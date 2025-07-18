@@ -24,14 +24,30 @@ func (lx *Lexer) nextChar() {
 		return
 	}
 	lx.ch = lx.input[lx.readPosition]
-	lx.position = lx.readPosition
+	// lx.position = lx.readPosition
+	lx.position += 1
 	lx.readPosition += 1
 }
 
 func NewLexer(input string) *Lexer {
-	lx := &Lexer { input: input }
-	lx.nextChar()
-	return lx
+	// lx := &Lexer { input: input }
+	// lx.nextChar()
+	// return lx
+	readPosition := 1
+	ch := byte(0)
+	if len(input) > 0 {
+		ch = input[0]
+	}
+	if len(input) == 0 {
+		readPosition = 0
+
+	}
+	return &Lexer {
+		input: input,
+		position: 0,
+		readPosition: readPosition,
+		ch: ch,
+	}
 }
 
 // Special types
