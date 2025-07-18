@@ -1,4 +1,11 @@
+// monkey/lexer/lexer.go
+
 package lexer
+
+import (
+	"monkey/token"
+	"log"
+)
 
 // The current version of Lexer only supports ASCII characters. Can be updated
 // later to support utf-8 later as an exercise
@@ -9,18 +16,43 @@ type Lexer struct {
 	ch byte          // current char under examination
 }
 
-func NewLexer(initialInput string) *Lexer {
-	newLexer := &Lexer{ input: initialInput }
-	newLexer.readChar()
-	return newLexer
-}
-
-func (lexer *Lexer) readChar() {
-	if lexer.readPosition >= len(lexer.input) {
-		lexer.ch = 0 // ascii for nul or eof
+// Reads the input position at readPosition and set its value at ch and update
+// the position and readPosition. if readPosition is not valid set ch to 0
+func (lx *Lexer) nextChar() {
+	if lx.readPosition >= len(lx.input) {
+		lx.ch = 0 // ascii for nul or eof
 		return
 	}
-	lexer.ch = lexer.input[lexer.readPosition]
-	lexer.position = lexer.readPosition
-	lexer.readPosition += 1
+	lx.ch = lx.input[lx.readPosition]
+	lx.position = lx.readPosition
+	lx.readPosition += 1
+}
+
+func NewLexer(input string) *Lexer {
+	lx := &Lexer { input: input }
+	lx.nextChar()
+	return lx
+}
+
+// Special types
+// ILLEGAL   = "ILLEGAL"
+// EOF       = "EOF"
+
+// indentifiers + literals
+// IDENT     = "IDENT" // add, foobar, x, y
+// INT       = "INT"
+
+// Keywords
+// FUNCTION  = "FUNCTION"
+// LET       = "LET"
+
+// Reads the current char the returns an equivalent token for it
+// and interates the lexer to next char
+func (lx *Lexer) NextToken() token.Token {
+	tok, err := token.TokenFromValue(lx.ch)
+	if err != nil {
+		log.Fatal(err)
+	}
+	lx.nextChar()
+	return tok
 }
