@@ -4,71 +4,58 @@ package lexer
 
 import (
 	"monkey/token"
-	"log"
 )
 
 // The current version of Lexer only supports ASCII characters. Can be updated
 // later to support utf-8 later as an exercise
 type Lexer struct {
 	input string
-	position int     // current position in input (points to the current char)
-	readPosition int // current read position in input (after current char)
-	ch byte          // current char under examination
-}
-
-// Reads the input position at readPosition and set its value at ch and update
-// the position and readPosition. if readPosition is not valid set ch to 0
-func (lx *Lexer) nextChar() {
-	if lx.readPosition >= len(lx.input) {
-		lx.ch = 0 // ascii for nul or eof
-		return
-	}
-	lx.ch = lx.input[lx.readPosition]
-	// lx.position = lx.readPosition
-	lx.position += 1
-	lx.readPosition += 1
+	pos int
 }
 
 func NewLexer(input string) *Lexer {
-	// lx := &Lexer { input: input }
-	// lx.nextChar()
-	// return lx
-	readPosition := 1
-	ch := byte(0)
-	if len(input) > 0 {
-		ch = input[0]
-	}
-	if len(input) == 0 {
-		readPosition = 0
+	return &Lexer { input: input, pos: 0 }
+}
 
+func (lx *Lexer) getCh() byte {
+	// Return 0 (ASCII character for EOF) when the position has reach the end of the input
+	if lx.pos >= len(lx.input) {
+		return 0
 	}
-	return &Lexer {
-		input: input,
-		position: 0,
-		readPosition: readPosition,
-		ch: ch,
+	return lx.input[lx.pos]
+}
+
+func (lx *Lexer) nextPos() {
+	if lx.pos < len(lx.input) {
+		lx.pos += 1
 	}
 }
 
-// Special types
-// ILLEGAL   = "ILLEGAL"
-// EOF       = "EOF"
+func (lx *Lexer) GetNextToken() token.Token {
+	var tk token.Token
 
-// indentifiers + literals
-// IDENT     = "IDENT" // add, foobar, x, y
-// INT       = "INT"
-
-// Keywords
-// FUNCTION  = "FUNCTION"
-// LET       = "LET"
-
-// Reads the current char the returns an equivalent token for it
-// and interates the lexer to next char
-func (lx *Lexer) NextToken() token.Token {
-	tok, err := token.TokenFromValue(lx.ch)
-	if err != nil {
-		log.Fatal(err)
+	switch lx.getCh() {
+	case '=':
+		tk = token.NewToken(token.ASSIGN, lx.getCh())
+	case '+':
+		tk = token.NewToken(token.PLUS, lx.getCh())
+	case '(':
+		tk = token.NewToken(token.LPAREN, lx.getCh())
+	case ')':
+		tk = token.NewToken(token.RPAREN, lx.getCh())
+	case '{':
+		tk = token.NewToken(token.LBRACE, lx.getCh())
+	case '}':
+		tk = token.NewToken(token.RBRACE, lx.getCh())
+	case ',':
+		tk = token.NewToken(token.COMMA, lx.getCh())
+	case ';':
+		tk = token.NewToken(token.SEMICOLON, lx.getCh())
+	case 0:
+		tk = token.NewTokenStr(token.EOF, "")
 	}
-	lx.nextChar()
-	return tok
+
+	lx.nextPos()
+
+	return tk
 }

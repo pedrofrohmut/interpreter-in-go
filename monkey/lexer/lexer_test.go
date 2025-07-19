@@ -14,8 +14,8 @@ func TestNewLexer(t *testing.T) {
 	if lx.input != input {
 		t.Errorf("Expected lexer.input to be %q, but got %q", input, lx.input)
 	}
-	if lx.ch != input[0] {
-		t.Errorf("Expect lexer.ch to be %q, but got %q", input[0], lx.ch)
+	if lx.getCh() != input[0] {
+		t.Errorf("Expect lexer.ch to be %q, but got %q", input[0], lx.getCh())
 	}
 }
 
@@ -23,21 +23,15 @@ func TestNewLexerEmptyInput(t *testing.T) {
 	input := ""
 	lx := NewLexer(input)
 
-	if lx.position != 0 {
-		t.Errorf("Expected lexer.position to be %q, but got %q", 0, lx.position)
-	}
-	if lx.readPosition >= 1 {
-		t.Errorf("Expected lexer.readPosition to be %q, but got %q", 0, lx.readPosition)
-	}
 	if lx.input != "" {
 		t.Errorf("Expected lexer.input to be %q, but got %q", "", lx.input)
 	}
-	if lx.ch != 0 {
-		t.Errorf("Expected lexer.ch to be %q, but got %q", 0, lx.ch)
+	if lx.pos != 0 {
+		t.Errorf("Expected lexer.position to be %q, but got %q", 0, lx.pos)
 	}
 }
 
-func TestNextToken(t *testing.T) {
+func TestGetNextToken(t *testing.T) {
 	input := "=+(){},;"
 
 	tests := []struct {
@@ -58,7 +52,7 @@ func TestNextToken(t *testing.T) {
 	lx := NewLexer(input)
 
 	for i, tt := range tests {
-		tok := lx.NextToken()
+		tok := lx.GetNextToken()
 
 		if tok.Type != tt.expectedType {
 			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q",
@@ -71,3 +65,18 @@ func TestNextToken(t *testing.T) {
 		}
 	}
 }
+
+// TODO: TestGetNextToken2 with
+// input := 'let five = 5;'
+
+// TODO: TestGetNextToken3 with
+// 	input := `
+// 		let five = 5;
+// 		let ten = 10;
+//
+// 		let add = fn(x, y) {
+// 			x + y;
+// 		};
+//
+// 		let result = add(five, ten);
+// 	`
