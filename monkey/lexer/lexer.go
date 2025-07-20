@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-// The current version of Lexer only supports ASCII characters. Can be updated
+// INFO: The current version of Lexer only supports ASCII characters. Can be updated
 // later to support utf-8 later as an exercise
 type Lexer struct {
 	input string
@@ -62,10 +62,17 @@ func isIntNumber(val byte) bool {
 }
 
 func isWhiteSpace(val byte) bool {
-	if val == 9 || val == 10 || val == 32 {
+	if val == '\t' || val == ' ' || val == '\n' || val == '\r'{
 		return true
 	}
 	return false
+}
+
+func (lx *Lexer) skipWhiteSpaces() {
+	for isWhiteSpace(lx.getCh()) {
+		hasNext := lx.nextPos()
+		if ! hasNext { break }
+	}
 }
 
 func (lx *Lexer) readIdentifier() string {
@@ -77,6 +84,8 @@ func (lx *Lexer) readIdentifier() string {
 	return lx.input[start : lx.pos + 1]
 }
 
+// INFO: The monkey language, for educational purpose, only support int numbers.
+// Other kinds of number can be later added as an exercise
 func (lx *Lexer) readIntNumber() string {
 	start := lx.pos
 	for isIntNumber(lx.input[lx.pos + 1]) {
@@ -87,11 +96,7 @@ func (lx *Lexer) readIntNumber() string {
 }
 
 func (lx *Lexer) GetNextToken() token.Token {
-	// Skip white spaces
-	for isWhiteSpace(lx.getCh()) {
-		hasNext := lx.nextPos()
-		if ! hasNext { break }
-	}
+	lx.skipWhiteSpaces()
 
 	var tk token.Token
 
@@ -132,7 +137,7 @@ func (lx *Lexer) GetNextToken() token.Token {
 		default:
 			tk = token.NewToken(token.ILLEGAL, lx.getCh())
 		}
-	} // End Switch
+	}
 
 	lx.nextPos()
 
