@@ -115,12 +115,9 @@ func (lx *Lexer) GetNextToken() token.Token {
 	case 0:
 		tk = token.NewTokenStr(token.EOF, "")
 	default:
-		// fmt.Printf("Is Identifier Letter? %d - %s - %t\n", lx.getCh(), string(lx.getCh()), isIdentLetter(lx.getCh()))
-		// fmt.Printf("Is Int Number? %d - %s - %t\n", lx.getCh(), string(lx.getCh()), isIntNumber(lx.getCh()))
-		// Check for letters
-		if isIdentLetter(lx.getCh()) {
+		switch {
+		case isIdentLetter(lx.getCh()) == true:
 			ident := lx.readIdentifier()
-			// fmt.Printf("Identifier: '%s'\n", ident)
 			switch ident {
 			case "let":
 				tk = token.NewTokenStr(token.LET, ident)
@@ -129,13 +126,10 @@ func (lx *Lexer) GetNextToken() token.Token {
 			default:
 				tk = token.NewTokenStr(token.IDENT, ident)
 			}
-		// Check for numbers
-		} else if isIntNumber(lx.getCh()) {
+		case isIntNumber(lx.getCh()) :
 			num := lx.readIntNumber()
-			// fmt.Printf("IntNumber: '%s'\n", num)
 			tk = token.NewTokenStr(token.INT, num)
-		// Illegal and not covered ascii characters
-		} else {
+		default:
 			tk = token.NewToken(token.ILLEGAL, lx.getCh())
 		}
 	} // End Switch
