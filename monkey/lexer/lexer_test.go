@@ -33,6 +33,7 @@ func TestNewLexerEmptyInput(t *testing.T) {
 
 func TestGetNextToken(t *testing.T) {
 	input := "=+(){},;"
+	lx := NewLexer(input)
 
 	tests := []struct {
 		expectedType    token.TokenType
@@ -49,8 +50,6 @@ func TestGetNextToken(t *testing.T) {
 		{token.EOF,       ""},
 	}
 
-	lx := NewLexer(input)
-
 	for i, tt := range tests {
 		tok := lx.GetNextToken()
 
@@ -66,8 +65,35 @@ func TestGetNextToken(t *testing.T) {
 	}
 }
 
-// TODO: TestGetNextToken2 with
-// input := 'let five = 5;'
+func TestGetNextToken2(t *testing.T) {
+	input := `let five = 5;`
+	lx := NewLexer(input)
+
+	tests := []struct {
+		expectedType 	token.TokenType
+		expectedLiteral string
+	} {
+		{token.LET, "let"},
+		{token.IDENT, "five"},
+		{token.ASSIGN, "="},
+		{token.INT, "5"},
+		{token.SEMICOLON, ";"},
+	}
+
+	for i, tt := range tests {
+		tok := lx.GetNextToken()
+
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q",
+				i, tt.expectedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
+				i, tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
 
 // TODO: TestGetNextToken3 with
 // 	input := `
