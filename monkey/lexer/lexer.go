@@ -61,6 +61,13 @@ func isIntNumber(val byte) bool {
 	return false
 }
 
+func isWhiteSpace(val byte) bool {
+	if val == 9 || val == 10 || val == 32 {
+		return true
+	}
+	return false
+}
+
 func (lx *Lexer) readIdentifier() string {
 	start := lx.pos
 	for isIdentLetter(lx.input[lx.pos + 1]) {
@@ -80,8 +87,8 @@ func (lx *Lexer) readIntNumber() string {
 }
 
 func (lx *Lexer) GetNextToken() token.Token {
-	// Skip spaces (ascii 32)
-	for lx.getCh() == ' ' {
+	// Skip white spaces
+	for isWhiteSpace(lx.getCh()) {
 		hasNext := lx.nextPos()
 		if ! hasNext { break }
 	}
@@ -117,6 +124,8 @@ func (lx *Lexer) GetNextToken() token.Token {
 			switch ident {
 			case "let":
 				tk = token.NewTokenStr(token.LET, ident)
+			case "fn":
+				tk = token.NewTokenStr(token.FUNCTION, ident)
 			default:
 				tk = token.NewTokenStr(token.IDENT, ident)
 			}
