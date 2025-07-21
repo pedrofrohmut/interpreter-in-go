@@ -142,10 +142,20 @@ func (lx *Lexer) GetNextToken() token.Token {
         case isIdentLetter(lx.getCh()) == true:
             ident := lx.readIdentifier()
             switch ident {
+            case "true":
+                tk = token.NewTokenStr(token.TRUE, ident)
+            case "false":
+                tk = token.NewTokenStr(token.FALSE, ident)
             case "let":
                 tk = token.NewTokenStr(token.LET, ident)
             case "fn":
                 tk = token.NewTokenStr(token.FUNCTION, ident)
+            case "return":
+                tk = token.NewTokenStr(token.RETURN, ident)
+            case "if":
+                tk = token.NewTokenStr(token.IF, ident)
+            case "else":
+                tk = token.NewTokenStr(token.ELSE, ident)
             default:
                 tk = token.NewTokenStr(token.IDENT, ident)
             }

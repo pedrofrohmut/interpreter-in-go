@@ -34,6 +34,11 @@ const (
     // Keywords
     FUNCTION   = "FUNCTION"
     LET        = "LET"
+    TRUE       = "TRUE"
+    FALSE      = "FALSE"
+    IF         = "IF"
+    ELSE       = "ELSE"
+    RETURN     = "RETURN"
 )
 
 type TokenType string

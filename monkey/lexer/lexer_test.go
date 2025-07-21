@@ -171,3 +171,41 @@ func TestGetNextToken4(t *testing.T) {
 
     checksForNextToken(lx, t, tests)
 }
+
+func TestGetNextToken5(t *testing.T) {
+    input := `
+        if (5 < 10) {
+            return true;
+        } else {
+            return false;
+        }
+    `
+    lx := NewLexer(input)
+
+    tests := []ExpectedToken {
+        // Line 1
+        {token.IF, "if"},
+        {token.LPAREN, "("},
+        {token.INT, "5"},
+        {token.LT, "<"},
+        {token.INT, "10"},
+        {token.RPAREN, ")"},
+        {token.LBRACE, "{"},
+        // Line 2
+        {token.RETURN, "return"},
+        {token.TRUE, "true"},
+        {token.SEMICOLON, ";"},
+        // Line 3
+        {token.RBRACE, "}"},
+        {token.ELSE, "else"},
+        {token.LBRACE, "{"},
+        // Line 4
+        {token.RETURN, "return"},
+        {token.FALSE, "false"},
+        {token.SEMICOLON, ";"},
+        // Line 5
+        {token.RBRACE, "}"},
+    }
+
+    checksForNextToken(lx, t, tests)
+}
