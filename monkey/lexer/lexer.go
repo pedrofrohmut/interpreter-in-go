@@ -41,6 +41,13 @@ func (lx *Lexer) hasNextCh() bool {
     return false
 }
 
+func (lx *Lexer) getNextCh() byte {
+    if lx.hasNextCh() {
+        return lx.input[lx.pos + 1]
+    }
+    return 0 // EOF
+}
+
 func isIdentLetter(val byte) bool {
     if val >= 'a' && val <= 'z' { // lowercase letters
         return true
@@ -101,20 +108,31 @@ func (lx *Lexer) GetNextToken() token.Token {
     var tk token.Token
 
     switch lx.getCh() {
-    // Operators
+    // Operators & Comparison
     case '=':
-        tk = token.NewToken(token.ASSIGN, lx.getCh())
+        switch lx.getNextCh() {
+        case '=':
+            tk = token.NewTokenStr(token.EQ, "==")
+            lx.nextPos() // Needed for 2 characters operators
+        default:
+            tk = token.NewToken(token.ASSIGN, lx.getCh())
+        }
     case '+':
         tk = token.NewToken(token.PLUS, lx.getCh())
     case '-':
         tk = token.NewToken(token.MINUS, lx.getCh())
     case '!':
-        tk = token.NewToken(token.BANG, lx.getCh())
+        switch lx.getNextCh() {
+        case '=':
+            tk = token.NewTokenStr(token.NOT_EQ, "!=")
+            lx.nextPos() // Needed for 2 characters operators
+        default:
+            tk = token.NewToken(token.BANG, lx.getCh())
+        }
     case '*':
         tk = token.NewToken(token.ASTERISK, lx.getCh())
     case '/':
         tk = token.NewToken(token.SLASH, lx.getCh())
-
     case '<':
         tk = token.NewToken(token.LT, lx.getCh())
     case '>':

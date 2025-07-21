@@ -209,3 +209,26 @@ func TestGetNextToken5(t *testing.T) {
 
     checksForNextToken(lx, t, tests)
 }
+
+func TestNextToken6(t *testing.T) {
+    input := `
+        10 == 10;
+        9 !=  10;
+    `
+    lx := NewLexer(input)
+
+    tests := []ExpectedToken {
+        // Statement 1
+        {token.INT, "10"},
+        {token.EQ, "=="},
+        {token.INT, "10"},
+        {token.SEMICOLON, ";"},
+        // Statement 2
+        {token.INT, "9"},
+        {token.NOT_EQ, "!="},
+        {token.INT, "10"},
+        {token.SEMICOLON, ";"},
+    }
+
+    checksForNextToken(lx, t, tests)
+}
