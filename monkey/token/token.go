@@ -3,43 +3,50 @@
 package token
 
 const (
-	// Special types
-	ILLEGAL   = "ILLEGAL"
-	EOF       = "EOF"
+    // Special types
+    ILLEGAL    = "ILLEGAL"
+    EOF        = "EOF"
 
-	// indentifiers + literals
-	IDENT     = "IDENT" // add, foobar, x, y
-	INT       = "INT"
+    // indentifiers + literals
+    IDENT      = "IDENT" // add, foobar, x, y
+    INT        = "INT"
 
-	// Operators
-	ASSIGN    = "="
-	PLUS      = "+"
+    // Operators
+    ASSIGN     = "="
+    PLUS       = "+"
+    MINUS      = "-"
+    BANG       = "!"
+    ASTERISK   = "*"
+    SLASH      = "/"
 
-	// Delimiters
-	COMMA     = ","
-	SEMICOLON = ";"
+    LT         = "<"
+    GT         = ">"
 
-	LPAREN    = "("
-	RPAREN    = ")"
-	LBRACE    = "{"
-	RBRACE    = "}"
+    // Delimiters
+    COMMA      = ","
+    SEMICOLON  = ";"
 
-	// Keywords
-	FUNCTION  = "FUNCTION"
-	LET       = "LET"
+    LPAREN     = "("
+    RPAREN     = ")"
+    LBRACE     = "{"
+    RBRACE     = "}"
+
+    // Keywords
+    FUNCTION   = "FUNCTION"
+    LET        = "LET"
 )
 
 type TokenType string
 
 type Token struct {
-	Type    TokenType
-	Literal string
+    Type    TokenType
+    Literal string
 }
 
 func NewToken(t TokenType, val byte) Token {
-	return Token { Type: t, Literal: string(val) }
+    return Token { Type: t, Literal: string(val) }
 }
 
 func NewTokenStr(t TokenType, val string) Token {
-	return Token { Type: t, Literal: val }
+    return Token { Type: t, Literal: val }
 }
