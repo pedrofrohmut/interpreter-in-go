@@ -84,8 +84,7 @@ func (lx *Lexer) skipWhiteSpaces() {
 
 func (lx *Lexer) readIdentifier() string {
     start := lx.pos
-    for isIdentLetter(lx.input[lx.pos + 1]) {
-        if ! lx.hasNextCh() { break }
+    for lx.hasNextCh() && isIdentLetter(lx.input[lx.pos + 1]) {
         lx.pos += 1
     }
     return lx.input[start : lx.pos + 1]
@@ -95,8 +94,7 @@ func (lx *Lexer) readIdentifier() string {
 // Other kinds of number can be later added as an exercise
 func (lx *Lexer) readIntNumber() string {
     start := lx.pos
-    for isIntNumber(lx.input[lx.pos + 1]) {
-        if ! lx.hasNextCh() { break }
+    for lx.hasNextCh() && isIntNumber(lx.input[lx.pos + 1]) {
         lx.pos += 1
     }
     return lx.input[start:lx.pos + 1]
