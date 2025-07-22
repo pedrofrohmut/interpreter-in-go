@@ -29,6 +29,7 @@ const (
     COMMA      = ","
     SEMICOLON  = ";"
 
+    // Grouping
     LPAREN     = "("
     RPAREN     = ")"
     LBRACE     = "{"

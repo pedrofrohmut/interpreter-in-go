@@ -232,3 +232,48 @@ func TestNextToken6(t *testing.T) {
 
     checksForNextToken(lx, t, tests)
 }
+
+func TextNextTokenAllTokens(t *testing.T) {
+    input := `foo 5 = + - ! * / < > == != , ; ( ) { } fn let true false if else return`
+    lx := NewLexer(input)
+
+    tests := []ExpectedToken {
+        // Identifier + literals
+        {token.IDENT, "foo"},
+        {token.INT, "5"},
+
+        // Operators
+        {token.ASSIGN, "="},
+        {token.MINUS, "-"},
+        {token.BANG, "!"},
+        {token.ASTERISK, "*"},
+        {token.SLASH, "/"},
+
+        // Comparison
+        {token.LT, "<"},
+        {token.GT, ">"},
+        {token.EQ, "=="},
+        {token.NOT_EQ, "!="},
+
+        // Delimiters
+        {token.COMMA, ","},
+        {token.SEMICOLON, ";"},
+
+        // Grouping
+        {token.LPAREN, "("},
+        {token.RPAREN, ")"},
+        {token.LBRACE, "{"},
+        {token.RBRACE, "}"},
+
+        // Keywords
+        {token.FUNCTION, "fn"},
+        {token.LET, "let"},
+        {token.TRUE, "true"},
+        {token.FALSE, "false"},
+        {token.IF, "if"},
+        {token.ELSE, "else"},
+        {token.RETURN, "return"},
+    }
+
+    checksForNextToken(lx, t, tests)
+}
