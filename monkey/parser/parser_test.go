@@ -34,6 +34,25 @@ func checkLetStatements(program *ast.Program, tests []ExpectedIdentifier, t *tes
     }
 }
 
+func checkParserErrors(t *testing.T, par *Parser) {
+    errors := par.GetErrors()
+    if len(errors) == 0 { return }
+    t.Errorf("Parser has %d errors.\n", len(errors))
+    for _, msg := range errors {
+        t.Errorf("Parser error: %q\n", msg)
+    }
+    t.FailNow()
+}
+
+func checkProgram(program *ast.Program, t *testing.T) {
+    if program == nil {
+        t.Fatalf("ParseProgram() returned nil")
+    }
+    if len(program.Statements) != 3 {
+        t.Fatalf("program.Statements expected 3 but got=%d", len(program.Statements))
+    }
+}
+
 func TestLetStatements(t *testing.T) {
     input := `
         let x = 5;
@@ -43,13 +62,8 @@ func TestLetStatements(t *testing.T) {
     lx := lexer.NewLexer(input)
     par := NewParser(lx)
     program := par.ParseProgram()
-
-    if program == nil {
-        t.Fatalf("ParseProgram() returned nil")
-    }
-    if len(program.Statements) != 3 {
-        t.Fatalf("program.Statements expected 3 but got=%d", len(program.Statements))
-    }
+    checkParserErrors(t, par)
+    checkProgram(program, t)
 
     tests := []ExpectedIdentifier {
         {"x"},
@@ -58,4 +72,28 @@ func TestLetStatements(t *testing.T) {
     }
 
     checkLetStatements(program, tests, t)
+}
+
+func TestReturnStatement(t *testing.T) {
+    input := `
+        return 5;
+        return 10;
+        return 12345;
+    `
+    lx := lexer.NewLexer(input)
+    par := NewParser(lx)
+    program := par.ParseProgram()
+    checkParserErrors(t, par)
+    checkProgram(program, t)
+
+    for _, currStm := range program.Statements {
+        stm, ok := currStm.(*ast.ReturnStatement)
+        if !ok {
+            t.Errorf("Expected a return statement but got %T", stm)
+            continue
+        }
+        if stm.TokenLiteral() != "return" {
+            t.Errorf("Expected token literal to be 'return' but got %q", stm.TokenLiteral())
+        }
+    }
 }

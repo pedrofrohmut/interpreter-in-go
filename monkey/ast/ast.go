@@ -63,3 +63,18 @@ func (stm *LetStatement) statementNode() {}
 func (stm *LetStatement) TokenLiteral() string {
     return stm.Token.Literal
 }
+
+type ReturnStatement struct {
+    Token token.Token
+    ReturnValue Expression
+}
+
+func NewReturnStatement(tk token.Token) *ReturnStatement {
+    return &ReturnStatement { Token: tk }
+}
+
+func (stm *ReturnStatement) statementNode() {}
+
+func (stm *ReturnStatement) TokenLiteral() string {
+    return stm.Token.Literal
+}
