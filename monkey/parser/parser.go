@@ -9,11 +9,31 @@ import (
     "fmt"
 )
 
+const (
+    // iota gives the constants a ascending numbers
+    // _ skips the 0 value
+    _ int = iota
+    LOWEST
+    EQUALS      // ==
+    LESSGREATER // > or <
+    SUM         // +
+    PRODUCT     // *
+    PREFIX      // -X or !X
+    CALL        // myFunction(X)
+)
+
+type (
+    prefixParseFn func() ast.Expression
+    infixParseFn func(ast.Expression) ast.Expression
+)
+
 type Parser struct {
     lx *lexer.Lexer
     currToken token.Token
     nextToken token.Token
     errors []string
+    prefixParseFns map[token.TokenType]prefixParseFn
+    infixParseFns map[token.TokenType]infixParseFn
 }
 
 func NewParser(lx *lexer.Lexer) *Parser {
@@ -21,14 +41,11 @@ func NewParser(lx *lexer.Lexer) *Parser {
         lx: lx,
         errors: []string {},
     }
-
+    par.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+    par.registerPrefix(token.IDENT, par.parseIdentifier)
     // Initialize currToken and nextToken with tokens
     par.getNextToken()
     par.getNextToken()
-    // tmp := lx.GetNextToken()
-    // par.nextToken = lx.GetNextToken()
-    // par.currToken = tmp
-
     return par
 }
 
@@ -53,6 +70,13 @@ func (par *Parser) currTokenIs(tk token.TokenType) bool {
     return true
 }
 
+func (par *Parser) nextTokenIs(tk token.TokenType) bool {
+    if tk != par.nextToken.Type {
+        return false
+    }
+    return true
+}
+
 // Random code from book. Clean this shit later
 // Fix this hack random method later
 func (par *Parser) expectPeek(tk token.TokenType) bool {
@@ -67,20 +91,21 @@ func (par *Parser) expectPeek(tk token.TokenType) bool {
 
 func (par *Parser) parseLetStatement() *ast.LetStatement {
     stm := ast.NewLetStatement(par.currToken)
-
     // TODO: Remove magic nextToken inside this method that should only check
-    if !par.expectPeek(token.IDENT) {
-        return nil
-    }
-
+    if !par.expectPeek(token.IDENT) { return nil }
     stm.Name = &ast.Identifier { Token: par.currToken, Value: par.currToken.Literal }
-
     // TODO: Remove magic nextToken inside this method that should only check
-    if !par.expectPeek(token.ASSIGN) {
-        return nil
-    }
-
+    if !par.expectPeek(token.ASSIGN) { return nil }
     // TODO: We're skipping the expressions until we find a semicolon
+    for !par.currTokenIs(token.SEMICOLON) {
+        par.getNextToken()
+    }
+    return stm
+}
+
+func (par *Parser) parseReturnStatement() *ast.ReturnStatement {
+    stm := ast.NewReturnStatement(par.currToken)
+    par.getNextToken()
     for !par.currTokenIs(token.SEMICOLON) {
         par.getNextToken()
     }
@@ -88,20 +113,19 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
     return stm
 }
 
-func (par *Parser) parseReturnStatement() *ast.ReturnStatement {
-    stm := ast.NewReturnStatement(par.currToken)
+func (par *Parser) parseExpression(precedence int) ast.Expression {
+    prefix := par.prefixParseFns[par.currToken.Type]
+    if prefix == nil { return nil }
+    leftExp := prefix()
+    return leftExp
+}
 
-    // if !par.currTokenIs(token.RETURN) {
-    //     fmt.Printf("First token is not Return\n")
-    // } else {
-    //     fmt.Printf("It begins with return\n")
-    // }
-
-    par.getNextToken()
-    for !par.currTokenIs(token.SEMICOLON) {
+func (par *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+    stm := &ast.ExpressionStatement { Token: par.currToken }
+    stm.Expression = par.parseExpression(LOWEST)
+    if par.nextTokenIs(token.SEMICOLON) {
         par.getNextToken()
     }
-
     return stm
 }
 
@@ -112,9 +136,14 @@ func (par *Parser) parseCurrStatement() ast.Statement {
     case token.RETURN:
         return par.parseReturnStatement()
     default:
-        fmt.Printf("# WARNING: Not an expected type of statement\n")
-        return nil
+        // fmt.Printf("# WARNING: Not an expected type of statement\n")
+        // return nil
+        return par.parseExpressionStatement()
     }
+}
+
+func (par *Parser) parseIdentifier() ast.Expression {
+    return &ast.Identifier { Token: par.currToken, Value: par.currToken.Literal }
 }
 
 func (par *Parser) ParseProgram() *ast.Program {
@@ -129,4 +158,12 @@ func (par *Parser) ParseProgram() *ast.Program {
     }
 
     return program
+}
+
+func (par *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+    par.prefixParseFns[tokenType] = fn
+}
+
+func (par *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+    par.infixParseFns[tokenType] = fn
 }
