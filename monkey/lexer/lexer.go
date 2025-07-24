@@ -199,3 +199,12 @@ func (lx *Lexer) PrintChars() {
     }
     lx.pos = start
 }
+
+func (lx *Lexer) PrintTokens() {
+    i := 0
+    tk := lx.GetNextToken()
+    for tk.Type != token.EOF {
+        fmt.Printf("[%d] %+v\n", i, tk)
+        tk = lx.GetNextToken()
+    }
+}

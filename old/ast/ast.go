@@ -53,6 +53,10 @@ type Identifier struct {
     Value string
 }
 
+func NewIdentifier(tk token.Token) *Identifier {
+    return &Identifier { Token: tk, Value: tk.Literal }
+}
+
 func (iden *Identifier) String() string {
     return iden.Value
 }
@@ -119,6 +123,10 @@ func (stm *ReturnStatement) TokenLiteral() string {
 type ExpressionStatement struct {
     Token token.Token
     Expression Expression
+}
+
+func NewExpressionStatement(tk token.Token) *ExpressionStatement {
+    return &ExpressionStatement { Token: tk }
 }
 
 func (stm *ExpressionStatement) String() string {

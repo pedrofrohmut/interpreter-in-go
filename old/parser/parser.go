@@ -121,7 +121,7 @@ func (par *Parser) parseExpression(precedence int) ast.Expression {
 }
 
 func (par *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-    stm := &ast.ExpressionStatement { Token: par.currToken }
+    stm := ast.NewExpressionStatement(par.currToken)
     stm.Expression = par.parseExpression(LOWEST)
     if par.nextTokenIs(token.SEMICOLON) {
         par.getNextToken()
@@ -131,19 +131,19 @@ func (par *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 func (par *Parser) parseCurrStatement() ast.Statement {
     switch par.currToken.Type {
+    // Statements
     case token.LET:
         return par.parseLetStatement()
     case token.RETURN:
         return par.parseReturnStatement()
+    // Expressions
     default:
-        // fmt.Printf("# WARNING: Not an expected type of statement\n")
-        // return nil
         return par.parseExpressionStatement()
     }
 }
 
 func (par *Parser) parseIdentifier() ast.Expression {
-    return &ast.Identifier { Token: par.currToken, Value: par.currToken.Literal }
+    return ast.NewIdentifier(par.currToken)
 }
 
 func (par *Parser) ParseProgram() *ast.Program {
