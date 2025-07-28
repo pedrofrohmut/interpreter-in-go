@@ -4,6 +4,7 @@ package parser
 
 import (
     "testing"
+    "reflect"
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
@@ -72,5 +73,31 @@ func TestReturnStatement(t *testing.T) {
         if stm.Token.Literal != "return" {
             t.Errorf("[%d] Expected token literal to be '%s' but got '%s'", i, "return", stm.Token.Literal)
         }
+    }
+}
+
+func TestErrorsOnLetStatement(t *testing.T) {
+    input := `
+        let x 5;
+        let = 10;
+        let 15;
+    `
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if pro == nil {
+        t.Fatalf("Program is nill")
+    }
+
+    for i, tmp := range pro.Statements {
+        if tmp != nil && !reflect.ValueOf(tmp).IsNil() {
+            t.Errorf("[%d] Current statement is not nil as expected for an invalid statement", i)
+        }
+    }
+
+    expectedErrCount := 3
+    if len(par.errors) < expectedErrCount {
+        t.Fatalf("Expected number of errors to be %d but got %d instead.", expectedErrCount, len(par.errors))
     }
 }

@@ -8,6 +8,7 @@
 package parser
 
 import (
+    "fmt"
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
@@ -15,10 +16,16 @@ import (
 
 type Parser struct {
     lex *lexer.Lexer
+    errors []string
 }
 
 func NewParser(lex *lexer.Lexer) *Parser {
-    return &Parser { lex: lex }
+    return &Parser { lex: lex, errors: []string {} }
+}
+
+func (par *Parser) addTokenError(expected token.TokenType, tok token.Token) {
+    err := fmt.Sprintf("Expected token type to be %s but got %s instead.", expected, tok.Type)
+    par.errors = append(par.errors, err)
 }
 
 func (par *Parser) parseLetStatement() *ast.LetStatement {
@@ -26,12 +33,18 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
 
     // Check for identifier
     tok := par.lex.GetNextToken()
-    if tok.Type != token.IDENT { return nil }
+    if tok.Type != token.IDENT {
+        par.addTokenError(token.IDENT, tok)
+        return nil
+    }
     stm.Identifier = tok.Literal
 
     // Check for assign item
     tok = par.lex.GetNextToken()
-    if tok.Type != token.ASSIGN { return nil }
+    if tok.Type != token.ASSIGN {
+        par.addTokenError(token.ASSIGN, tok)
+        return nil
+    }
 
     // TODO: Check out how to parse Expression from letStm
 
@@ -81,4 +94,10 @@ func (par *Parser) ParseProgram() *ast.Program {
     }
 
     return pro
+}
+
+func (par *Parser) PrintParserErrors() {
+    for i, x := range par.errors {
+        fmt.Printf("[%d] Parser error: %s\n", i, x)
+    }
 }
