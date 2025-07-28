@@ -3,31 +3,27 @@
 package repl
 
 import (
-    "io"
+    "os"
     "bufio"
     "fmt"
+    "log"
     "monkey/lexer"
-    "monkey/token"
 )
 
-const PROMPT = ">> "
-
-func Start(in io.Reader, out io.Writer) {
-    scanner := bufio.NewScanner(in)
-
+func Execute() {
+    fmt.Println("Monkey REPL. (:q to quit)")
+    scanner := bufio.NewScanner(os.Stdin)
     for {
-        fmt.Printf(PROMPT)
-        scanned := scanner.Scan()
-        if !scanned { return }
+        fmt.Printf(">> ")
+
+        scanner.Scan()
+        err := scanner.Err()
+        if err != nil { log.Fatal(err) }
 
         line := scanner.Text()
-        lx := lexer.NewLexer(line)
+        if line == ":q" { break }
 
-        tk := lx.GetNextToken()
-        for tk.Type != token.EOF {
-            fmt.Printf("%+v\n", tk)
-            tk = lx.GetNextToken()
-        }
+        lx := lexer.NewLexer(line)
+        lx.PrintTokens()
     }
 }
-

@@ -1,143 +1,83 @@
 // monkey/ast/ast.go
+/*
+      AST - Abstract Syntax Tree. Is the data structure the results for parsing
+    the source code of monkey language
+*/
 
 package ast
 
 import (
-    "bytes"
     "monkey/token"
 )
 
+// Check if this interface is necessary and also the GetTokenLiteral
 type Node interface {
-    TokenLiteral() string
-    // Utility method
+    // GetTokenLiteral() string
     String() string
-}
-
-type Statement interface {
-    Node
-    statementNode()
 }
 
 type Expression interface {
     Node
-    expressionNode()
 }
 
+type Statement interface {
+    Node
+}
+
+// AST Root
 type Program struct {
     Statements []Statement
 }
 
 func NewProgram() *Program {
-    return &Program {
-        Statements: []Statement{},
-    }
+    return &Program { Statements: []Statement {} }
 }
 
-func (pr *Program) TokenLiteral() string {
-    if len(pr.Statements) == 0 {
-        return ""
-    }
-    return pr.Statements[0].TokenLiteral()
-}
+// TODO: check if this method is necessary
+// Also check why it is first statement only
+// func (pr *Program) GetTokenLiteral() string {
+//     if len(pr.Statements) < 1 {
+//         return ""
+//     }
+//     return pr.Statements[0].GetTokenLiteral()
+// }
 
-func (pr *Program) String() string {
-    var out bytes.Buffer
-    for _, s := range pr.Statements {
-        out.WriteString(s.String())
-    }
-    return out.String()
-}
-
+// TODO: Maybe it doesnt need to be token. Only TokenType
 type Identifier struct {
-    Token token.Token
+    Token token.Token // the token.IDENT token
     Value string
 }
 
-func NewIdentifier(tk token.Token) *Identifier {
-    return &Identifier { Token: tk, Value: tk.Literal }
-}
-
-func (iden *Identifier) String() string {
-    return iden.Value
-}
-
-func (iden *Identifier) expressionNode() {}
-
-func (iden *Identifier) TokenLiteral() string {
-    return iden.Token.Literal
-}
-
-type LetStatement struct {
-    Token token.Token
-    Name *Identifier
-    Value Expression
-}
-
-func NewLetStatement(tk token.Token) *LetStatement {
-    return &LetStatement { Token: tk }
-}
-
-func (stm *LetStatement) String() string {
-    var out bytes.Buffer
-    out.WriteString(stm.TokenLiteral() + " ")
-    out.WriteString(stm.Name.String())
-    out.WriteString(" = ")
-    if stm.Value != nil {
-        out.WriteString(stm.Value.String())
+func NewIdentifier(value string) *Identifier {
+    return &Identifier {
+        Token: token.NewTokenStr(token.IDENT, value),
+        Value: value,
     }
-    out.WriteString(";")
-    return out.String()
 }
 
-func (stm *LetStatement) statementNode() {}
+// TODO: Maybe you dont need a separated struct for identifier
+// TODO: Maybe it doesnt need to be token. Only TokenType
+type LetStatement struct {
+    Statement
+    Token token.Token // the token.LET token
+    Identifier *Identifier
+    Expression Expression
+}
 
-func (stm *LetStatement) TokenLiteral() string {
-    return stm.Token.Literal
+func NewLetStatement() *LetStatement {
+    return &LetStatement {
+        Token: token.NewTokenStr(token.LET, "let"),
+    }
 }
 
 type ReturnStatement struct {
-    Token token.Token
-    ReturnValue Expression
-}
-
-func NewReturnStatement(tk token.Token) *ReturnStatement {
-    return &ReturnStatement { Token: tk }
-}
-
-func (stm *ReturnStatement) String() string {
-    var out bytes.Buffer
-    out.WriteString(stm.TokenLiteral() + " ")
-    if stm.ReturnValue != nil {
-        out.WriteString(stm.ReturnValue.String())
-    }
-    out.WriteString(";")
-    return out.String()
-}
-
-func (stm *ReturnStatement) statementNode() {}
-
-func (stm *ReturnStatement) TokenLiteral() string {
-    return stm.Token.Literal
-}
-
-type ExpressionStatement struct {
+    Statement
     Token token.Token
     Expression Expression
 }
 
-func NewExpressionStatement(tk token.Token) *ExpressionStatement {
-    return &ExpressionStatement { Token: tk }
-}
-
-func (stm *ExpressionStatement) String() string {
-    if stm.Expression != nil {
-        return stm.Expression.String()
+func NewReturnStatement() *ReturnStatement {
+    return &ReturnStatement {
+        Token: token.NewTokenStr(token.RETURN, "return"),
     }
-    return ""
-}
-
-func (ex *ExpressionStatement) statementNode() {}
-
-func (ex *ExpressionStatement) TokenLiteral() string {
-    return ex.TokenLiteral()
 }

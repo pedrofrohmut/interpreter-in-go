@@ -11,7 +11,9 @@ import (
 )
 
 func Execute() {
-    fmt.Println("Monkey REPL. (:q to quit)")
+    fmt.Println("Monkey REPL.")
+    fmt.Println("Tokenize your input")
+    fmt.Println(":q or :quit to quit")
     scanner := bufio.NewScanner(os.Stdin)
     for {
         fmt.Printf(">> ")
@@ -21,7 +23,7 @@ func Execute() {
         if err != nil { log.Fatal(err) }
 
         line := scanner.Text()
-        if line == ":q" { break }
+        if line == ":q" || line == ":quit" { break }
 
         lx := lexer.NewLexer(line)
         lx.PrintTokens()
