@@ -17,10 +17,36 @@ import (
 type Parser struct {
     lex *lexer.Lexer
     errors []string
+
+    // My custom variables to check tokens
+    tokens []token.Token
 }
 
 func NewParser(lex *lexer.Lexer) *Parser {
-    return &Parser { lex: lex, errors: []string {} }
+    return &Parser {
+        lex: lex,
+        errors: []string {},
+        tokens: []token.Token {},
+    }
+}
+
+func (par *Parser) GetCurrToken() token.Token {
+    if len(par.tokens) == 0 {
+        return token.Token {}
+    }
+    return par.tokens[len(par.tokens) - 1]
+}
+
+func (par *Parser) GetNextToken() token.Token {
+    tok := par.lex.GetNextToken()
+
+    // Dont add extra EOF tokens at the end
+    if tok.Type == token.EOF && par.GetCurrToken().Type == token.EOF {
+        return tok
+    }
+
+    par.tokens = append(par.tokens, tok)
+    return tok
 }
 
 func (par *Parser) addTokenError(expected token.TokenType, tok token.Token) {

@@ -109,6 +109,50 @@ func TestErrorsOnLetStatement(t *testing.T) {
     }
 }
 
+func TestParserGetToken(t *testing.T) {
+    input := `
+        let x = 5;
+        let y = 10;
+    `
+    // input := ""
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+
+    tests := [] struct {
+        expectedType token.TokenType
+        expectedLiteral string
+    } {
+        // Statement 1
+        {token.LET, "let"},
+        {token.IDENT, "x"},
+        {token.ASSIGN, "="},
+        {token.INT, "5"},
+        {token.SEMICOLON, ";"},
+        // Statement 2
+        {token.LET, "let"},
+        {token.IDENT, "y"},
+        {token.ASSIGN, "="},
+        {token.INT, "10"},
+        {token.SEMICOLON, ";"},
+        // End
+        {token.EOF, ""},
+    }
+
+    // fmt.Printf("Current: %s\n\n", par.GetCurrToken())
+    for i, test := range tests {
+        tok := par.GetNextToken()
+        // fmt.Printf("[%d] %s\n",i, tok)
+        // fmt.Printf("Len: %d\n", len(par.tokens))
+        // fmt.Printf("Current: %s\n\n", par.GetCurrToken())
+        if tok.Type != test.expectedType {
+            t.Errorf("[%d] Expected token type to be %s but got %s instead", i, test.expectedType, tok.Type)
+        }
+        if tok.Literal != test.expectedLiteral {
+            t.Errorf("[%d] Expected token literal to be %s but got %s instead", i, test.expectedLiteral, tok.Literal)
+        }
+    }
+}
+
 func TestProgramString(t *testing.T) {
     input := `
         let x = 5;
