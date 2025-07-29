@@ -58,7 +58,7 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
     stm := ast.NewLetStatement()
 
     // Check for identifier
-    tok := par.lex.GetNextToken()
+    tok := par.GetNextToken()
     if tok.Type != token.IDENT {
         par.addTokenError(token.IDENT, tok)
         return nil
@@ -66,7 +66,7 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
     stm.Identifier = tok.Literal
 
     // Check for assign item
-    tok = par.lex.GetNextToken()
+    tok = par.GetNextToken()
     if tok.Type != token.ASSIGN {
         par.addTokenError(token.ASSIGN, tok)
         return nil
@@ -76,7 +76,7 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
 
     // Advance tokens until find a semicolon
     for tok.Type != token.SEMICOLON {
-        tok = par.lex.GetNextToken()
+        tok = par.GetNextToken()
     }
 
     return stm
@@ -90,7 +90,7 @@ func (par *Parser) parseReturnStatement() *ast.ReturnStatement {
 
     // Advance tokens until find a semicolon
     for tok.Type != token.SEMICOLON {
-        tok = par.lex.GetNextToken()
+        tok = par.GetNextToken()
     }
 
     return stm
@@ -110,13 +110,13 @@ func (par *Parser) parseStatement(tok token.Token) ast.Statement {
 func (par *Parser) ParseProgram() *ast.Program {
     pro := ast.NewProgram()
 
-    tok := par.lex.GetNextToken()
+    tok := par.GetNextToken()
     for tok.Type != token.EOF {
         stm := par.parseStatement(tok)
         if stm != nil {
             pro.Statements = append(pro.Statements, stm)
         }
-        tok = par.lex.GetNextToken()
+        tok = par.GetNextToken()
     }
 
     return pro
