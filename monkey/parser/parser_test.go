@@ -5,6 +5,7 @@ package parser
 import (
     "testing"
     "reflect"
+    "fmt"
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
@@ -106,4 +107,16 @@ func TestErrorsOnLetStatement(t *testing.T) {
     if len(par.errors) < expectedErrCount {
         t.Fatalf("Expected number of errors to be %d but got %d instead.", expectedErrCount, len(par.errors))
     }
+}
+
+func TestProgramString(t *testing.T) {
+    input := `
+        let x = 5;
+        let y = 10;
+    `
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    fmt.Printf("Program to string: '%s'\n", pro.String())
 }
