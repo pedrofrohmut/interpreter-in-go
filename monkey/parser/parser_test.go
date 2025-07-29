@@ -26,6 +26,9 @@ func TestLetStatement(t *testing.T) {
     if len(pro.Statements) != 3 {
         t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
     }
+    if len(par.errors) > 0 {
+        t.Fatalf("Parser the program found errors")
+    }
 
     tests := []struct { expectedIdentifier string } {
         {"x"}, {"y"}, {"z"},
@@ -60,6 +63,9 @@ func TestReturnStatement(t *testing.T) {
     }
     if len(pro.Statements) != 3 {
         t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
+    }
+    if len(par.errors) > 0 {
+        t.Fatalf("Parser the program found errors")
     }
 
     for i, currStm := range pro.Statements {
