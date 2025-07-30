@@ -189,3 +189,23 @@ func TestIdentifierExpression(t *testing.T) {
         t.Errorf("Expected statement expression to be '%s' but got '%s' instead", expectedExpression, stm.Expression)
     }
 }
+
+func TestIntExpression(t *testing.T) {
+    input := "5;"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    expectedNumStm := 1
+    if len(pro.Statements) != expectedNumStm {
+        t.Fatalf("Expected program number of statements to be %d but got %d instead", expectedNumStm, len(pro.Statements))
+    }
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Expected an ast.ExpressionStatement but got %T instead", pro.Statements[0])
+    }
+    // fmt.Println(stm)
+    if stm.Expression != "5" {
+        t.Fatalf("Expected statement expression to be '%s' but got '%s' instead", "5", stm.Expression)
+    }
+}

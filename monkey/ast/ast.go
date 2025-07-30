@@ -108,3 +108,21 @@ func (stm *ExpressionStatement) String() string {
 func NewExpressionStatement(first token.Token) *ExpressionStatement {
     return &ExpressionStatement { Token: first }
 }
+
+type IntegerLiteral struct {
+    Node
+    Token token.Token
+    Value int64
+}
+
+func NewIntegerLiteral(val int64) *IntegerLiteral {
+    return &IntegerLiteral {
+        Token: token.Token { Type: token.INT, Literal: string(val) },
+        Value: val,
+    }
+}
+
+// @Impl
+func (lit *IntegerLiteral) String() string {
+    return lit.Token.Literal
+}

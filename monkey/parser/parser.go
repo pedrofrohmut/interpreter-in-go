@@ -9,6 +9,7 @@ package parser
 
 import (
     "fmt"
+    "strconv"
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
@@ -54,11 +55,23 @@ func NewParser(lex *lexer.Lexer) *Parser {
     }
     par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
     par.addPrefixFn(token.IDENT, par.parseIdentifier)
+    par.addPrefixFn(token.INT, par.parseIntegerLiteral)
     return par
 }
 
 func (par *Parser) parseIdentifier() string {
     return par.GetCurrToken().Literal
+}
+
+func (par *Parser) parseIntegerLiteral() string {
+    curr := par.GetCurrToken()
+    _, err := strconv.ParseInt(curr.Literal, 0, 64)
+    if err != nil {
+        msg := fmt.Sprintf("Could not parse %q as integer", curr.Literal)
+        par.errors = append(par.errors, msg)
+        return ""
+    }
+    return curr.Literal
 }
 
 func (par *Parser) GetCurrToken() token.Token {
@@ -143,21 +156,24 @@ func (par *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (par *Parser) parseExpression(precedence int) string {
-    prefix := par.prefixParseFns[par.GetCurrToken().Type]
-    if prefix == nil { return "" }
+    curr := par.GetCurrToken()
+    prefix := par.prefixParseFns[curr.Type]
+    if utils.IsNill(prefix) { return "" }
     return prefix()
 }
 
 func (par *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+    parsedExp := par.parseExpression(LOWEST)
+    if parsedExp == "" { return nil }
+
     stm := ast.NewExpressionStatement(par.GetCurrToken())
-    stm.Expression = par.parseExpression(LOWEST)
-    if stm.Expression == "" {
-        return nil
-    }
+    stm.Expression = parsedExp
+
     // To skip semicolons so you can use no semicolon expressions on the REPL
     if par.GetCurrToken().Type == token.SEMICOLON {
         par.GetNextToken()
     }
+
     return stm
 }
 
