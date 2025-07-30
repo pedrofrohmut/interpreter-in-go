@@ -97,12 +97,15 @@ func TestErrorsOnLetStatement(t *testing.T) {
     // for i, stm := range pro.Statements {
     //     fmt.Printf("[%d] ERR stm: %s\n", i, stm)
     // }
+    // for i, err := range par.errors {
+    //     fmt.Printf("[%d] ERROR: %s\n", i, err)
+    // }
 
     if pro == nil {
         t.Fatalf("Program is nill")
     }
-    expectedErrCount := 3
-    if len(par.errors) < expectedErrCount {
+    expectedErrCount := 4
+    if len(par.errors) != expectedErrCount {
         t.Fatalf("Expected number of errors to be %d but got %d instead.", expectedErrCount, len(par.errors))
     }
 }

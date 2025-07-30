@@ -108,7 +108,9 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
     stm.Identifier = tok.Literal
 
     // Check for assign item
-    tok = par.GetNextToken()
+    if !hasErr {
+        tok = par.GetNextToken()
+    }
     if tok.Type != token.ASSIGN {
         par.addTokenError(token.ASSIGN, tok)
         hasErr = true
