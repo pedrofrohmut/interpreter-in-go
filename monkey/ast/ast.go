@@ -105,6 +105,6 @@ func (stm *ExpressionStatement) String() string {
     return out.String()
 }
 
-func NewExpressionStatement(first token.Token, val string) *ExpressionStatement {
-    return &ExpressionStatement { Token: first, Expression: val }
+func NewExpressionStatement(first token.Token) *ExpressionStatement {
+    return &ExpressionStatement { Token: first }
 }

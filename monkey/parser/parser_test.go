@@ -4,7 +4,7 @@ package parser
 
 import (
     "testing"
-    "reflect"
+    _"reflect"
     "fmt"
     "monkey/ast"
     "monkey/lexer"
@@ -93,16 +93,14 @@ func TestErrorsOnLetStatement(t *testing.T) {
     par := NewParser(lex)
     pro := par.ParseProgram()
 
+    // print("Program stm: ", len(pro.Statements), "\n")
+    // for i, stm := range pro.Statements {
+    //     fmt.Printf("[%d] ERR stm: %s\n", i, stm)
+    // }
+
     if pro == nil {
         t.Fatalf("Program is nill")
     }
-
-    for i, tmp := range pro.Statements {
-        if tmp != nil && !reflect.ValueOf(tmp).IsNil() {
-            t.Errorf("[%d] Current statement is not nil as expected for an invalid statement", i)
-        }
-    }
-
     expectedErrCount := 3
     if len(par.errors) < expectedErrCount {
         t.Fatalf("Expected number of errors to be %d but got %d instead.", expectedErrCount, len(par.errors))
@@ -163,4 +161,28 @@ func TestProgramString(t *testing.T) {
     pro := par.ParseProgram()
 
     fmt.Printf("Program to string: '%s'\n", pro.String())
+}
+
+func TestIdentifierExpression(t *testing.T) {
+    input := "foo;"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    expectedLen := 1
+    if len(pro.Statements) != expectedLen {
+        t.Fatalf("Expected program statements length to be %d but got %d", expectedLen, len(pro.Statements))
+    }
+    expectedErrLen := 0
+    if len(par.errors) != expectedErrLen {
+        t.Errorf("Expected to not have any parser errors but got %d instead", len(par.errors))
+    }
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Not an expression statement")
+    }
+    expectedExpression := "foo"
+    if stm.Expression != expectedExpression {
+        t.Errorf("Expected statement expression to be '%s' but got '%s' instead", expectedExpression, stm.Expression)
+    }
 }

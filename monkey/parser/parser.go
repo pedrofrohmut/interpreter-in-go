@@ -1,8 +1,8 @@
 // monkey/parser/parser.go
 /*
-      A parser is a software that takes an input and builds up an AST (Abstract
-    Syntac Tree) that is structural representation of the input. The parser
-    often uses tokens created from a lexer.
+     A parser is a software that takes an input and builds up an AST (Abstract
+   Syntac Tree) that is structural representation of the input. The parser
+   often uses tokens created from a lexer.
 */
 
 package parser
@@ -12,22 +12,53 @@ import (
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
+    "monkey/utils"
+)
+
+const (
+    // iota gives the constants a ascending numbers
+    // _ skips the 0 value
+    _ int = iota
+    LOWEST
+    EQUALS      // ==
+    LESSGREATER // > or <
+    SUM         // +
+    PRODUCT     // *
+    PREFIX      // -X or !X
+    CALL        // myFunction(X)
+)
+
+// TODO: On book the all strings here are ast.Expression
+type (
+    PrefixParseFn func() string
+    InfixParseFn func(string) string
 )
 
 type Parser struct {
     lex *lexer.Lexer
     errors []string
+    prefixParseFns map[token.TokenType]PrefixParseFn
+    infixParseFns map[token.TokenType]InfixParseFn
 
     // My custom variables to check tokens
+    // TODO: check if it can be replaced to a single reference token like
+    // 'currToken' instead of an array for token (lower memory footprint)
     tokens []token.Token
 }
 
 func NewParser(lex *lexer.Lexer) *Parser {
-    return &Parser {
+    par := &Parser {
         lex: lex,
         errors: []string {},
         tokens: []token.Token {},
     }
+    par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
+    par.addPrefixFn(token.IDENT, par.parseIdentifier)
+    return par
+}
+
+func (par *Parser) parseIdentifier() string {
+    return par.GetCurrToken().Literal
 }
 
 func (par *Parser) GetCurrToken() token.Token {
@@ -49,6 +80,16 @@ func (par *Parser) GetNextToken() token.Token {
     return tok
 }
 
+// TODO: check if this fn is necessary
+func (par *Parser) addPrefixFn(typ token.TokenType, fn PrefixParseFn) {
+    par.prefixParseFns[typ] = fn
+}
+
+// TODO: check if this fn is necessary
+func (par *Parser) addInfixFn(typ token.TokenType, fn InfixParseFn) {
+    par.infixParseFns[typ] = fn
+}
+
 func (par *Parser) addTokenError(expected token.TokenType, tok token.Token) {
     err := fmt.Sprintf("Expected token type to be %s but got %s instead.", expected, tok.Type)
     par.errors = append(par.errors, err)
@@ -56,12 +97,13 @@ func (par *Parser) addTokenError(expected token.TokenType, tok token.Token) {
 
 func (par *Parser) parseLetStatement() *ast.LetStatement {
     stm := ast.NewLetStatement()
+    hasErr := false
 
     // Check for identifier
     tok := par.GetNextToken()
     if tok.Type != token.IDENT {
         par.addTokenError(token.IDENT, tok)
-        return nil
+        hasErr = true
     }
     stm.Identifier = tok.Literal
 
@@ -69,7 +111,7 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
     tok = par.GetNextToken()
     if tok.Type != token.ASSIGN {
         par.addTokenError(token.ASSIGN, tok)
-        return nil
+        hasErr = true
     }
 
     // TODO: Check out how to parse Expression from letStm
@@ -78,6 +120,8 @@ func (par *Parser) parseLetStatement() *ast.LetStatement {
     for tok.Type != token.SEMICOLON {
         tok = par.GetNextToken()
     }
+
+    if hasErr { return nil }
 
     return stm
 }
@@ -96,14 +140,33 @@ func (par *Parser) parseReturnStatement() *ast.ReturnStatement {
     return stm
 }
 
-func (par *Parser) parseStatement(tok token.Token) ast.Statement {
-    switch tok.Type {
+func (par *Parser) parseExpression(precedence int) string {
+    prefix := par.prefixParseFns[par.GetCurrToken().Type]
+    if prefix == nil { return "" }
+    return prefix()
+}
+
+func (par *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+    stm := ast.NewExpressionStatement(par.GetCurrToken())
+    stm.Expression = par.parseExpression(LOWEST)
+    if stm.Expression == "" {
+        return nil
+    }
+    // To skip semicolons so you can use no semicolon expressions on the REPL
+    if par.GetCurrToken().Type == token.SEMICOLON {
+        par.GetNextToken()
+    }
+    return stm
+}
+
+func (par *Parser) parseStatement() ast.Statement {
+    switch par.GetCurrToken().Type {
     case token.LET:
         return par.parseLetStatement()
     case token.RETURN:
         return par.parseReturnStatement()
     default:
-        return nil
+        return par.parseExpressionStatement()
     }
 }
 
@@ -112,8 +175,8 @@ func (par *Parser) ParseProgram() *ast.Program {
 
     tok := par.GetNextToken()
     for tok.Type != token.EOF {
-        stm := par.parseStatement(tok)
-        if stm != nil {
+        stm := par.parseStatement()
+        if !utils.IsNill(stm) {
             pro.Statements = append(pro.Statements, stm)
         }
         tok = par.GetNextToken()
