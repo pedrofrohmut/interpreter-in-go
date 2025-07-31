@@ -7,14 +7,14 @@
 package ast
 
 import (
-    _"bytes"
+    "bytes"
     _"strconv"
     "monkey/token"
 )
 
 type Node interface {
     TokenLiteral() string
-    // String() string
+    String() string
 }
 
 type Statement interface {
@@ -35,6 +35,15 @@ type Program struct {
 func (this *Program) TokenLiteral() string {
     if len(this.Statements) == 0 { return "" }
     return this.Statements[0].TokenLiteral()
+}
+
+// @Impl
+func (this *Program) String() string {
+    var out bytes.Buffer
+    for _, stm := range this.Statements {
+        out.WriteString(stm.String())
+    }
+    return out.String()
 }
 
 func NewProgram() *Program {
@@ -61,8 +70,14 @@ type Identifier struct {
     Value string
 }
 
+// @Impl
 func (this *Identifier) expressionNode() {}
+
+// @Impl
 func (this *Identifier) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *Identifier) String() string { return this.Value }
 
 func NewIdentifier(tok token.Token, val string) *Identifier {
     return &Identifier { Token: tok, Value: val }
@@ -77,12 +92,27 @@ func NewIdentifier(tok token.Token, val string) *Identifier {
 // }
 type LetStatement struct {
     Token token.Token
-    Left *Identifier
-    Right *Expression
+    Identifier *Identifier
+    Expression Expression
 }
 
+// @Impl
 func (this *LetStatement) statementNode() {}
+
+// @Impl
 func (this *LetStatement) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *LetStatement) String() string {
+    var out bytes.Buffer
+    out.WriteString(this.Token.Literal + " ")
+    out.WriteString(this.Identifier.Value + " = ")
+    if this.Expression != nil {
+        out.WriteString(this.Expression.String())
+    }
+    out.WriteString(";")
+    return out.String()
+}
 
 func NewLetStatement() *LetStatement {
     return &LetStatement {
@@ -111,11 +141,25 @@ func NewLetStatement() *LetStatement {
 
 type ReturnStatement struct {
     Token token.Token
-    ReturnValue Expression
+    Expression Expression
 }
 
+// @Impl
 func (this *ReturnStatement) statementNode() {}
+
+// @Impl
 func (this *ReturnStatement) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *ReturnStatement) String() string {
+    var out bytes.Buffer
+    out.WriteString(this.Token.Literal + " ")
+    if this.Expression != nil {
+        out.WriteString(this.Expression.String())
+    }
+    out.WriteString(";")
+    return out.String()
+}
 
 func NewReturnStatement() *ReturnStatement {
     return &ReturnStatement {
@@ -146,6 +190,28 @@ func NewReturnStatement() *ReturnStatement {
 //     }
 // }
 //
+
+// We are having Expression Statements because in monkey you can have expressions
+// as statements. Exp: 5 * 5 + 3;. So it is needed to have it as statement here
+type ExpressionStatement struct {
+    Token token.Token // The first token of the expression
+    Expression Expression
+}
+
+// @Impl
+func (this *ExpressionStatement) statementNode() {}
+
+// @Impl
+func (this *ExpressionStatement) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *ExpressionStatement) String() string {
+    if this.Expression == nil {
+        return ""
+    }
+    return this.Expression.String()
+}
+
 // // We are having Expression Statements because in monkey you can have expressions
 // // as statements. Exp: 5 * 5 + 3;. So it is needed to have it as statement here
 // type ExpressionStatement struct {
