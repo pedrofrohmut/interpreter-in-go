@@ -97,10 +97,21 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
     return stm
 }
 
+func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
+    stm := ast.NewReturnStatement()
+
+    // TODO: Skipping the expression until find a semicolon (ParseExpression)
+    for this.currToken.Type != token.SEMICOLON { this.nextToken() }
+
+    return stm
+}
+
 func (this *Parser) parseStatement() ast.Statement {
     switch this.currToken.Type {
     case token.LET:
         return this.parseLetStatement()
+    case token.RETURN:
+        return this.parseReturnStatement()
     default:
         return nil
     }

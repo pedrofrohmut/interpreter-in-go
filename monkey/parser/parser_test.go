@@ -31,7 +31,6 @@ func TestLetStatement(t *testing.T) {
     pro := par.ParseProgram()
 
     checkParserErrors(t, par)
-
     if pro == nil {
         t.Fatalf("Program is nill")
     }
@@ -97,7 +96,41 @@ func TestLetStatement(t *testing.T) {
 //         }
 //     }
 // }
-//
+
+func TestReturnStatement(t *testing.T) {
+    input := `
+        return 5;
+        return 10;
+        return 1234;
+    `
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    checkParserErrors(t, par)
+    if pro == nil {
+        t.Fatalf("Program is nill")
+    }
+    if len(pro.Statements) != 3 {
+        t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
+    }
+    for i, currStm := range pro.Statements {
+        stm, ok := currStm.(*ast.ReturnStatement)
+        if !ok {
+            t.Errorf("Is not a ReturnStatement")
+        }
+        if stm.Token.Type != token.RETURN {
+            t.Errorf("[%d] Expected token type to be %s but got %s", i, token.RETURN, stm.Token.Type)
+        }
+        if stm.Token.Literal != "return" {
+            t.Errorf("[%d] Expected token literal to be '%s' but got '%s'", i, "return", stm.Token.Literal)
+        }
+        if stm.TokenLiteral() != "return" {
+            t.Errorf("[%d] Expected TokenLiteral to be '%s' but got '%s'", i, "return", stm.Token.Literal)
+        }
+    }
+}
+
 // func TestReturnStatement(t *testing.T) {
 //     input := `
 //         return 5;

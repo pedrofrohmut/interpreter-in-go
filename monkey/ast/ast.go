@@ -108,7 +108,21 @@ func NewLetStatement() *LetStatement {
 //         Token: token.NewTokenStr(token.LET, "let"),
 //     }
 // }
-//
+
+type ReturnStatement struct {
+    Token token.Token
+    ReturnValue Expression
+}
+
+func (this *ReturnStatement) statementNode() {}
+func (this *ReturnStatement) TokenLiteral() string { return this.Token.Literal }
+
+func NewReturnStatement() *ReturnStatement {
+    return &ReturnStatement {
+        Token: token.NewTokenStr(token.RETURN, "return"),
+    }
+}
+
 // type ReturnStatement struct {
 //     Statement
 //     Token token.Token
