@@ -212,6 +212,10 @@ func (this *ExpressionStatement) String() string {
     return this.Expression.String()
 }
 
+func NewExpressionStatement(tok token.Token) *ExpressionStatement {
+    return &ExpressionStatement { Token: tok }
+}
+
 // // We are having Expression Statements because in monkey you can have expressions
 // // as statements. Exp: 5 * 5 + 3;. So it is needed to have it as statement here
 // type ExpressionStatement struct {

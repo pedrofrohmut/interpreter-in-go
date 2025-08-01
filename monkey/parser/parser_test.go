@@ -54,8 +54,8 @@ func TestLetStatement(t *testing.T) {
         if stm.Token.Type != token.LET {
             t.Errorf("[%dl] Expected identifier to be %s but got %s", i, token.LET, stm.Token.Type)
         }
-        if stm.Left.Value != test.expectedIdentifier {
-            t.Errorf("[%d] Expected identifier to be %s but got %s", i, stm.Left.Value, test.expectedIdentifier)
+        if stm.Identifier.Value != test.expectedIdentifier {
+            t.Errorf("[%d] Expected identifier to be %s but got %s", i, stm.Identifier.Value, test.expectedIdentifier)
         }
     }
 }
@@ -264,7 +264,33 @@ func TestErrorsOnLetStatement(t *testing.T) {
 //
 //     fmt.Printf("Program to string: '%s'\n", pro.String())
 // }
-//
+
+func TestIdentifierExpression(t *testing.T) {
+    input := "foo;"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    checkParserErrors(t, par)
+    if len(pro.Statements) != 1 {
+        t.Fatalf("Expected program statements length to be %d but got %d", 1, len(pro.Statements))
+    }
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Not an expression statement")
+    }
+    ident, ok := stm.Expression.(*ast.Identifier)
+    if !ok {
+        t.Fatalf("Statement expression is not an identifier")
+    }
+    if ident.Value != "foo" {
+        t.Errorf("Expected identifier value to be '%s' but got '%s' instead", "foo", ident.Value)
+    }
+    if ident.TokenLiteral() != "foo" {
+        t.Errorf("Expected statement expression to be '%s' but got '%s' instead", "foo", ident.TokenLiteral())
+    }
+}
+
 // // func TestIdentifierExpression(t *testing.T) {
 // //     input := "foo;"
 // //     lex := lexer.NewLexer(input)

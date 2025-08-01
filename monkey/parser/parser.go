@@ -49,8 +49,15 @@ func NewParser(lex *lexer.Lexer) *Parser {
         lex: lex,
         errors: []string {},
     }
+
+    // Initialize tokens
     par.currToken = lex.GetNextToken()
     par.peekToken = lex.GetNextToken()
+
+    // Register Prefix Functions
+    par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
+    par.registerPrefix(token.IDENT, par.parseIdentifierPrefix)
+
     return par
 }
 
@@ -68,6 +75,18 @@ func (this *Parser) nextToken() {
     this.peekToken = this.lex.GetNextToken()
 }
 
+func (this *Parser) registerPrefix(tokenType token.TokenType, fn PrefixParseFn) {
+    this.prefixParseFns[tokenType] = fn
+}
+
+func (this *Parser) parseIdentifierPrefix() ast.Expression {
+    return ast.NewIdentifier(this.currToken, this.currToken.Literal)
+}
+
+func (this *Parser) registerInfix(tokenType token.TokenType, fn InfixParseFn) {
+    this.infixParseFns[tokenType] = fn
+}
+
 func (this *Parser) parseLetStatement() *ast.LetStatement {
     stm := ast.NewLetStatement()
     hasError := false
@@ -78,7 +97,7 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
         this.addTokenError(this.currToken.Type, token.IDENT)
         hasError = true
     }
-    stm.Left = ast.NewIdentifier(this.currToken, this.currToken.Literal)
+    stm.Identifier = ast.NewIdentifier(this.currToken, this.currToken.Literal)
 
     // Check for the assign operator
     if !hasError {
@@ -106,6 +125,23 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
     return stm
 }
 
+func (this *Parser) parseExpression(precedence int) ast.Expression {
+    prefix := this.prefixParseFns[this.currToken.Type]
+    if utils.IsNill(prefix) {
+        return nil
+    }
+    return prefix()
+}
+
+func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+    stm := ast.NewExpressionStatement(this.currToken)
+    stm.Expression = this.parseExpression(LOWEST)
+    if this.currToken.Type != token.SEMICOLON {
+        this.nextToken()
+    }
+    return stm
+}
+
 func (this *Parser) parseStatement() ast.Statement {
     switch this.currToken.Type {
     case token.LET:
@@ -113,7 +149,7 @@ func (this *Parser) parseStatement() ast.Statement {
     case token.RETURN:
         return this.parseReturnStatement()
     default:
-        return nil
+        return this.parseExpressionStatement()
     }
 }
 
