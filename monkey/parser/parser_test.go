@@ -314,7 +314,35 @@ func TestIdentifierExpression(t *testing.T) {
 // //         t.Errorf("Expected statement expression to be '%s' but got '%s' instead", expectedExpression, stm.Expression)
 // //     }
 // // }
-//
+
+func TestIntegerLiteralExpression(t *testing.T) {
+    input := "5;"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if len(pro.Statements) != 1 {
+        t.Fatalf("Expected program number of statements to be %d but got %d instead", 1, len(pro.Statements))
+    }
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Expected an ast.ExpressionStatement but got %T instead", pro.Statements[0])
+    }
+    intLit, ok := stm.Expression.(*ast.IntegerLiteral)
+    if !ok {
+        t.Fatalf("Expected an ast.IntegerLiteral but got %T instead", stm.Expression)
+    }
+    if intLit.TokenLiteral() != "5" {
+        t.Errorf("Expected statement expression to be '%s' but got '%s' instead", "5", intLit.TokenLiteral())
+    }
+    if intLit.Token.Type != token.INT {
+        t.Errorf("Expected integer literal token type to be %s but got %s instead", token.INT, intLit.Token.Type)
+    }
+    if intLit.Value != 5 {
+        t.Errorf("Expected integer literal value to be %d but got %d instead", 5, intLit.Value)
+    }
+}
+
 // func TestIntExpression(t *testing.T) {
 //     input := "5;"
 //     lex := lexer.NewLexer(input)

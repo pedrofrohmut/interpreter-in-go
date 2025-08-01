@@ -14,7 +14,7 @@ import (
     "monkey/token"
     "monkey/utils"
     _ "monkey/utils"
-    _ "strconv"
+    "strconv"
 )
 
 const (
@@ -57,6 +57,7 @@ func NewParser(lex *lexer.Lexer) *Parser {
     // Register Prefix Functions
     par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
     par.registerPrefix(token.IDENT, par.parseIdentifierPrefix)
+    par.registerPrefix(token.INT, par.parseIntegerLiteral)
 
     return par
 }
@@ -81,6 +82,16 @@ func (this *Parser) registerPrefix(tokenType token.TokenType, fn PrefixParseFn) 
 
 func (this *Parser) parseIdentifierPrefix() ast.Expression {
     return ast.NewIdentifier(this.currToken, this.currToken.Literal)
+}
+
+func (this *Parser) parseIntegerLiteral() ast.Expression {
+    val, err := strconv.ParseInt(this.currToken.Literal, 10, 64)
+    if err != nil {
+        msg := fmt.Sprintf("Could not parse %q as integer", this.currToken.Literal)
+        this.errors = append(this.errors, msg)
+        return nil
+    }
+    return ast.NewIntegerLiteral(val)
 }
 
 func (this *Parser) registerInfix(tokenType token.TokenType, fn InfixParseFn) {
@@ -202,6 +213,7 @@ func (this *Parser) ParseProgram() *ast.Program {
 //     return par.GetCurrToken().Literal
 // }
 //
+
 // func (par *Parser) parseIntegerLiteral() ast.Expression {
 //     curr := par.GetCurrToken()
 //     _, err := strconv.ParseInt(curr.Literal, 0, 64)

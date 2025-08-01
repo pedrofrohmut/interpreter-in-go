@@ -8,7 +8,7 @@ package ast
 
 import (
     "bytes"
-    _"strconv"
+    "strconv"
     "monkey/token"
 )
 
@@ -240,8 +240,29 @@ func NewExpressionStatement(tok token.Token) *ExpressionStatement {
 //     return &ExpressionStatement { Token: first }
 // }
 //
+
+type IntegerLiteral struct {
+    Token token.Token
+    Value int64
+}
+
+// @Impl
+func (this *IntegerLiteral) expressionNode() {}
+
+// @Impl
+func (this *IntegerLiteral) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *IntegerLiteral) String() string { return this.Token.Literal }
+
+func NewIntegerLiteral(val int64) *IntegerLiteral {
+    return &IntegerLiteral {
+        Token: token.Token { Type: token.INT, Literal: strconv.FormatInt(val, 10) },
+        Value: val,
+    }
+}
+
 // type IntegerLiteral struct {
-//     Node
 //     Token token.Token
 //     Value int64
 // }
