@@ -4,8 +4,8 @@ package parser
 
 import (
     "testing"
-    _"reflect"
     _"fmt"
+    "strconv"
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
@@ -363,6 +363,71 @@ func TestIntegerLiteralExpression(t *testing.T) {
 //     }
 // }
 //
+
+func TestParsingPrefixExpression(t *testing.T) {
+    input := `
+        !5;
+        -15;
+    `
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if pro == nil {
+        t.Fatalf("Program is nill")
+    }
+    if len(pro.Statements) != 2 {
+        t.Fatalf("Expected program number of statements to be %d but got %d instead", 2, len(pro.Statements))
+    }
+
+    checkParserErrors(t, par)
+    tests := []struct { operator string; integerValue int64 } {
+        {"!", 5}, {"-", 15},
+    }
+    for i, test := range tests {
+        stm, ok := pro.Statements[i].(*ast.ExpressionStatement)
+        if !ok {
+            t.Fatalf("Not an expression statement")
+        }
+        exp, ok := stm.Expression.(*ast.PrefixExpression)
+        if !ok {
+            t.Fatalf("Statement Expression is not a prefix statement")
+        }
+        if exp.Operator != test.operator {
+            t.Errorf("Expected operator to be '%s' but got '%s' instead", test.operator, exp.Operator)
+        }
+        val, err := strconv.ParseInt(exp.Right.String(), 10, 64)
+        if err != nil {
+            t.Fatalf("Cound not convert to int64")
+        }
+        if val != test.integerValue {
+            t.Errorf("Expected prefix expression value to be %d but got %d instead", test.integerValue, val)
+        }
+    }
+}
+
+
+// for i, stm := range pro.Statements {
+//     fmt.Printf("[%d] stm: %s\n", i, stm.TokenLiteral())
+// }
+// tests := []struct { input string operator string integerValue int64 } {
+//     {"!5;", "!", 5}, {"-15;", "-", 15},
+// }
+// _, _ = tests, pro
+//
+// for i, err := range par.errors {
+//     fmt.Printf("[%d] ERROR: %s\n", i, err)
+// }
+//
+// for i, test := range tests {
+//     stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+//     if !ok {
+//         t.Errorf("Not an expression statement")
+//     }
+//     fmt.Printf("[%d] Stm: %s\n", i, stm)
+//     _, _ = stm, test
+// }
+
 // func TestParsingPrefixExpression(t *testing.T) {
 //     input := `
 //         !5;

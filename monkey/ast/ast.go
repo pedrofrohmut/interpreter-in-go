@@ -279,6 +279,33 @@ func NewIntegerLiteral(val int64) *IntegerLiteral {
 //     return lit.Token.Literal
 // }
 //
+
+type PrefixExpression struct {
+    Token token.Token
+    Operator string
+    Right Expression
+}
+
+// @Impl
+func (this *PrefixExpression) expressionNode() {}
+
+// @Impl
+func (this *PrefixExpression) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *PrefixExpression) String() string {
+    var out bytes.Buffer
+    out.WriteString("(")
+    out.WriteString(this.Operator)
+    out.WriteString(this.Right.String())
+    out.WriteString(")")
+    return out.String()
+}
+
+func NewPrefixExpression(token token.Token, operator string) *PrefixExpression {
+    return &PrefixExpression { Token: token, Operator: operator }
+}
+
 // type PrefixExpression struct {
 //     Token token.Token // The prefix token
 //     Operator string
