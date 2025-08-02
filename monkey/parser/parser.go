@@ -24,11 +24,22 @@ const (
     LOWEST
     EQUALS      // ==
     LESSGREATER // > or <
-    SUM         // +
-    PRODUCT     // *
+    SUM         // + -
+    PRODUCT     // * /
     PREFIX      // -X or !X
     CALL        // myFunction(X)
 )
+
+var precedences = map[token.TokenType] int {
+    token.EQ:       EQUALS,
+    token.NOT_EQ:   EQUALS,
+    token.LT:       LESSGREATER,
+    token.GT:       LESSGREATER,
+    token.PLUS:     SUM,
+    token.MINUS:    SUM,
+    token.SLASH:    PRODUCT,
+    token.ASTERISK: PRODUCT,
+}
 
 type (
     PrefixParseFn func() ast.Expression
@@ -57,9 +68,20 @@ func NewParser(lex *lexer.Lexer) *Parser {
     // Register Prefix Functions
     par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
     par.registerPrefix(token.IDENT, par.parseIdentifierPrefix)
-    par.registerPrefix(token.INT, par.parseIntegerLiteral)
-    par.registerPrefix(token.BANG, par.parsePrefixExpression)
+    par.registerPrefix(token.INT,   par.parseIntegerLiteral)
+    par.registerPrefix(token.BANG,  par.parsePrefixExpression)
     par.registerPrefix(token.MINUS, par.parsePrefixExpression)
+
+    // Register Infix Functions
+    par.infixParseFns = make(map[token.TokenType]InfixParseFn)
+    par.registerInfix(token.PLUS,     par.parseInfixExpression)
+    par.registerInfix(token.MINUS,    par.parseInfixExpression)
+    par.registerInfix(token.SLASH,    par.parseInfixExpression)
+    par.registerInfix(token.ASTERISK, par.parseInfixExpression)
+    par.registerInfix(token.EQ,       par.parseInfixExpression)
+    par.registerInfix(token.NOT_EQ,   par.parseInfixExpression)
+    par.registerInfix(token.LT,       par.parseInfixExpression)
+    par.registerInfix(token.GT,       par.parseInfixExpression)
 
     return par
 }
@@ -78,6 +100,22 @@ func (this *Parser) nextToken() {
     this.peekToken = this.lex.GetNextToken()
 }
 
+func (this *Parser) peekPrecedence() int {
+    pre, ok := precedences[this.peekToken.Type]
+    if !ok {
+        return LOWEST
+    }
+    return pre
+}
+
+func (this *Parser) currPrecedence() int {
+    pre, ok := precedences[this.currToken.Type]
+    if !ok {
+        return LOWEST
+    }
+    return pre
+}
+
 func (this *Parser) registerPrefix(tokenType token.TokenType, fn PrefixParseFn) {
     this.prefixParseFns[tokenType] = fn
 }
@@ -93,13 +131,21 @@ func (this *Parser) parseIntegerLiteral() ast.Expression {
         this.errors = append(this.errors, msg)
         return nil
     }
-    return ast.NewIntegerLiteral(val)
+    return ast.NewIntegerLiteral(this.currToken, val)
 }
 
 func (this *Parser) parsePrefixExpression() ast.Expression {
     exp := ast.NewPrefixExpression(this.currToken, this.currToken.Literal)
     this.nextToken()
     exp.Right = this.parseExpression(PREFIX)
+    return exp
+}
+
+func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+    exp := ast.NewInfixExpression(this.currToken, left)
+    precedence := this.currPrecedence()
+    this.nextToken()
+    exp.Right = this.parseExpression(precedence)
     return exp
 }
 
@@ -146,13 +192,29 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (this *Parser) parseExpression(precedence int) ast.Expression {
-    prefix := this.prefixParseFns[this.currToken.Type]
-    if utils.IsNill(prefix) {
+
+    fmt.Printf("Parse Expression curr token: %s\n", this.currToken.Type)
+
+    prefixFn := this.prefixParseFns[this.currToken.Type]
+    if utils.IsNill(prefixFn) {
         msg := fmt.Sprintf("No prefix parse function for %s found", this.currToken.Type)
         this.errors = append(this.errors, msg)
         return nil
     }
-    return prefix()
+    left := prefixFn()
+
+    for this.peekToken.Type != token.SEMICOLON {
+        if precedence >= this.peekPrecedence() { break }
+
+        infixFn := this.infixParseFns[this.peekToken.Type]
+        if utils.IsNill(infixFn) {
+            return left
+        }
+        this.nextToken()
+        left = infixFn(left)
+    }
+
+    return left
 }
 
 func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {

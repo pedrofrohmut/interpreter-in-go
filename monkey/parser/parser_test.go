@@ -4,7 +4,7 @@ package parser
 
 import (
     "testing"
-    _"fmt"
+    "fmt"
     "strconv"
     "monkey/ast"
     "monkey/lexer"
@@ -13,7 +13,10 @@ import (
 
 func checkParserErrors(t *testing.T, par *Parser) {
     errors := par.Errors()
-    if len(errors) == 0 { return }
+    if len(errors) == 0 {
+        fmt.Println("No parser errors found")
+        return
+    }
     for i, err := range errors {
         t.Errorf("[%d] Parser Error: %s\n", i, err)
     }
@@ -379,8 +382,8 @@ func TestParsingPrefixExpression(t *testing.T) {
     if len(pro.Statements) != 2 {
         t.Fatalf("Expected program number of statements to be %d but got %d instead", 2, len(pro.Statements))
     }
-
     checkParserErrors(t, par)
+
     tests := []struct { operator string; integerValue int64 } {
         {"!", 5}, {"-", 15},
     }
@@ -391,7 +394,7 @@ func TestParsingPrefixExpression(t *testing.T) {
         }
         exp, ok := stm.Expression.(*ast.PrefixExpression)
         if !ok {
-            t.Fatalf("Statement Expression is not a prefix statement")
+            t.Fatalf("Expression statement is not a prefix statement")
         }
         if exp.Operator != test.operator {
             t.Errorf("Expected operator to be '%s' but got '%s' instead", test.operator, exp.Operator)
@@ -477,3 +480,77 @@ func TestParsingPrefixExpression(t *testing.T) {
 //         _, _ = stm, test
 //     }
 // }
+
+func TestParsingInfixExpression(t *testing.T) {
+    input := `
+        5 + 5;
+        5 - 5;
+        5 * 5;
+        5 / 5;
+        5 > 5;
+        5 < 5;
+        5 == 5;
+        5 != 5;
+    `
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if pro == nil {
+        t.Fatalf("Program is nill")
+    }
+    for i, stm := range pro.Statements { fmt.Printf("[%d] Statement: %s\n", i, stm) }
+    if len(pro.Statements) != 8 {
+        t.Fatalf("Expected program number of statements to be %d but got %d instead", 8, len(pro.Statements))
+    }
+
+    checkParserErrors(t, par)
+}
+    // checkParserErrors(t, par)
+    //
+    //
+    // tests := []struct {
+    //     input string
+    //     leftValue int64
+    //     operator string
+    //     rightValue int64
+    // } {
+    //     { "5 + 5;",  5, "+",  5 },
+    //     { "5 - 5;",  5, "-",  5 },
+    //     { "5 * 5;",  5, "*",  5 },
+    //     { "5 / 5;",  5, "/",  5 },
+    //     { "5 > 5;",  5, ">",  5 },
+    //     { "5 < 5;",  5, "<",  5 },
+    //     { "5 == 5;", 5, "==", 5 },
+    //     { "5 != 5;", 5, "!=", 5 },
+    // }
+    // for i, test := range tests {
+    //     stm, ok := pro.Statements[i].(*ast.ExpressionStatement)
+    //     if !ok {
+    //         t.Fatalf("Not an expression statement")
+    //     }
+    //     exp, ok := stm.Expression.(*ast.InfixExpression)
+    //     if !ok {
+    //         t.Fatalf("Expression statement is not a infix expression")
+    //     }
+    //
+    //     // TODO: extra tests left, operator and right side
+    //     // TODO: try extract testIntegerLiteral so you can use in the Right and
+    //     // Left side and also in the previous function
+    //     _, _ = exp, test
+    // }
+
+func testIntegerLiteral(t *testing.T, exp ast.Expression, expectedValue int64) {
+    lit, ok := exp.(*ast.IntegerLiteral)
+    if !ok {
+        t.Errorf("Expression is not an Integer Literal")
+        return
+    }
+    if lit.Value != expectedValue {
+        t.Errorf("Expected Integer Literal value to be %d but got %d instead", expectedValue, lit.Value)
+    }
+    expectedStr := strconv.FormatInt(expectedValue, 10)
+    if lit.TokenLiteral() != expectedStr {
+        t.Errorf("Expected Integer token literal to be '%s' but got '%s' instead", expectedStr, lit.TokenLiteral())
+    }
+}

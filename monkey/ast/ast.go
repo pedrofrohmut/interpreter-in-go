@@ -8,7 +8,7 @@ package ast
 
 import (
     "bytes"
-    "strconv"
+    _"strconv"
     "monkey/token"
 )
 
@@ -255,11 +255,8 @@ func (this *IntegerLiteral) TokenLiteral() string { return this.Token.Literal }
 // @Impl
 func (this *IntegerLiteral) String() string { return this.Token.Literal }
 
-func NewIntegerLiteral(val int64) *IntegerLiteral {
-    return &IntegerLiteral {
-        Token: token.Token { Type: token.INT, Literal: strconv.FormatInt(val, 10) },
-        Value: val,
-    }
+func NewIntegerLiteral(tok token.Token, val int64) *IntegerLiteral {
+    return &IntegerLiteral { Token: tok, Value: val }
 }
 
 // type IntegerLiteral struct {
@@ -326,3 +323,31 @@ func NewPrefixExpression(token token.Token, operator string) *PrefixExpression {
 // func NewPrefixExpression() *PrefixExpression {
 //     return &PrefixExpression {}
 // }
+
+type InfixExpression struct {
+    Token token.Token // Operator token
+    Left Expression
+    Operator string
+    Right Expression
+}
+
+// @Impl
+func (this *InfixExpression) expressionNode() {}
+
+// @Impl
+func (this *InfixExpression) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *InfixExpression) String() string {
+    var out bytes.Buffer
+    out.WriteString("(")
+    out.WriteString(this.Left.String())
+    out.WriteString(" " + this.Operator + " ")
+    out.WriteString(this.Right.String())
+    out.WriteString(")")
+    return out.String()
+}
+
+func NewInfixExpression(tok token.Token, left Expression) *InfixExpression {
+    return &InfixExpression { Token: tok, Operator: tok.Literal, Left: left }
+}
