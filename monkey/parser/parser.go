@@ -192,9 +192,6 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (this *Parser) parseExpression(precedence int) ast.Expression {
-
-    fmt.Printf("Parse Expression curr token: %s\n", this.currToken.Type)
-
     prefixFn := this.prefixParseFns[this.currToken.Type]
     if utils.IsNill(prefixFn) {
         msg := fmt.Sprintf("No prefix parse function for %s found", this.currToken.Type)
