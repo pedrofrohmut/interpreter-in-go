@@ -3,12 +3,13 @@
 package parser
 
 import (
-	_ "fmt"
-	"monkey/ast"
-	"monkey/lexer"
-	"monkey/token"
-	"strconv"
-	"testing"
+    _"fmt"
+    "bytes"
+    "monkey/ast"
+    "monkey/lexer"
+    "monkey/token"
+    "strconv"
+    "testing"
 )
 
 func checkParserErrors(t *testing.T, par *Parser) {
@@ -32,7 +33,7 @@ func TestLetStatement(t *testing.T) {
 
     checkParserErrors(t, par)
     if pro == nil {
-        t.Fatalf("Program is nill")
+        t.Fatalf("Program is nil")
     }
     if len(pro.Statements) != 3 {
         t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
@@ -70,7 +71,7 @@ func TestLetStatement(t *testing.T) {
 //     pro := par.ParseProgram()
 //
 //     if pro == nil {
-//         t.Fatalf("Program is nill")
+//         t.Fatalf("Program is nil")
 //     }
 //     if len(pro.Statements) != 3 {
 //         t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
@@ -109,7 +110,7 @@ func TestReturnStatement(t *testing.T) {
 
     checkParserErrors(t, par)
     if pro == nil {
-        t.Fatalf("Program is nill")
+        t.Fatalf("Program is nil")
     }
     if len(pro.Statements) != 3 {
         t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
@@ -142,7 +143,7 @@ func TestReturnStatement(t *testing.T) {
 //     pro := par.ParseProgram()
 //
 //     if pro == nil {
-//         t.Fatalf("Program is nill")
+//         t.Fatalf("Program is nil")
 //     }
 //     if len(pro.Statements) != 3 {
 //         t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
@@ -175,7 +176,7 @@ func TestErrorsOnLetStatement(t *testing.T) {
     par := NewParser(lex)
     pro := par.ParseProgram()
     if pro == nil {
-        t.Fatalf("Program is nill")
+        t.Fatalf("Program is nil")
     }
     expectedErrCount := 4
     if len(par.errors) != expectedErrCount {
@@ -201,7 +202,7 @@ func TestErrorsOnLetStatement(t *testing.T) {
 //     // }
 //
 //     if pro == nil {
-//         t.Fatalf("Program is nill")
+//         t.Fatalf("Program is nil")
 //     }
 //     expectedErrCount := 4
 //     if len(par.errors) != expectedErrCount {
@@ -374,7 +375,7 @@ func TestParsingPrefixExpression(t *testing.T) {
     pro := par.ParseProgram()
 
     if pro == nil {
-        t.Fatalf("Program is nill")
+        t.Fatalf("Program is nil")
     }
     if len(pro.Statements) != 2 {
         t.Fatalf("Expected program number of statements to be %d but got %d instead", 2, len(pro.Statements))
@@ -457,7 +458,7 @@ func TestParsingPrefixExpression(t *testing.T) {
 //     _, _ = tests, pro
 //
 //     if pro == nil {
-//         t.Fatalf("Program is nill")
+//         t.Fatalf("Program is nil")
 //     }
 //     expectedNumStm := 2
 //     if len(pro.Statements) != expectedNumStm {
@@ -479,44 +480,39 @@ func TestParsingPrefixExpression(t *testing.T) {
 // }
 
 func TestParsingInfixExpression(t *testing.T) {
-    input := `
-        5 + 5;
-        5 - 5;
-        5 * 5;
-        5 / 5;
-        5 > 5;
-        5 < 5;
-        5 == 5;
-        5 != 5;
-    `
+    tests := []struct {
+        input string
+        leftValue int64
+        operator string
+        rightValue int64
+    } {
+        { "5 + 5",  5, "+",  5 },
+        { "5 - 5",  5, "-",  5 },
+        { "5 * 5",  5, "*",  5 },
+        { "5 / 5",  5, "/",  5 },
+        { "5 > 5",  5, ">",  5 },
+        { "5 < 5",  5, "<",  5 },
+        { "5 == 5", 5, "==", 5 },
+        { "5 != 5", 5, "!=", 5 },
+    }
+    var acc bytes.Buffer
+    for _, test := range tests {
+        acc.WriteString(test.input + ";\n")
+    }
+    input := acc.String()
     lex := lexer.NewLexer(input)
     par := NewParser(lex)
     pro := par.ParseProgram()
 
     checkParserErrors(t, par)
     if pro == nil {
-        t.Fatalf("Program is nill")
+        t.Fatalf("Program is nil")
     }
     if len(pro.Statements) != 8 {
         t.Fatalf("Expected program number of statements to be %d but got %d instead", 8, len(pro.Statements))
     }
 
-    expectations := []struct {
-        leftValue int64
-        operator string
-        rightValue int64
-    } {
-        { 5, "+",  5 },
-        { 5, "-",  5 },
-        { 5, "*",  5 },
-        { 5, "/",  5 },
-        { 5, ">",  5 },
-        { 5, "<",  5 },
-        { 5, "==", 5 },
-        { 5, "!=", 5 },
-    }
-
-    for i, expect := range expectations {
+    for i, test := range tests {
         stm, ok := pro.Statements[i].(*ast.ExpressionStatement)
         if !ok {
             t.Fatalf("[%d] Not an expression statement", i)
@@ -526,14 +522,14 @@ func TestParsingInfixExpression(t *testing.T) {
             t.Fatalf("[%d] Expression statement is not a infix expression", i)
         }
         // Test Left
-        testIntegerLiteral(t, expression.Left, expect.leftValue)
+        testIntegerLiteral(t, expression.Left, test.leftValue)
         // Operator
-        if expression.Operator != expect.operator {
+        if expression.Operator != test.operator {
             t.Fatalf("[%d] Expected Infix Expression Operator to be '%s' but got '%s' instead",
-                i, expect.operator, expression.Operator)
+                i, test.operator, expression.Operator)
         }
         // Test Right
-        testIntegerLiteral(t, expression.Right, expect.rightValue)
+        testIntegerLiteral(t, expression.Right, test.rightValue)
     }
 }
 
@@ -550,4 +546,53 @@ func testIntegerLiteral(t *testing.T, exp ast.Expression, expectedValue int64) {
     if intLiteral.TokenLiteral() != expectedStr {
         t.Errorf("Expected Integer token literal to be '%s' but got '%s' instead", expectedStr, intLiteral.TokenLiteral())
     }
+}
+
+func TestOperatorPrecedenceParsing(t *testing.T) {
+    tests := []struct {
+          input string;                 expected string
+    } {
+        { "-a * b",                     "((-a) * b)" },
+        { "!-a",                        "(!(-a))" },
+        { "a + b + c",                  "((a + b) + c)" },
+        { "a + b - c",                  "((a + b) - c)" },
+        { "a * b * c",                  "((a * b) * c)" },
+        { "a * b / c",                  "((a * b) / c)" },
+        { "a + b / c",                  "(a + (b / c))" },
+        { "a + b * c + d / e - f",      "(((a + (b * c)) + (d / e)) - f)" },
+        { "3 + 4; -5 * 5",              "(3 + 4)((-5) * 5)" },
+        { "5 > 4 == 3 < 4",             "((5 > 4) == (3 < 4))" },
+        { "5 < 4 != 3 > 4",             "((5 < 4) != (3 > 4))" },
+        { "3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" },
+    }
+
+    for _, test := range tests {
+        lex := lexer.NewLexer(test.input)
+        par := NewParser(lex)
+        pro := par.ParseProgram()
+
+        checkParserErrors(t, par)
+
+        progStr := pro.String()
+        if progStr != test.expected {
+            t.Errorf("Expected program string to be '%s' but got '%s' instead", test.expected, progStr)
+        }
+    }
+
+    // var acc bytes.Buffer
+    // for _, test := range tests {
+    //     acc.WriteString(test.input + ";\n")
+    // }
+    // input := acc.String()
+    // lex := lexer.NewLexer(input)
+    // par := NewParser(lex)
+    // pro := par.ParseProgram()
+    //
+    // checkParserErrors(t, par)
+    // if pro == nil {
+    //     t.Fatalf("Program is nil")
+    // }
+    // if len(pro.Statements) != 13 {
+    //     t.Fatalf("Expected program number of statements to be %d but got %d instead", 13, len(pro.Statements))
+    // }
 }
