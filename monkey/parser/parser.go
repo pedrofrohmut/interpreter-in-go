@@ -71,6 +71,8 @@ func NewParser(lex *lexer.Lexer) *Parser {
     par.registerPrefix(token.INT,   par.parseIntegerLiteral)
     par.registerPrefix(token.BANG,  par.parsePrefixExpression)
     par.registerPrefix(token.MINUS, par.parsePrefixExpression)
+    par.registerPrefix(token.TRUE,  par.parseBoolean)
+    par.registerPrefix(token.FALSE, par.parseBoolean)
 
     // Register Infix Functions
     par.infixParseFns = make(map[token.TokenType]InfixParseFn)
@@ -141,6 +143,17 @@ func (this *Parser) parsePrefixExpression() ast.Expression {
     return exp
 }
 
+func (this *Parser) parseBoolean() ast.Expression {
+    t := this.currToken.Type
+    if t != token.TRUE && t != token.FALSE {
+        msg := fmt.Sprintf("Expected current token to be boolean but got %T instead", t)
+        this.errors = append(this.errors, msg)
+        return nil
+    }
+    val := t == token.TRUE
+    return ast.NewBoolean(this.currToken, val)
+}
+
 func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
     exp := ast.NewInfixExpression(this.currToken, left)
     precedence := this.currPrecedence()
@@ -174,7 +187,12 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
         hasError = true
     }
 
-    // TODO: Skipping the expression until find a semicolon (ParseExpression)
+    // Parse the expression
+    if !hasError {
+        this.nextToken()
+        stm.Expression = this.parseExpression(LOWEST)
+    }
+
     for this.currToken.Type != token.SEMICOLON { this.nextToken() }
 
     if hasError { return nil }

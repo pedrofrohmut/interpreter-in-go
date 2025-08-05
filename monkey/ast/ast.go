@@ -171,6 +171,24 @@ func NewIntegerLiteral(tok token.Token, val int64) *IntegerLiteral {
     return &IntegerLiteral { Token: tok, Value: val }
 }
 
+type Boolean struct {
+    Token token.Token
+    Value bool
+}
+
+// @Impl
+func (this *Boolean) expressionNode() {}
+
+// @Impl
+func (this *Boolean) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *Boolean) String() string { return this.Token.Literal }
+
+func NewBoolean(tok token.Token, val bool) *Boolean {
+    return &Boolean { Token: tok, Value: val }
+}
+
 type PrefixExpression struct {
     Token token.Token
     Operator string
