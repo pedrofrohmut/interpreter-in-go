@@ -13,7 +13,8 @@ import (
 func main() {
     const debug = true
     if debug {
-        input := "1 + 2 + 3;"
+        // input := "1 + 2 + 3;" // 1st
+        input := "-1 + 2" // 2nd
         lex := lexer.NewLexer(input)
         par := parser.NewParser(lex)
         _ = par.ParseProgram()

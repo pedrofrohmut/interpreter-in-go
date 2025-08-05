@@ -21,6 +21,62 @@ func checkParserErrors(t *testing.T, par *Parser) {
     t.FailNow()
 }
 
+func testIntegerLiteral(t *testing.T, exp ast.Expression, expectedValue int64) {
+    intLiteral, ok := exp.(*ast.IntegerLiteral)
+    if !ok {
+        t.Errorf("Expression is not an Integer Literal")
+        return
+    }
+    if intLiteral.Value != expectedValue {
+        t.Errorf("Expected Integer Literal value to be %d but got %d instead", expectedValue, intLiteral.Value)
+    }
+    expectedStr := strconv.FormatInt(expectedValue, 10)
+    if intLiteral.TokenLiteral() != expectedStr {
+        t.Errorf("Expected Integer token literal to be '%s' but got '%s' instead", expectedStr, intLiteral.TokenLiteral())
+    }
+}
+
+func testIdentifier(t *testing.T, exp ast.Expression, expectedValue string) {
+    ident, ok := exp.(*ast.Identifier)
+    if !ok {
+        t.Errorf("Expression is not an Identifier")
+        return
+    }
+    if ident.Value != expectedValue {
+        t.Errorf("Expected Identifier Value to be %s but got %s instead", expectedValue, ident.Value)
+    }
+    if ident.TokenLiteral() != expectedValue {
+        t.Errorf("Expected Identifier TokenLiteral to be %s but got %s instead", expectedValue, ident.TokenLiteral())
+    }
+}
+
+func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) {
+    switch v := expected.(type) {
+    case int:
+        testIntegerLiteral(t, exp, int64(v))
+    case int64:
+        testIntegerLiteral(t, exp, v)
+    case string:
+        testIdentifier(t, exp, v)
+    default:
+        t.Errorf("Type of exp not handled. got %T", exp)
+    }
+}
+
+func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
+        expectedOperator string, right interface{}) {
+    infExp, ok := exp.(*ast.InfixExpression)
+    if !ok {
+        t.Errorf("Expression is not an Infix Expression")
+        return
+    }
+    testLiteralExpression(t, infExp.Left, left)
+    if infExp.Operator != expectedOperator {
+        t.Errorf("Expected operator to be %s but got %s instead", expectedOperator, infExp.Operator)
+    }
+    testLiteralExpression(t, infExp.Right, right)
+}
+
 func TestLetStatement(t *testing.T) {
     input := `
         let x = 5;
@@ -260,21 +316,6 @@ func TestParsingInfixExpression(t *testing.T) {
         }
         // Test Right
         testIntegerLiteral(t, expression.Right, test.rightValue)
-    }
-}
-
-func testIntegerLiteral(t *testing.T, exp ast.Expression, expectedValue int64) {
-    intLiteral, ok := exp.(*ast.IntegerLiteral)
-    if !ok {
-        t.Errorf("Expression is not an Integer Literal")
-        return
-    }
-    if intLiteral.Value != expectedValue {
-        t.Errorf("Expected Integer Literal value to be %d but got %d instead", expectedValue, intLiteral.Value)
-    }
-    expectedStr := strconv.FormatInt(expectedValue, 10)
-    if intLiteral.TokenLiteral() != expectedStr {
-        t.Errorf("Expected Integer token literal to be '%s' but got '%s' instead", expectedStr, intLiteral.TokenLiteral())
     }
 }
 
