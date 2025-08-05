@@ -3,9 +3,22 @@
 package main
 
 import (
+    "os"
     "monkey/repl"
+    "monkey/lexer"
+    "monkey/parser"
 )
 
+
 func main() {
-    repl.Execute()
+    const debug = true
+    if debug {
+        input := "1 + 2 + 3;"
+        lex := lexer.NewLexer(input)
+        par := parser.NewParser(lex)
+        _ = par.ParseProgram()
+    } else {
+        replType := os.Args[1]
+        repl.Execute(replType)
+    }
 }

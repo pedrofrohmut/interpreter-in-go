@@ -125,13 +125,13 @@ func (this *Parser) parseIdentifierPrefix() ast.Expression {
 }
 
 func (this *Parser) parseIntegerLiteral() ast.Expression {
-    val, err := strconv.ParseInt(this.currToken.Literal, 10, 64)
+    intVal, err := strconv.ParseInt(this.currToken.Literal, 10, 64)
     if err != nil {
         msg := fmt.Sprintf("Could not parse %q as integer", this.currToken.Literal)
         this.errors = append(this.errors, msg)
         return nil
     }
-    return ast.NewIntegerLiteral(this.currToken, val)
+    return ast.NewIntegerLiteral(this.currToken, intVal)
 }
 
 func (this *Parser) parsePrefixExpression() ast.Expression {
