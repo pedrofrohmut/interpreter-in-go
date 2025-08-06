@@ -67,12 +67,13 @@ func NewParser(lex *lexer.Lexer) *Parser {
 
     // Register Prefix Functions
     par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
-    par.registerPrefix(token.IDENT, par.parseIdentifierPrefix)
-    par.registerPrefix(token.INT,   par.parseIntegerLiteral)
-    par.registerPrefix(token.BANG,  par.parsePrefixExpression)
-    par.registerPrefix(token.MINUS, par.parsePrefixExpression)
-    par.registerPrefix(token.TRUE,  par.parseBoolean)
-    par.registerPrefix(token.FALSE, par.parseBoolean)
+    par.registerPrefix(token.IDENT,  par.parseIdentifierPrefix)
+    par.registerPrefix(token.INT,    par.parseIntegerLiteral)
+    par.registerPrefix(token.BANG,   par.parsePrefixExpression)
+    par.registerPrefix(token.MINUS,  par.parsePrefixExpression)
+    par.registerPrefix(token.TRUE,   par.parseBoolean)
+    par.registerPrefix(token.FALSE,  par.parseBoolean)
+    par.registerPrefix(token.LPAREN, par.parseGroupedExpression)
 
     // Register Infix Functions
     par.infixParseFns = make(map[token.TokenType]InfixParseFn)
@@ -94,6 +95,11 @@ func (this *Parser) Errors() []string {
 
 func (this *Parser) addTokenError(check token.TokenType, expected token.TokenType) {
     msg := fmt.Sprintf("Expected token type to be '%s' but got '%s' instead", expected, check)
+    this.errors = append(this.errors, msg)
+}
+
+func (this *Parser) peekError(expectedType token.TokenType) {
+    msg := fmt.Sprintf("Expected next token type to be %T but got %T instead", expectedType, this.peekToken.Type)
     this.errors = append(this.errors, msg)
 }
 
@@ -152,6 +158,17 @@ func (this *Parser) parseBoolean() ast.Expression {
     }
     val := t == token.TRUE
     return ast.NewBoolean(this.currToken, val)
+}
+
+func (this *Parser) parseGroupedExpression() ast.Expression {
+    this.nextToken()
+    exp := this.parseExpression(LOWEST)
+    if this.peekToken.Type != token.RPAREN {
+        this.peekError(token.RPAREN)
+        return nil
+    }
+    this.nextToken()
+    return exp
 }
 
 func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {

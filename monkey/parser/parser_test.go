@@ -344,26 +344,49 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
         { "a * b / c",                  "((a * b) / c)" },
         { "a + b / c",                  "(a + (b / c))" },
         { "a + b * c + d / e - f",      "(((a + (b * c)) + (d / e)) - f)" },
-        { "3 + 4; -5 * 5",              "(3 + 4)((-5) * 5)" },
+        { "3 + 4",                      "(3 + 4)" },
+        { "-5 * 5",                     "((-5) * 5)" },
+
+        // EQ NOT_EQ
         { "5 > 4 == 3 < 4",             "((5 > 4) == (3 < 4))" },
         { "5 < 4 != 3 > 4",             "((5 < 4) != (3 > 4))" },
         { "3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" },
+
+        // Booleans
         { "true",                       "true" },
         { "false",                      "false" },
         { "3 > 5 == false",             "((3 > 5) == false)" },
         { "3 < 5 == true",              "((3 < 5) == true)" },
+
+        // Groups
+        { "1 + (2 + 3) + 4",            "((1 + (2 + 3)) + 4)" },
+        { "(5 + 5) * 2",                "((5 + 5) * 2)" },
+        { "2 / (5 + 5)",                "(2 / (5 + 5))" },
+        { "-(5 + 5)",                   "(-(5 + 5))" },
+        { "!(true == true)",            "(!(true == true))" },
     }
 
+    var acc bytes.Buffer
     for _, test := range tests {
-        lex := lexer.NewLexer(test.input)
-        par := NewParser(lex)
-        pro := par.ParseProgram()
+        acc.WriteString(test.input + ";\n")
+    }
+    input := acc.String()
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
 
-        checkParserErrors(t, par)
+    if pro == nil {
+        t.Fatalf("The program is nil")
+    }
+    if len(pro.Statements) != len(tests) {
+        t.Errorf("Expected program to have %d statements but it have %d instead", len(tests), len(pro.Statements))
+    }
+    checkParserErrors(t, par)
 
-        progStr := pro.String()
+    for i, test := range tests {
+        progStr := pro.Statements[i].String()
         if progStr != test.expected {
-            t.Errorf("Expected program string to be '%s' but got '%s' instead", test.expected, progStr)
+            t.Errorf("Expected program string to be '%s' but got '%s' instead\n", test.expected, progStr)
         }
     }
 }
