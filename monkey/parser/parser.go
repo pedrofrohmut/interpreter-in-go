@@ -13,7 +13,7 @@ import (
     "monkey/lexer"
     "monkey/token"
     "monkey/utils"
-    _ "monkey/utils"
+    _"monkey/utils"
     "strconv"
 )
 
@@ -74,6 +74,7 @@ func NewParser(lex *lexer.Lexer) *Parser {
     par.registerPrefix(token.TRUE,   par.parseBoolean)
     par.registerPrefix(token.FALSE,  par.parseBoolean)
     par.registerPrefix(token.LPAREN, par.parseGroupedExpression)
+    par.registerPrefix(token.IF,     par.parseIfExpression)
 
     // Register Infix Functions
     par.infixParseFns = make(map[token.TokenType]InfixParseFn)
@@ -169,6 +170,66 @@ func (this *Parser) parseGroupedExpression() ast.Expression {
     }
     this.nextToken()
     return exp
+}
+
+func (this *Parser) parseIfExpression() ast.Expression {
+    exp := ast.NewIfExpression(this.currToken)
+
+    if this.peekToken.Type != token.LPAREN {
+        this.peekError(token.LPAREN)
+        return nil
+    }
+    this.nextToken()
+
+    exp.Condition = this.parseExpression(LOWEST)
+
+    if this.currToken.Type != token.RPAREN {
+        this.peekError(token.RPAREN)
+        return nil
+    }
+    this.nextToken()
+
+    if this.currToken.Type != token.LBRACE {
+        this.peekError(token.LBRACE)
+        return nil
+    }
+    this.nextToken()
+
+    exp.Consequence = this.parseBlockStatement()
+
+    if this.currToken.Type != token.ELSE {
+        return exp
+    }
+    this.nextToken()
+
+    if this.currToken.Type != token.LBRACE {
+        this.peekError(token.LBRACE)
+        return nil
+    }
+    this.nextToken()
+
+    exp.Alternative = this.parseBlockStatement()
+
+    return exp
+}
+
+func (this *Parser) parseBlockStatement() *ast.BlockStatement {
+    blk := ast.NewBlockStatement(this.currToken)
+
+    if this.currToken.Type == token.RBRACE {
+        this.errors = append(this.errors, "Block statement is empty. Nothing to parse")
+        return nil
+    }
+
+    for this.currToken.Type != token.RBRACE && this.currToken.Type != token.EOF && this.currToken.Type != token.ELSE {
+        stm := this.parseStatement()
+        if !utils.IsNill(stm) {
+            blk.Statements = append(blk.Statements, stm)
+        }
+        this.nextToken()
+    }
+
+    return blk
 }
 
 func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {

@@ -3,8 +3,8 @@
 package parser
 
 import (
-    "fmt"
     "bytes"
+    "fmt"
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
@@ -389,4 +389,96 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
             t.Errorf("Expected program string to be '%s' but got '%s' instead\n", test.expected, progStr)
         }
     }
+}
+
+func TestIfExpression(t *testing.T) {
+    input := "if (x < y) { x }"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if pro == nil {
+        t.Fatalf("The program is nil")
+    }
+    if len(pro.Statements) != 1 {
+        t.Errorf("Expected program to have %d statements but it have %d instead", 1, len(pro.Statements))
+    }
+    checkParserErrors(t, par)
+
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("The statement is not an ExpressionStatement. Got %T instead", pro.Statements[0])
+    }
+    exp, ok := stm.Expression.(*ast.IfExpression)
+    if !ok {
+        t.Fatalf("The expression is not an IfExpression. Got %T instead", stm.Expression)
+    }
+
+    // Check condition
+    testInfixExpression(t, exp.Condition, "x", "<", "y")
+
+    // Check consequence
+    if len(exp.Consequence.Statements) != 1 {
+        t.Errorf("Expected if consequence number of statements to be %d but got %d instead",
+            1, len(exp.Consequence.Statements))
+    }
+    consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Consequence Statement is not an ExpressionStatement. Got %T instead", exp.Consequence.Statements[0])
+    }
+    testIdentifier(t, consequence.Expression, "x")
+
+    // Check alternative
+    if exp.Alternative != nil {
+        t.Errorf("Alternative is not nil")
+    }
+}
+
+func TestIfExpression2(t *testing.T) {
+    input := "if (x < y) { x } else { y }"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if pro == nil {
+        t.Fatalf("The program is nil")
+    }
+    if len(pro.Statements) != 1 {
+        t.Errorf("Expected program to have %d statements but it have %d instead", 1, len(pro.Statements))
+    }
+    checkParserErrors(t, par)
+
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("The statement is not an ExpressionStatement. Got %T instead", pro.Statements[0])
+    }
+    exp, ok := stm.Expression.(*ast.IfExpression)
+    if !ok {
+        t.Fatalf("The expression is not an IfExpression. Got %T instead", stm.Expression)
+    }
+
+    // Check Condition
+    testInfixExpression(t, exp.Condition, "x", "<", "y")
+
+    // Check Consequence
+    if len(exp.Consequence.Statements) != 1 {
+        t.Errorf("Expected if consequence number of statements to be %d but got %d instead",
+            1, len(exp.Consequence.Statements))
+    }
+    consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Consequence Statement is not an ExpressionStatement. Got %T instead", exp.Consequence.Statements[0])
+    }
+    testIdentifier(t, consequence.Expression, "x")
+
+    // Check Alternative
+    if len(exp.Alternative.Statements) != 1 {
+        t.Errorf("Expected if consequence number of statements to be %d but got %d instead",
+            1, len(exp.Alternative.Statements))
+    }
+    alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Alternative Statement is not an ExpressionStatement. Got %T instead", exp.Alternative.Statements[0])
+    }
+    testIdentifier(t, alternative.Expression, "y")
 }

@@ -242,3 +242,60 @@ func (this *InfixExpression) String() string {
 func NewInfixExpression(tok token.Token, left Expression) *InfixExpression {
     return &InfixExpression { Token: tok, Operator: tok.Literal, Left: left }
 }
+
+type BlockStatement struct {
+    Token token.Token
+    Statements []Statement
+}
+
+// @Impl
+func (this *BlockStatement) expressionNode() {}
+
+// @Impl
+func (this *BlockStatement) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *BlockStatement) String() string {
+    var out bytes.Buffer
+    for _, stm := range this.Statements {
+        out.WriteString(stm.String())
+    }
+    return out.String()
+}
+
+func NewBlockStatement(tok token.Token) *BlockStatement {
+    return &BlockStatement { Token: tok, Statements: []Statement {} }
+}
+
+type IfExpression struct {
+    Token token.Token
+    Condition Expression
+    Consequence *BlockStatement
+    Alternative *BlockStatement
+}
+
+// @Impl
+func (this *IfExpression) expressionNode() {}
+
+// @Impl
+func (this *IfExpression) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *IfExpression) String() string {
+    var out bytes.Buffer
+    out.WriteString("if (")
+    out.WriteString(this.Condition.String())
+    out.WriteString(") { ")
+    out.WriteString(this.Consequence.String())
+    out.WriteString(" }")
+    if this.Alternative != nil {
+        out.WriteString(" else { ")
+        out.WriteString(this.Alternative.String())
+        out.WriteString(" }")
+    }
+    return out.String()
+}
+
+func NewIfExpression(tok token.Token) *IfExpression {
+    return &IfExpression { Token: tok }
+}
