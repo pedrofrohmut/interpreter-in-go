@@ -67,14 +67,15 @@ func NewParser(lex *lexer.Lexer) *Parser {
 
     // Register Prefix Functions
     par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
-    par.registerPrefix(token.IDENT,  par.parseIdentifierPrefix)
-    par.registerPrefix(token.INT,    par.parseIntegerLiteral)
-    par.registerPrefix(token.BANG,   par.parsePrefixExpression)
-    par.registerPrefix(token.MINUS,  par.parsePrefixExpression)
-    par.registerPrefix(token.TRUE,   par.parseBoolean)
-    par.registerPrefix(token.FALSE,  par.parseBoolean)
-    par.registerPrefix(token.LPAREN, par.parseGroupedExpression)
-    par.registerPrefix(token.IF,     par.parseIfExpression)
+    par.registerPrefix(token.IDENT,    par.parseIdentifierPrefix)
+    par.registerPrefix(token.INT,      par.parseIntegerLiteral)
+    par.registerPrefix(token.BANG,     par.parsePrefixExpression)
+    par.registerPrefix(token.MINUS,    par.parsePrefixExpression)
+    par.registerPrefix(token.TRUE,     par.parseBoolean)
+    par.registerPrefix(token.FALSE,    par.parseBoolean)
+    par.registerPrefix(token.LPAREN,   par.parseGroupedExpression)
+    par.registerPrefix(token.IF,       par.parseIfExpression)
+    par.registerPrefix(token.FUNCTION, par.parseFunctionLiteral)
 
     // Register Infix Functions
     par.infixParseFns = make(map[token.TokenType]InfixParseFn)
@@ -96,6 +97,11 @@ func (this *Parser) Errors() []string {
 
 func (this *Parser) addTokenError(check token.TokenType, expected token.TokenType) {
     msg := fmt.Sprintf("Expected token type to be '%s' but got '%s' instead", expected, check)
+    this.errors = append(this.errors, msg)
+}
+
+func (this *Parser) currError(expectedType token.TokenType) {
+    msg := fmt.Sprintf("Expected current token type to be %T but got %T instead", expectedType, this.peekToken.Type)
     this.errors = append(this.errors, msg)
 }
 
@@ -172,6 +178,26 @@ func (this *Parser) parseGroupedExpression() ast.Expression {
     return exp
 }
 
+func (this *Parser) parseBlockStatement() *ast.BlockStatement {
+    blk := ast.NewBlockStatement(this.currToken)
+
+    if this.currToken.Type == token.RBRACE {
+        // TODO: Check if this error is needed or not
+        // this.errors = append(this.errors, "Block statement is empty. Nothing to parse")
+        return blk
+    }
+
+    for this.currToken.Type != token.RBRACE && this.currToken.Type != token.EOF && this.currToken.Type != token.ELSE {
+        stm := this.parseStatement()
+        if !utils.IsNill(stm) {
+            blk.Statements = append(blk.Statements, stm)
+        }
+        this.nextToken()
+    }
+
+    return blk
+}
+
 func (this *Parser) parseIfExpression() ast.Expression {
     exp := ast.NewIfExpression(this.currToken)
 
@@ -184,13 +210,13 @@ func (this *Parser) parseIfExpression() ast.Expression {
     exp.Condition = this.parseExpression(LOWEST)
 
     if this.currToken.Type != token.RPAREN {
-        this.peekError(token.RPAREN)
+        this.currError(token.RPAREN)
         return nil
     }
     this.nextToken()
 
     if this.currToken.Type != token.LBRACE {
-        this.peekError(token.LBRACE)
+        this.currError(token.LBRACE)
         return nil
     }
     this.nextToken()
@@ -203,7 +229,7 @@ func (this *Parser) parseIfExpression() ast.Expression {
     this.nextToken()
 
     if this.currToken.Type != token.LBRACE {
-        this.peekError(token.LBRACE)
+        this.currError(token.LBRACE)
         return nil
     }
     this.nextToken()
@@ -213,23 +239,52 @@ func (this *Parser) parseIfExpression() ast.Expression {
     return exp
 }
 
-func (this *Parser) parseBlockStatement() *ast.BlockStatement {
-    blk := ast.NewBlockStatement(this.currToken)
+func (this *Parser) parseFunctionParameters() []*ast.Identifier {
+    idents := []*ast.Identifier {}
 
-    if this.currToken.Type == token.RBRACE {
-        this.errors = append(this.errors, "Block statement is empty. Nothing to parse")
+    if this.peekToken.Type == token.RPAREN {
+        this.nextToken()
+        this.nextToken()
+        return idents
+    }
+
+    this.nextToken()
+
+    for this.currToken.Type != token.RPAREN && this.currToken.Type != token.EOF {
+        ident := ast.NewIdentifier(this.currToken, this.currToken.Literal)
+        idents = append(idents, ident)
+        this.nextToken()
+        if this.currToken.Type == token.COMMA {
+            this.nextToken()
+        }
+    }
+
+    this.nextToken()
+
+    return idents
+}
+
+func (this *Parser) parseFunctionLiteral() ast.Expression {
+    exp := ast.NewFunctionLiteral(this.currToken)
+
+    if this.peekToken.Type != token.LPAREN {
+        this.peekError(token.LPAREN)
         return nil
     }
+    this.nextToken()
 
-    for this.currToken.Type != token.RBRACE && this.currToken.Type != token.EOF && this.currToken.Type != token.ELSE {
-        stm := this.parseStatement()
-        if !utils.IsNill(stm) {
-            blk.Statements = append(blk.Statements, stm)
-        }
-        this.nextToken()
+    exp.Parameters = this.parseFunctionParameters()
+
+    if this.currToken.Type != token.LBRACE {
+        this.peekError(token.LBRACE)
+        return nil
     }
+    this.nextToken()
 
-    return blk
+    exp.Body = this.parseBlockStatement()
+    this.nextToken()
+
+    return exp
 }
 
 func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {

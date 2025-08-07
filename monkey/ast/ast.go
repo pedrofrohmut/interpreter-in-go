@@ -8,7 +8,7 @@ package ast
 
 import (
     "bytes"
-    _"strconv"
+    "strings"
     "monkey/token"
 )
 
@@ -298,4 +298,40 @@ func (this *IfExpression) String() string {
 
 func NewIfExpression(tok token.Token) *IfExpression {
     return &IfExpression { Token: tok }
+}
+
+type FunctionLiteral struct {
+    Token token.Token
+    Parameters []*Identifier
+    Body *BlockStatement
+}
+
+// @Impl
+func (this *FunctionLiteral) expressionNode() {}
+
+// @Impl
+func (this *FunctionLiteral) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *FunctionLiteral) String() string {
+    var out bytes.Buffer
+
+    params := []string {}
+    for _, param := range this.Parameters {
+        params = append(params, param.String())
+    }
+
+    out.WriteString(this.TokenLiteral())
+    out.WriteString("(")
+    out.WriteString(strings.Join(params, ", "))
+    out.WriteString(")")
+    // out.WriteString(") {")
+    out.WriteString(this.Body.String())
+    // out.WriteString("}")
+
+    return out.String()
+}
+
+func NewFunctionLiteral(tok token.Token) *FunctionLiteral {
+    return &FunctionLiteral { Token: tok }
 }

@@ -240,7 +240,9 @@ func TestIntegerLiteralExpression(t *testing.T) {
 }
 
 func TestParsingPrefixExpression(t *testing.T) {
-    tests := []struct { input string; operator string; value any } {
+    tests := []struct {
+        input string; operator string; value any
+    } {
         { "!5",     "!", 5 },
         { "-15",    "-", 15 },
         { "!true",  "!", true },
@@ -281,7 +283,9 @@ func TestParsingPrefixExpression(t *testing.T) {
 }
 
 func TestParsingInfixExpression(t *testing.T) {
-    tests := []struct { input string; leftValue any; operator string; rightValue any } {
+    tests := []struct {
+        input string; leftValue any; operator string; rightValue any
+    } {
         { "5 + 5",          5,     "+",  5 },
         { "5 - 5",          5,     "-",  5 },
         { "5 * 5",          5,     "*",  5 },
@@ -481,4 +485,82 @@ func TestIfExpression2(t *testing.T) {
         t.Fatalf("Alternative Statement is not an ExpressionStatement. Got %T instead", exp.Alternative.Statements[0])
     }
     testIdentifier(t, alternative.Expression, "y")
+}
+
+func TestFunctionLiteralParsing(t *testing.T) {
+    input := "fn (x, y) { x + y; }"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if pro == nil {
+        t.Fatalf("The program is nil")
+    }
+    if len(pro.Statements) != 1 {
+        t.Errorf("Expected program to have %d statements but it have %d instead", 1, len(pro.Statements))
+    }
+    checkParserErrors(t, par)
+
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("The statement is not an ExpressionStatement. Got %T instead", pro.Statements[0])
+    }
+    lit, ok := stm.Expression.(*ast.FunctionLiteral)
+    if !ok {
+        t.Fatalf("The expression is not a FunctionLiteral. Got %t instead", stm.Expression)
+    }
+
+    // Check Function Parameters
+    if len(lit.Parameters) != 2 {
+        t.Errorf("Expected fuction literal to have %d parameters but got %d instead", 2, len(lit.Parameters))
+    }
+    testLiteralExpression(t, lit.Parameters[0], "x")
+    testLiteralExpression(t, lit.Parameters[1], "y")
+
+    // Check Function Body
+    if len(lit.Body.Statements) != 1 {
+        t.Errorf("Expected function literal body to have %d statements but got %d instead", 1, len(lit.Body.Statements))
+    }
+    bodyStm, ok := lit.Body.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("Fuction Literal Body first statement is not an ExpressionStatement. Got %T instead",
+            lit.Body.Statements[0])
+    }
+    testInfixExpression(t, bodyStm.Expression, "x", "+", "y")
+}
+
+func TestFunctionParametersParsing(t *testing.T) {
+    tests := []struct {
+          input string;      expectedParams []string
+    } {
+        { "fn () {}",        []string {} },
+        { "fn (x, y) {}",    []string { "x", "y" } },
+        { "fn (x, y, z) {}", []string { "x", "y", "z" } },
+    }
+    var acc bytes.Buffer
+    for _, test := range tests {
+        acc.WriteString(test.input + ";\n")
+    }
+    input := acc.String()
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    checkParserErrors(t, par)
+    if pro == nil {
+        t.Fatalf("Program is nil")
+    }
+    if len(pro.Statements) != len(tests) {
+        t.Fatalf("Expected program number of statements to be %d but got %d instead", len(tests), len(pro.Statements))
+    }
+
+    for i, test := range tests {
+        stm := pro.Statements[i].(*ast.ExpressionStatement)
+        fnLit := stm.Expression.(*ast.FunctionLiteral)
+
+        if len(fnLit.Parameters) != len(test.expectedParams) {
+            t.Errorf("Expected Function Literal number of parameters to be %d but got %d instead",
+                len(fnLit.Parameters), len(test.expectedParams))
+        }
+    }
 }

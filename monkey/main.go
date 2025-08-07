@@ -10,9 +10,12 @@ import (
 )
 
 func debugMain() {
-    // input := "1 + 2 + 3;" // 1st
-    // input := "-1 + 2" // 2nd
-    input := "if (foo < bar) { 13 } else { 42 }" // 3rd
+    // input := "1 + 2 + 3;" // precedence
+    // input := "-1 + 2;" // prefix
+    // input := "if (foo < bar) { 13 } else { 42 }" // ifelse
+    // input := "fn (x, y) { x + y; }" // function literal
+    // input := "fn (x, y) {}" // function literal
+    input := "fn () {}" // function literal
     lex := lexer.NewLexer(input)
     par := parser.NewParser(lex)
     par.ParseProgram()
