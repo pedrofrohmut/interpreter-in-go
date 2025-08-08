@@ -5,11 +5,11 @@ package parser
 import (
     "bytes"
     "fmt"
+    "strconv"
+    "testing"
     "monkey/ast"
     "monkey/lexer"
     "monkey/token"
-    "strconv"
-    "testing"
 )
 
 func checkParserErrors(t *testing.T, par *Parser) {
@@ -368,6 +368,20 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
         { "2 / (5 + 5)",                "(2 / (5 + 5))" },
         { "-(5 + 5)",                   "(-(5 + 5))" },
         { "!(true == true)",            "(!(true == true))" },
+
+        // Call Expression
+        {
+            "a + add(b * c) + d",
+            "((a + add((b * c))) + d)",
+        },
+        // {
+        //     "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+        //     "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+        // },
+        // {
+        //     "add(a + b + c * d / f + g)",
+        //     "add((((a + b) + ((c * d) / f)) + g))",
+        // },
     }
 
     var acc bytes.Buffer
@@ -389,6 +403,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 
     for i, test := range tests {
         progStr := pro.Statements[i].String()
+        // fmt.Println(progStr)
         if progStr != test.expected {
             t.Errorf("Expected program string to be '%s' but got '%s' instead\n", test.expected, progStr)
         }
@@ -563,4 +578,39 @@ func TestFunctionParametersParsing(t *testing.T) {
                 len(fnLit.Parameters), len(test.expectedParams))
         }
     }
+}
+
+func TestCallExpressionParsing(t *testing.T) {
+    input := "add(1, 2 * 3, 4 + 5);"
+    lex := lexer.NewLexer(input)
+    par := NewParser(lex)
+    pro := par.ParseProgram()
+
+    if pro == nil {
+        t.Fatalf("Program is nill")
+    }
+    if len(pro.Statements) != 1 {
+        t.Fatalf("Expected program number of statements to be %d but got %d instead", 1, len(pro.Statements))
+    }
+    checkParserErrors(t, par)
+
+    stm, ok := pro.Statements[0].(*ast.ExpressionStatement)
+    if !ok {
+        t.Fatalf("The first statement is not an ExpressionStatement")
+    }
+    exp, ok := stm.Expression.(*ast.CallExpression)
+    if !ok {
+        t.Fatalf("The statement expression is not call expression")
+    }
+
+    // Check indentifier
+    testIdentifier(t, exp.Function, "add")
+
+    // Check arguments
+    if len(exp.Arguments) != 3 {
+        t.Errorf("Expected call expression to have %d argumenst but found %d instead", 3, len(exp.Arguments))
+    }
+    testLiteralExpression(t, exp.Arguments[0], 1)
+    testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
+    testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }

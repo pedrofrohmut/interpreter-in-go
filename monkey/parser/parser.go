@@ -39,6 +39,7 @@ var precedences = map[token.TokenType] int {
     token.MINUS:    SUM,
     token.SLASH:    PRODUCT,
     token.ASTERISK: PRODUCT,
+    token.LPAREN:   CALL,
 }
 
 type (
@@ -87,6 +88,7 @@ func NewParser(lex *lexer.Lexer) *Parser {
     par.registerInfix(token.NOT_EQ,   par.parseInfixExpression)
     par.registerInfix(token.LT,       par.parseInfixExpression)
     par.registerInfix(token.GT,       par.parseInfixExpression)
+    par.registerInfix(token.LPAREN,   par.parseCallExpression)
 
     return par
 }
@@ -293,6 +295,34 @@ func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
     this.nextToken()
     exp.Right = this.parseExpression(precedence)
     return exp
+}
+
+func (this *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+    exp := ast.NewCallExpression(this.currToken, function)
+    exp.Arguments = this.parseCallArguments()
+    return exp
+}
+
+func (this *Parser) parseCallArguments() []ast.Expression {
+    exps := []ast.Expression {}
+
+    this.nextToken() // Jumps the token.LPAREN
+
+    if this.currToken.Type == token.RPAREN {
+        this.nextToken() // Jumps the token.RPAREN
+        return exps
+    }
+
+    for this.currToken.Type != token.RPAREN {
+        exp := this.parseExpression(LOWEST)
+        exps = append(exps, exp)
+        this.nextToken()
+        if this.currToken.Type == token.COMMA {
+            this.nextToken()
+        }
+    }
+
+    return exps
 }
 
 func (this *Parser) registerInfix(tokenType token.TokenType, fn InfixParseFn) {

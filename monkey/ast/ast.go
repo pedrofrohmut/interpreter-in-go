@@ -335,3 +335,36 @@ func (this *FunctionLiteral) String() string {
 func NewFunctionLiteral(tok token.Token) *FunctionLiteral {
     return &FunctionLiteral { Token: tok }
 }
+
+type CallExpression struct {
+    Token token.Token // the token '('
+    Function Expression // Identifier or FunctionLiteral
+    Arguments []Expression
+}
+
+// @Impl
+func (this *CallExpression) expressionNode() {}
+
+// @Impl
+func (this *CallExpression) TokenLiteral() string { return this.Token.Literal }
+
+// @Impl
+func (this *CallExpression) String() string {
+    var out bytes.Buffer
+
+    args := []string {}
+    for _, arg := range this.Arguments {
+        args = append(args, arg.String())
+    }
+
+    out.WriteString(this.Function.String())
+    out.WriteString("(")
+    out.WriteString(strings.Join(args, ", "))
+    out.WriteString(")")
+
+    return out.String()
+}
+
+func NewCallExpression(tok token.Token, function Expression) *CallExpression {
+    return &CallExpression { Token: tok, Function: function }
+}
