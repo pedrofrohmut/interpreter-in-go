@@ -94,11 +94,23 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left any, expectedOpe
 }
 
 func TestLetStatement(t *testing.T) {
-    input := `
-        let x = 5;
-        let y = 10;
-        let z = 15;
-    `
+    tests := []struct {
+        input string
+        expectedIdentifier string
+        expectedValue any
+    } {
+        { "let x = 5;",           "x",      5        },
+        { "let y = 10;",          "y",      10       },
+        { "let z = 15;",          "z",      15       },
+        { "let isGood = false;",  "isGood", false    },
+        { "let isOld = true;",    "isOld",  true     },
+        { "let isNice = isGood;", "isNice", "isGood" },
+    }
+    var acc bytes.Buffer
+    for _, x := range tests {
+        acc.WriteString(x.input + "\n")
+    }
+    input := acc.String()
     lex := lexer.NewLexer(input)
     par := NewParser(lex)
     pro := par.ParseProgram()
@@ -109,29 +121,26 @@ func TestLetStatement(t *testing.T) {
     if pro == nil {
         t.Fatalf("Program is nil")
     }
-    if len(pro.Statements) != 3 {
-        t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
-    }
-
-    tests := []struct { expectedIdentifier string } {
-        {"x"}, {"y"}, {"z"},
+    if len(pro.Statements) != len(tests) {
+        t.Fatalf("Expected program to have %d statements but got %d\n", len(tests), len(pro.Statements))
     }
 
     for i, test := range tests {
-        if pro.Statements[i].TokenLiteral() != "let" {
-            t.Errorf("Expected statement literal to be '%s' but got '%s' instead",
-                "let", pro.Statements[i].TokenLiteral())
-        }
         stm, ok := pro.Statements[i].(*ast.LetStatement)
         if !ok {
-            t.Errorf("Is not a LetStatement")
+            t.Fatalf("[%d] Expected current statement to be LetStatement but got %T instead", i, stm)
         }
+
+        // Check Token
         if stm.Token.Type != token.LET {
-            t.Errorf("[%dl] Expected identifier to be %s but got %s", i, token.LET, stm.Token.Type)
+            t.Errorf("[%d] Expected token type to be %s but got %s instead", i, token.LET, stm.Token.Type)
         }
-        if stm.Identifier.Value != test.expectedIdentifier {
-            t.Errorf("[%d] Expected identifier to be %s but got %s", i, stm.Identifier.Value, test.expectedIdentifier)
-        }
+
+        // Check Identifier
+        testIdentifier(t, stm.Identifier, test.expectedIdentifier)
+
+        // Check Expression
+        testLiteralExpression(t, stm.Expression, test.expectedValue)
     }
 }
 
