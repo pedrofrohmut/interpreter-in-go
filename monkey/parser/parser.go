@@ -97,6 +97,16 @@ func (this *Parser) Errors() []string {
     return this.errors
 }
 
+func (this *Parser) PrintErrors() {
+    if len(this.errors) == 0 {
+        fmt.Println("No parser errors")
+        return
+    }
+    for i, err := range this.errors {
+        fmt.Printf("[%d] ERROR: %s\n", i, err)
+    }
+}
+
 func (this *Parser) addTokenError(check token.TokenType, expected token.TokenType) {
     msg := fmt.Sprintf("Expected token type to be '%s' but got '%s' instead", expected, check)
     this.errors = append(this.errors, msg)

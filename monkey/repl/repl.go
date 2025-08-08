@@ -46,9 +46,10 @@ func parserRepl() {
         par := parser.NewParser(lex)
         pro := par.ParseProgram()
 
-        fmt.Printf("Program: %s\n", pro.String())
-        for i, stm := range pro.Statements {
-            fmt.Printf("[%d]: %s\n", i, stm)
+        if len(par.Errors()) > 0 {
+            par.PrintErrors()
+        } else {
+            pro.PrintStatements(true)
         }
     }
 }
