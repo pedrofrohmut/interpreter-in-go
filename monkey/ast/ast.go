@@ -47,13 +47,15 @@ func (this *Program) String() string {
     return out.String()
 }
 
-func (this *Program) PrintStatements(withIndex bool) {
+func (this *Program) PrintStatements() {
+    for _, stm := range this.Statements {
+        fmt.Println(stm)
+    }
+}
+
+func (this *Program) PrintStatementsWithIndex() {
     for i, stm := range this.Statements {
-        if withIndex {
-            fmt.Printf("[%d] %s\n", i, stm)
-        } else {
-            fmt.Println(stm)
-        }
+        fmt.Printf("[%d] %s\n", i, stm)
     }
 }
 

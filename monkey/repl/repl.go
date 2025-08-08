@@ -49,7 +49,7 @@ func parserRepl() {
         if len(par.Errors()) > 0 {
             par.PrintErrors()
         } else {
-            pro.PrintStatements(true)
+            pro.PrintStatementsWithIndex()
         }
     }
 }
