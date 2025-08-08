@@ -103,6 +103,8 @@ func TestLetStatement(t *testing.T) {
     par := NewParser(lex)
     pro := par.ParseProgram()
 
+    pro.PrintStatements()
+
     checkParserErrors(t, par)
     if pro == nil {
         t.Fatalf("Program is nil")
@@ -134,27 +136,41 @@ func TestLetStatement(t *testing.T) {
 }
 
 func TestReturnStatement(t *testing.T) {
-    input := `
-        return 5;
-        return 10;
-        return 1234;
-    `
+    tests := []struct {
+          input string;            expected string
+    }{
+        { "return;",               "" },
+        { "return 5;",             "5" },
+        { "return 10;",            "10" },
+        { "return 1234;",          "1234" },
+        { "return 1 + 2 / 3 * 4;", "(1 + ((2 / 3) * 4))" },
+        { "return 1 + 2 + 3 + 4;", "(((1 + 2) + 3) + 4)" },
+    }
+    var acc bytes.Buffer
+    for _, x := range tests {
+        acc.WriteString(x.input + "\n")
+    }
+    input := acc.String()
     lex := lexer.NewLexer(input)
     par := NewParser(lex)
     pro := par.ParseProgram()
+
+    pro.PrintStatements()
 
     checkParserErrors(t, par)
     if pro == nil {
         t.Fatalf("Program is nil")
     }
-    if len(pro.Statements) != 3 {
-        t.Fatalf("Expected program to have %d statements but got %d\n", 3, len(pro.Statements))
+    if len(pro.Statements) != 6 {
+        t.Fatalf("Expected program to have %d statements but got %d\n", 6, len(pro.Statements))
     }
-    for i, currStm := range pro.Statements {
-        stm, ok := currStm.(*ast.ReturnStatement)
+
+    for i, test := range tests {
+        stm, ok := pro.Statements[i].(*ast.ReturnStatement)
         if !ok {
             t.Errorf("Is not a ReturnStatement")
         }
+
         if stm.Token.Type != token.RETURN {
             t.Errorf("[%d] Expected token type to be %s but got %s", i, token.RETURN, stm.Token.Type)
         }
@@ -163,6 +179,11 @@ func TestReturnStatement(t *testing.T) {
         }
         if stm.TokenLiteral() != "return" {
             t.Errorf("[%d] Expected TokenLiteral to be '%s' but got '%s'", i, "return", stm.Token.Literal)
+        }
+
+        if stm.Expression != nil && stm.Expression.String() != test.expected {
+            t.Errorf("[%d] Expected return expression to be '%s' but got '%s' instead",
+                i, test.expected, stm.Expression.String())
         }
     }
 }

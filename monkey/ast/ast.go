@@ -8,6 +8,7 @@ package ast
 
 import (
     "bytes"
+    "fmt"
     "strings"
     "monkey/token"
 )
@@ -44,6 +45,12 @@ func (this *Program) String() string {
         out.WriteString(stm.String())
     }
     return out.String()
+}
+
+func (this *Program) PrintStatements() {
+    for _, stm := range this.Statements {
+        fmt.Println(stm)
+    }
 }
 
 func NewProgram() *Program {

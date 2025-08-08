@@ -184,8 +184,6 @@ func (this *Parser) parseBlockStatement() *ast.BlockStatement {
     blk := ast.NewBlockStatement(this.currToken)
 
     if this.currToken.Type == token.RBRACE {
-        // TODO: Check if this error is needed or not
-        // this.errors = append(this.errors, "Block statement is empty. Nothing to parse")
         return blk
     }
 
@@ -366,8 +364,16 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
 func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
     stm := ast.NewReturnStatement()
 
-    // TODO: Skipping the expression until find a semicolon (ParseExpression)
-    for this.currToken.Type != token.SEMICOLON { this.nextToken() }
+    this.nextToken()
+    if this.currToken.Type == token.SEMICOLON {
+        return stm
+    }
+
+    stm.Expression = this.parseExpression(LOWEST)
+
+    for this.currToken.Type != token.SEMICOLON {
+        this.nextToken()
+    }
 
     return stm
 }

@@ -10,41 +10,34 @@ import (
 )
 
 func debugMain() {
-    // precedence
+    // Precedence
     // input := "1 + 2 + 3;"
 
-    // prefix
+    // Prefix
     // input := "-1 + 2;"
 
-    // ifelse
+    // IfElse
     // input := "if (foo < bar) { 13 } else { 42 }"
 
     // function literal
     // input := "fn (x, y) { x + y; }"
-
-    // function literal
     // input := "fn (x, y) {}"
-
-    // function literal
     // input := "fn () {}"
 
-    // call expression
+    // Call Expression
     // input := "add(1, 2 * 3, 4 + 5);"
 
-    // Call Expression Precedence Test => "((a + add((b * c))) + d)"
-    // input := "a + add(b * c) + d;"
+    // Call Expression Precedence Test
+    // input := "a + add(b * c) + d;" // => "((a + add((b * c))) + d)"
+    // input := "add(b * c);" // => "add((b * c))"
+    // input := "a + add(b * c);" // => "(a + add((b * c)))"
+    // input := "add(b * c) + d;" // => "(add((b * c)) + d)"
+    // input := "add();" // => "add()"
 
-    //  Call Expression Precedence Test => "add((b * c))"
-    // input := "add(b * c);"
-
-    //  Call Expression Precedence Test => "(a + add((b * c)))"
-    // input := "a + add(b * c);"
-
-    //  Call Expression Precedence Test => "(add((b * c)) + d)"
-    // input := "add(b * c) + d;"
-
-    //  Call Expression Precedence Test => "add()"
-    input := "add();"
+    // Return Statement
+    // input := "return;" // => "return"
+    // input := "return 5;" // => "return 5"
+    input := "return 5 + 10;" // => "return (5 + 10)"
 
     lex := lexer.NewLexer(input)
     par := parser.NewParser(lex)
