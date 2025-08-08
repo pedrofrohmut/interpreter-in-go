@@ -4,6 +4,7 @@ package main
 
 import (
     "os"
+    "fmt"
     "monkey/repl"
     "monkey/lexer"
     "monkey/parser"
@@ -47,12 +48,16 @@ func debugMain() {
 }
 
 func replMain() {
+    if len(os.Args) < 2 {
+        fmt.Println("You did not provided the repl type. Add 'lexer' or 'parser' as an argument.")
+        os.Exit(0)
+    }
     replType := os.Args[1]
     repl.Execute(replType)
 }
 
 func main() {
-    const debug = true // Toggle for debugging or to use the repl
+    const debug = false // Toggle for debugging or to use the repl
     if debug {
         debugMain()
     } else {

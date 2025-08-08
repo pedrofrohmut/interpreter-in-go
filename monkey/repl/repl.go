@@ -11,13 +11,8 @@ import (
     "monkey/parser"
 )
 
-func printQuitMsg() {
-    fmt.Println(":q or :quit to quit")
-}
-
 func lexerRepl() {
     fmt.Println("Tokenize your input")
-    printQuitMsg()
     scanner := bufio.NewScanner(os.Stdin)
     for {
         fmt.Printf(">> ")
@@ -36,7 +31,6 @@ func lexerRepl() {
 
 func parserRepl() {
     fmt.Println("Tokenize then Parse your input")
-    printQuitMsg()
     scanner := bufio.NewScanner(os.Stdin)
     for {
         fmt.Printf(">> ")
@@ -52,15 +46,15 @@ func parserRepl() {
         par := parser.NewParser(lex)
         pro := par.ParseProgram()
 
-        fmt.Println("Program: ", pro.String())
+        fmt.Printf("Program: %s\n", pro.String())
         for i, stm := range pro.Statements {
-            fmt.Printf("[%d]:\t%s\n", i, stm)
+            fmt.Printf("[%d]: %s\n", i, stm)
         }
     }
 }
 
 func Execute(replType string) {
-    fmt.Println("Monkey REPL.")
+    fmt.Println("Monkey REPL. [:q or :quit to quit]")
     switch replType {
     case "lexer":
         lexerRepl()
