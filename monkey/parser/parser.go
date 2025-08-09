@@ -35,6 +35,8 @@ func NewParser(lexer *lexer.Lexer) *Parser {
     parser.leftParseFns = make(map[string]LeftParseFn)
     parser.leftParseFns[token.IDENT] = parser.parseIdentifierExpression
     parser.leftParseFns[token.INT]   = parser.parseIntegerLiteralExpression
+    parser.leftParseFns[token.BANG]  = parser.parsePrefixExpression
+    parser.leftParseFns[token.MINUS] = parser.parsePrefixExpression
 
     return parser
 }
@@ -123,6 +125,16 @@ func (this *Parser) parseIntegerLiteralExpression() ast.Expression {
         this.errors = append(this.errors, "Could not convert current token literal to int64")
     }
     return ast.NewIntegerLiteral(intValue)
+}
+
+func (this *Parser) parsePrefixExpression() ast.Expression {
+    value, err := strconv.ParseInt(this.peek.Literal, 10, 64)
+    if err != nil {
+        this.errors = append(this.errors, "Could not convert peek token literal to int64")
+    }
+    operator := this.curr.Literal
+    this.next()
+    return ast.NewPrefixExpression(operator, value)
 }
 
 func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {

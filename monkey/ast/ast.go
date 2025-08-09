@@ -143,3 +143,23 @@ func (this *IntegerLiteral) String() string { return strconv.FormatInt(this.Valu
 func NewIntegerLiteral(value int64) *IntegerLiteral {
     return &IntegerLiteral { Value: value }
 }
+
+type PrefixExpression struct {
+    Operator string
+    Value int64
+}
+
+// @Impl
+func (this *PrefixExpression) node() {}
+
+// @Impl
+func (this *PrefixExpression) expression() {}
+
+// @Impl
+func (this *PrefixExpression) String() string {
+    return this.Operator + strconv.FormatInt(this.Value, 10)
+}
+
+func NewPrefixExpression(operator string, value int64) *PrefixExpression {
+    return &PrefixExpression { Operator: operator, Value: value }
+}
