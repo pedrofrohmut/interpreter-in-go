@@ -1,444 +1,92 @@
 // monkey/parser/parser.go
-/*
-     A parser is a software that takes an input and builds up an AST (Abstract
-   Syntac Tree) that is structural representation of the input. The parser
-   often uses tokens created from a lexer.
-*/
 
 package parser
 
 import (
     "fmt"
-    "monkey/ast"
-    "monkey/lexer"
     "monkey/token"
+    "monkey/lexer"
+    "monkey/ast"
     "monkey/utils"
-    _"monkey/utils"
-    "strconv"
-)
-
-const (
-    // iota gives the constants a ascending numbers
-    // _ skips the 0 value
-    _ int = iota
-    LOWEST
-    EQUALS      // ==
-    LESSGREATER // > or <
-    SUM         // + -
-    PRODUCT     // * /
-    PREFIX      // -X or !X
-    CALL        // myFunction(X)
-)
-
-var precedences = map[token.TokenType] int {
-    token.EQ:       EQUALS,
-    token.NOT_EQ:   EQUALS,
-    token.LT:       LESSGREATER,
-    token.GT:       LESSGREATER,
-    token.PLUS:     SUM,
-    token.MINUS:    SUM,
-    token.SLASH:    PRODUCT,
-    token.ASTERISK: PRODUCT,
-    token.LPAREN:   CALL,
-}
-
-type (
-    PrefixParseFn func() ast.Expression
-    InfixParseFn func(ast.Expression) ast.Expression
 )
 
 type Parser struct {
     lex *lexer.Lexer
+    curr token.Token
+    peek token.Token
     errors []string
-    currToken token.Token
-    peekToken token.Token
-    prefixParseFns map[token.TokenType]PrefixParseFn
-    infixParseFns map[token.TokenType]InfixParseFn
 }
 
-func NewParser(lex *lexer.Lexer) *Parser {
-    par := &Parser {
-        lex: lex,
-        errors: []string {},
-    }
-
-    // Initialize tokens
-    par.currToken = lex.GetNextToken()
-    par.peekToken = lex.GetNextToken()
-
-    // Register Prefix Functions
-    par.prefixParseFns = make(map[token.TokenType]PrefixParseFn)
-    par.registerPrefix(token.IDENT,    par.parseIdentifierPrefix)
-    par.registerPrefix(token.INT,      par.parseIntegerLiteral)
-    par.registerPrefix(token.BANG,     par.parsePrefixExpression)
-    par.registerPrefix(token.MINUS,    par.parsePrefixExpression)
-    par.registerPrefix(token.TRUE,     par.parseBoolean)
-    par.registerPrefix(token.FALSE,    par.parseBoolean)
-    par.registerPrefix(token.LPAREN,   par.parseGroupedExpression)
-    par.registerPrefix(token.IF,       par.parseIfExpression)
-    par.registerPrefix(token.FUNCTION, par.parseFunctionLiteral)
-
-    // Register Infix Functions
-    par.infixParseFns = make(map[token.TokenType]InfixParseFn)
-    par.registerInfix(token.PLUS,     par.parseInfixExpression)
-    par.registerInfix(token.MINUS,    par.parseInfixExpression)
-    par.registerInfix(token.SLASH,    par.parseInfixExpression)
-    par.registerInfix(token.ASTERISK, par.parseInfixExpression)
-    par.registerInfix(token.EQ,       par.parseInfixExpression)
-    par.registerInfix(token.NOT_EQ,   par.parseInfixExpression)
-    par.registerInfix(token.LT,       par.parseInfixExpression)
-    par.registerInfix(token.GT,       par.parseInfixExpression)
-    par.registerInfix(token.LPAREN,   par.parseCallExpression)
-
-    return par
+func NewParser(lexer *lexer.Lexer) *Parser {
+    parser := &Parser { lex: lexer }
+    parser.curr = lexer.GetNextToken()
+    parser.peek = lexer.GetNextToken()
+    parser.errors = []string {}
+    return parser
 }
 
-func (this *Parser) Errors() []string {
-    return this.errors
+func (this *Parser) isCurr(tokenType string) bool {
+    return this.curr.Type == tokenType
 }
 
-func (this *Parser) PrintErrors() {
-    if len(this.errors) == 0 {
-        fmt.Println("No parser errors")
-        return
-    }
-    for i, err := range this.errors {
-        fmt.Printf("[%d] ERROR: %s\n", i, err)
-    }
+func (this *Parser) next() {
+    this.curr = this.peek
+    this.peek = this.lex.GetNextToken()
 }
 
-func (this *Parser) addTokenError(check token.TokenType, expected token.TokenType) {
-    msg := fmt.Sprintf("Expected token type to be '%s' but got '%s' instead", expected, check)
-    this.errors = append(this.errors, msg)
+func (this *Parser) hasNext() bool {
+    return this.curr.Type != token.EOF
 }
 
-func (this *Parser) currError(expectedType token.TokenType) {
-    msg := fmt.Sprintf("Expected current token type to be %T but got %T instead", expectedType, this.peekToken.Type)
-    this.errors = append(this.errors, msg)
-}
-
-func (this *Parser) peekError(expectedType token.TokenType) {
-    msg := fmt.Sprintf("Expected next token type to be %T but got %T instead", expectedType, this.peekToken.Type)
-    this.errors = append(this.errors, msg)
-}
-
-func (this *Parser) nextToken() {
-    this.currToken = this.peekToken
-    this.peekToken = this.lex.GetNextToken()
-}
-
-func (this *Parser) peekPrecedence() int {
-    pre, ok := precedences[this.peekToken.Type]
-    if !ok {
-        return LOWEST
-    }
-    return pre
-}
-
-func (this *Parser) currPrecedence() int {
-    pre, ok := precedences[this.currToken.Type]
-    if !ok {
-        return LOWEST
-    }
-    return pre
-}
-
-func (this *Parser) registerPrefix(tokenType token.TokenType, fn PrefixParseFn) {
-    this.prefixParseFns[tokenType] = fn
-}
-
-func (this *Parser) parseIdentifierPrefix() ast.Expression {
-    return ast.NewIdentifier(this.currToken, this.currToken.Literal)
-}
-
-func (this *Parser) parseIntegerLiteral() ast.Expression {
-    intVal, err := strconv.ParseInt(this.currToken.Literal, 10, 64)
-    if err != nil {
-        msg := fmt.Sprintf("Could not parse %q as integer", this.currToken.Literal)
-        this.errors = append(this.errors, msg)
-        return nil
-    }
-    return ast.NewIntegerLiteral(this.currToken, intVal)
-}
-
-func (this *Parser) parsePrefixExpression() ast.Expression {
-    exp := ast.NewPrefixExpression(this.currToken, this.currToken.Literal)
-    this.nextToken()
-    exp.Right = this.parseExpression(PREFIX)
-    return exp
-}
-
-func (this *Parser) parseBoolean() ast.Expression {
-    t := this.currToken.Type
-    if t != token.TRUE && t != token.FALSE {
-        msg := fmt.Sprintf("Expected current token to be boolean but got %T instead", t)
-        this.errors = append(this.errors, msg)
-        return nil
-    }
-    val := t == token.TRUE
-    return ast.NewBoolean(this.currToken, val)
-}
-
-func (this *Parser) parseGroupedExpression() ast.Expression {
-    this.nextToken()
-    exp := this.parseExpression(LOWEST)
-    if this.peekToken.Type != token.RPAREN {
-        this.peekError(token.RPAREN)
-        return nil
-    }
-    this.nextToken()
-    return exp
-}
-
-func (this *Parser) parseBlockStatement() *ast.BlockStatement {
-    blk := ast.NewBlockStatement(this.currToken)
-
-    if this.currToken.Type == token.RBRACE {
-        return blk
-    }
-
-    for this.currToken.Type != token.RBRACE && this.currToken.Type != token.EOF && this.currToken.Type != token.ELSE {
-        stm := this.parseStatement()
-        if !utils.IsNill(stm) {
-            blk.Statements = append(blk.Statements, stm)
-        }
-        this.nextToken()
-    }
-
-    return blk
-}
-
-func (this *Parser) parseIfExpression() ast.Expression {
-    exp := ast.NewIfExpression(this.currToken)
-
-    if this.peekToken.Type != token.LPAREN {
-        this.peekError(token.LPAREN)
-        return nil
-    }
-    this.nextToken()
-
-    exp.Condition = this.parseExpression(LOWEST)
-
-    if this.currToken.Type != token.RPAREN {
-        this.currError(token.RPAREN)
-        return nil
-    }
-    this.nextToken()
-
-    if this.currToken.Type != token.LBRACE {
-        this.currError(token.LBRACE)
-        return nil
-    }
-    this.nextToken()
-
-    exp.Consequence = this.parseBlockStatement()
-
-    if this.currToken.Type != token.ELSE {
-        return exp
-    }
-    this.nextToken()
-
-    if this.currToken.Type != token.LBRACE {
-        this.currError(token.LBRACE)
-        return nil
-    }
-    this.nextToken()
-
-    exp.Alternative = this.parseBlockStatement()
-
-    return exp
-}
-
-func (this *Parser) parseFunctionParameters() []*ast.Identifier {
-    idents := []*ast.Identifier {}
-
-    if this.peekToken.Type == token.RPAREN {
-        this.nextToken()
-        this.nextToken()
-        return idents
-    }
-
-    this.nextToken()
-
-    for this.currToken.Type != token.RPAREN && this.currToken.Type != token.EOF {
-        ident := ast.NewIdentifier(this.currToken, this.currToken.Literal)
-        idents = append(idents, ident)
-        this.nextToken()
-        if this.currToken.Type == token.COMMA {
-            this.nextToken()
-        }
-    }
-
-    this.nextToken()
-
-    return idents
-}
-
-func (this *Parser) parseFunctionLiteral() ast.Expression {
-    exp := ast.NewFunctionLiteral(this.currToken)
-
-    if this.peekToken.Type != token.LPAREN {
-        this.peekError(token.LPAREN)
-        return nil
-    }
-    this.nextToken()
-
-    exp.Parameters = this.parseFunctionParameters()
-
-    if this.currToken.Type != token.LBRACE {
-        this.peekError(token.LBRACE)
-        return nil
-    }
-    this.nextToken()
-
-    exp.Body = this.parseBlockStatement()
-    this.nextToken()
-
-    return exp
-}
-
-func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
-    exp := ast.NewInfixExpression(this.currToken, left)
-    precedence := this.currPrecedence()
-    this.nextToken()
-    exp.Right = this.parseExpression(precedence)
-    return exp
-}
-
-func (this *Parser) parseCallExpression(function ast.Expression) ast.Expression {
-    exp := ast.NewCallExpression(this.currToken, function)
-    exp.Arguments = this.parseCallArguments()
-    return exp
-}
-
-func (this *Parser) parseCallArguments() []ast.Expression {
-    exps := []ast.Expression {}
-
-    this.nextToken() // Jumps the token.LPAREN
-
-    if this.currToken.Type == token.RPAREN {
-        this.nextToken() // Jumps the token.RPAREN
-        return exps
-    }
-
-    for this.currToken.Type != token.RPAREN {
-        exp := this.parseExpression(LOWEST)
-        exps = append(exps, exp)
-        this.nextToken()
-        if this.currToken.Type == token.COMMA {
-            this.nextToken()
-        }
-    }
-
-    return exps
-}
-
-func (this *Parser) registerInfix(tokenType token.TokenType, fn InfixParseFn) {
-    this.infixParseFns[tokenType] = fn
+func (this *Parser) addTokenError(tokenType string) {
+    err := fmt.Sprintf("Expected token to be %s but got %s instead", tokenType, this.curr.Type)
+    this.errors = append(this.errors, err)
 }
 
 func (this *Parser) parseLetStatement() *ast.LetStatement {
+    if !this.isCurr(token.LET) { return nil }
+
     stm := ast.NewLetStatement()
     hasError := false
 
-    // Check for indentifier
-    this.nextToken()
-    if this.currToken.Type != token.IDENT {
-        this.addTokenError(this.currToken.Type, token.IDENT)
+    // Check identifier
+    this.next()
+    if !this.isCurr(token.IDENT) {
+        this.addTokenError(token.IDENT)
         hasError = true
     }
-    stm.Identifier = ast.NewIdentifier(this.currToken, this.currToken.Literal)
-
-    // Check for the assign operator
     if !hasError {
-        this.nextToken()
+        stm.Identifier = this.curr.Literal
+        this.next()
     }
-    if this.currToken.Type != token.ASSIGN {
-        this.addTokenError(this.currToken.Type, token.ASSIGN)
+
+    // Check for asign symbol
+    if !this.isCurr(token.ASSIGN) {
+        this.addTokenError(token.ASSIGN)
         hasError = true
     }
+    this.next()
 
-    // Parse the expression
-    if !hasError {
-        this.nextToken()
-        stm.Expression = this.parseExpression(LOWEST)
-    }
+    // TODO: parse the expression later
+    for !this.isCurr(token.SEMICOLON) { this.next() }
 
-    for this.currToken.Type != token.SEMICOLON { this.nextToken() }
+    if !this.isCurr(token.SEMICOLON) || hasError { return nil }
 
-    if hasError { return nil }
-
-    return stm
-}
-
-func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
-    stm := ast.NewReturnStatement()
-
-    this.nextToken()
-    if this.currToken.Type == token.SEMICOLON {
-        return stm
-    }
-
-    stm.Expression = this.parseExpression(LOWEST)
-
-    for this.currToken.Type != token.SEMICOLON {
-        this.nextToken()
-    }
-
-    return stm
-}
-
-func (this *Parser) parseExpression(precedence int) ast.Expression {
-    prefixFn := this.prefixParseFns[this.currToken.Type]
-    if utils.IsNill(prefixFn) {
-        msg := fmt.Sprintf("No prefix parse function for %s found", this.currToken.Type)
-        this.errors = append(this.errors, msg)
-        return nil
-    }
-    left := prefixFn()
-
-    for this.peekToken.Type != token.SEMICOLON {
-        if precedence >= this.peekPrecedence() { break }
-
-        infixFn := this.infixParseFns[this.peekToken.Type]
-        if utils.IsNill(infixFn) {
-            return left
-        }
-        this.nextToken()
-        left = infixFn(left)
-    }
-
-    return left
-}
-
-func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-    stm := ast.NewExpressionStatement(this.currToken)
-    stm.Expression = this.parseExpression(LOWEST)
-    if this.currToken.Type != token.SEMICOLON {
-        this.nextToken()
-    }
-    return stm
+    return stm // Parse should end with curr == token.SEMICOLON
 }
 
 func (this *Parser) parseStatement() ast.Statement {
-    switch this.currToken.Type {
-    case token.LET:
-        return this.parseLetStatement()
-    case token.RETURN:
-        return this.parseReturnStatement()
-    default:
-        return this.parseExpressionStatement()
-    }
+    return this.parseLetStatement()
 }
 
 func (this *Parser) ParseProgram() *ast.Program {
-    pro := ast.NewProgram()
-    for this.currToken.Type != token.EOF {
+    program := ast.NewProgram()
+    for this.hasNext() {
         stm := this.parseStatement()
         if !utils.IsNill(stm) {
-            pro.Statements = append(pro.Statements, stm)
+            program.Statements = append(program.Statements, stm)
         }
-        this.nextToken()
+        this.next()
     }
-    return pro
+    return program
 }

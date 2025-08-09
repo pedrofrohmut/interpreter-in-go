@@ -32,7 +32,7 @@ func TestNewLexerEmptyInput(t *testing.T) {
 }
 
 type ExpectedToken struct {
-    expectedType string
+    expectedType    token.TokenType
     expectedLiteral string
 }
 

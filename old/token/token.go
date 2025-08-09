@@ -45,15 +45,17 @@ const (
     RETURN     = "RETURN"
 )
 
+type TokenType string
+
 type Token struct {
-    Type string
+    Type    TokenType
     Literal string
 }
 
-func NewToken(tokenType string, value byte) Token {
-    return Token { Type: tokenType, Literal: string(value) }
+func NewToken(t TokenType, val byte) Token {
+    return Token { Type: t, Literal: string(val) }
 }
 
-func NewTokenStr(tokenType string, value string) Token {
-    return Token { Type: tokenType, Literal: value }
+func NewTokenStr(t TokenType, val string) Token {
+    return Token { Type: t, Literal: val }
 }

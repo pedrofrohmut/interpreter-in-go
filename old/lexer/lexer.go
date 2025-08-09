@@ -21,32 +21,32 @@ func NewLexer(input string) *Lexer {
     return &Lexer { input: input, pos: 0 }
 }
 
-func (this *Lexer) getCh() byte {
+func (lx *Lexer) getCh() byte {
     // Return 0 (ASCII character for EOF) when the position has reach the end of the input
-    if this.pos >= len(this.input) {
+    if lx.pos >= len(lx.input) {
         return 0
     }
-    return this.input[this.pos]
+    return lx.input[lx.pos]
 }
 
-func (this *Lexer) nextPos() bool {
-    if this.pos < len(this.input) {
-        this.pos += 1
+func (lx *Lexer) nextPos() bool {
+    if lx.pos < len(lx.input) {
+        lx.pos += 1
         return true
     }
     return false
 }
 
-func (this *Lexer) hasNextCh() bool {
-    if this.pos < len(this.input) - 1 {
+func (lx *Lexer) hasNextCh() bool {
+    if lx.pos < len(lx.input) - 1 {
         return true
     }
     return false
 }
 
-func (this *Lexer) getNextCh() byte {
-    if this.hasNextCh() {
-        return this.input[this.pos + 1]
+func (lx *Lexer) getNextCh() byte {
+    if lx.hasNextCh() {
+        return lx.input[lx.pos + 1]
     }
     return 0 // EOF
 }
@@ -78,88 +78,88 @@ func isWhiteSpace(val byte) bool {
     return false
 }
 
-func (this *Lexer) skipWhiteSpaces() {
-    for isWhiteSpace(this.getCh()) {
-        hasNext := this.nextPos()
+func (lx *Lexer) skipWhiteSpaces() {
+    for isWhiteSpace(lx.getCh()) {
+        hasNext := lx.nextPos()
         if ! hasNext { break }
     }
 }
 
-func (this *Lexer) readIdentifier() string {
-    start := this.pos
-    for this.hasNextCh() && isIdentLetter(this.input[this.pos + 1]) {
-        this.pos += 1
+func (lx *Lexer) readIdentifier() string {
+    start := lx.pos
+    for lx.hasNextCh() && isIdentLetter(lx.input[lx.pos + 1]) {
+        lx.pos += 1
     }
-    return this.input[start : this.pos + 1]
+    return lx.input[start : lx.pos + 1]
 }
 
 // INFO: The monkey language, for educational purpose, only support int numbers.
 // Other kinds of number can be later added as an exercise
-func (this *Lexer) readIntNumber() string {
-    start := this.pos
-    for this.hasNextCh() && isIntNumber(this.input[this.pos + 1]) {
-        this.pos += 1
+func (lx *Lexer) readIntNumber() string {
+    start := lx.pos
+    for lx.hasNextCh() && isIntNumber(lx.input[lx.pos + 1]) {
+        lx.pos += 1
     }
-    return this.input[start:this.pos + 1]
+    return lx.input[start:lx.pos + 1]
 }
 
-func (this *Lexer) GetNextToken() token.Token {
-    this.skipWhiteSpaces()
+func (lx *Lexer) GetNextToken() token.Token {
+    lx.skipWhiteSpaces()
 
     var tk token.Token
 
-    switch this.getCh() {
+    switch lx.getCh() {
     // Operators & Comparison
     case '=':
-        switch this.getNextCh() {
+        switch lx.getNextCh() {
         case '=':
             tk = token.NewTokenStr(token.EQ, "==")
-            this.nextPos() // Needed for 2 characters operators
+            lx.nextPos() // Needed for 2 characters operators
         default:
-            tk = token.NewToken(token.ASSIGN, this.getCh())
+            tk = token.NewToken(token.ASSIGN, lx.getCh())
         }
     case '+':
-        tk = token.NewToken(token.PLUS, this.getCh())
+        tk = token.NewToken(token.PLUS, lx.getCh())
     case '-':
-        tk = token.NewToken(token.MINUS, this.getCh())
+        tk = token.NewToken(token.MINUS, lx.getCh())
     case '!':
-        switch this.getNextCh() {
+        switch lx.getNextCh() {
         case '=':
             tk = token.NewTokenStr(token.NOT_EQ, "!=")
-            this.nextPos() // Needed for 2 characters operators
+            lx.nextPos() // Needed for 2 characters operators
         default:
-            tk = token.NewToken(token.BANG, this.getCh())
+            tk = token.NewToken(token.BANG, lx.getCh())
         }
     case '*':
-        tk = token.NewToken(token.ASTERISK, this.getCh())
+        tk = token.NewToken(token.ASTERISK, lx.getCh())
     case '/':
-        tk = token.NewToken(token.SLASH, this.getCh())
+        tk = token.NewToken(token.SLASH, lx.getCh())
     case '<':
-        tk = token.NewToken(token.LT, this.getCh())
+        tk = token.NewToken(token.LT, lx.getCh())
     case '>':
-        tk = token.NewToken(token.GT, this.getCh())
+        tk = token.NewToken(token.GT, lx.getCh())
 
     // Delimiter
     case ',':
-        tk = token.NewToken(token.COMMA, this.getCh())
+        tk = token.NewToken(token.COMMA, lx.getCh())
     case ';':
-        tk = token.NewToken(token.SEMICOLON, this.getCh())
+        tk = token.NewToken(token.SEMICOLON, lx.getCh())
 
     case '(':
-        tk = token.NewToken(token.LPAREN, this.getCh())
+        tk = token.NewToken(token.LPAREN, lx.getCh())
     case ')':
-        tk = token.NewToken(token.RPAREN, this.getCh())
+        tk = token.NewToken(token.RPAREN, lx.getCh())
     case '{':
-        tk = token.NewToken(token.LBRACE, this.getCh())
+        tk = token.NewToken(token.LBRACE, lx.getCh())
     case '}':
-        tk = token.NewToken(token.RBRACE, this.getCh())
+        tk = token.NewToken(token.RBRACE, lx.getCh())
 
     case 0:
         tk = token.NewTokenStr(token.EOF, "")
     default:
         switch {
-        case isIdentLetter(this.getCh()) == true:
-            ident := this.readIdentifier()
+        case isIdentLetter(lx.getCh()) == true:
+            ident := lx.readIdentifier()
             switch ident {
             case "true":
                 tk = token.NewTokenStr(token.TRUE, ident)
@@ -178,36 +178,36 @@ func (this *Lexer) GetNextToken() token.Token {
             default:
                 tk = token.NewTokenStr(token.IDENT, ident)
             }
-        case isIntNumber(this.getCh()) :
-            num := this.readIntNumber()
+        case isIntNumber(lx.getCh()) :
+            num := lx.readIntNumber()
             tk = token.NewTokenStr(token.INT, num)
         default:
-            tk = token.NewToken(token.ILLEGAL, this.getCh())
+            tk = token.NewToken(token.ILLEGAL, lx.getCh())
         }
     }
 
-    this.nextPos()
+    lx.nextPos()
 
     return tk
 }
 
-func (this *Lexer) PrintChars() {
-    start := this.pos
+func (lx *Lexer) PrintChars() {
+    start := lx.pos
     i := 0
     fmt.Printf("ASCII     \tDEC\tCHAR\n")
-    for this.hasNextCh() {
-        fmt.Printf("Char[%d]: \t%d\t'%s'\n", i, this.getCh(), string(this.getCh()))
-        this.nextPos()
+    for lx.hasNextCh() {
+        fmt.Printf("Char[%d]: \t%d\t'%s'\n", i, lx.getCh(), string(lx.getCh()))
+        lx.nextPos()
         i += 1
     }
-    this.pos = start
+    lx.pos = start
 }
 
-func (this *Lexer) PrintTokens() {
+func (lx *Lexer) PrintTokens() {
     i := 0
-    tk := this.GetNextToken()
+    tk := lx.GetNextToken()
     for tk.Type != token.EOF {
         fmt.Printf("[%d] %+v\n", i, tk)
-        tk = this.GetNextToken()
+        tk = lx.GetNextToken()
     }
 }
