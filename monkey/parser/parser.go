@@ -4,10 +4,16 @@ package parser
 
 import (
     "fmt"
-    "monkey/token"
-    "monkey/lexer"
+    "strconv"
     "monkey/ast"
+    "monkey/lexer"
+    "monkey/token"
     "monkey/utils"
+)
+
+type (
+    LeftParseFn func() ast.Expression
+    InfixParseFn func(ast.Expression) ast.Expression
 )
 
 type Parser struct {
@@ -15,13 +21,21 @@ type Parser struct {
     curr token.Token
     peek token.Token
     errors []string
+    leftParseFns map[string]LeftParseFn
+    InfixParseFns map[string]InfixParseFn
 }
 
 func NewParser(lexer *lexer.Lexer) *Parser {
     parser := &Parser { lex: lexer }
     parser.curr = lexer.GetNextToken()
     parser.peek = lexer.GetNextToken()
+
     parser.errors = []string {}
+
+    parser.leftParseFns = make(map[string]LeftParseFn)
+    parser.leftParseFns[token.IDENT] = parser.parseIdentifierExpression
+    parser.leftParseFns[token.INT]   = parser.parseIntegerLiteralExpression
+
     return parser
 }
 
@@ -90,14 +104,47 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
     return stm
 }
 
+func (this *Parser) parseExpression() ast.Expression {
+    leftParseFn := this.leftParseFns[this.curr.Type]
+    if utils.IsNill(leftParseFn) {
+        this.errors = append(this.errors, "Left parse function not found for: " + this.curr.Type)
+        return nil
+    }
+    return leftParseFn()
+}
+
+func (this *Parser) parseIdentifierExpression() ast.Expression {
+    return ast.NewIdentifier(this.curr.Literal)
+}
+
+func (this *Parser) parseIntegerLiteralExpression() ast.Expression {
+    intValue, err := strconv.ParseInt(this.curr.Literal, 10, 64)
+    if err != nil {
+        this.errors = append(this.errors, "Could not convert current token literal to int64")
+    }
+    return ast.NewIntegerLiteral(intValue)
+}
+
+func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+    stm := ast.NewExpressionStatement()
+    stm.Expression = this.parseExpression()
+    this.next()
+
+    if !this.isCurr(token.SEMICOLON) { return nil } // AFTER
+
+    return stm
+}
+
 func (this *Parser) parseStatement() ast.Statement {
     switch this.curr.Type {
     case token.LET:
         return this.parseLetStatement()
     case token.RETURN:
         return this.parseReturnStatement()
-    default:
+    case token.ILLEGAL:
         return nil
+    default:
+        return this.parseExpressionStatement()
     }
 }
 

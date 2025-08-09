@@ -46,11 +46,12 @@ func parserRepl() {
         par := parser.NewParser(lex)
         pro := par.ParseProgram()
 
-        if len(par.Errors()) > 0 {
-            par.PrintErrors()
-        } else {
-            pro.PrintStatementsWithIndex()
-        }
+        _ = pro
+        // if len(par.Errors()) > 0 {
+        //     par.PrintErrors()
+        // } else {
+        //     pro.PrintStatementsWithIndex()
+        // }
     }
 }
 

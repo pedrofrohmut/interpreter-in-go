@@ -4,7 +4,7 @@ package ast
 
 import (
     "fmt"
-    _"bytes"
+    "strconv"
 )
 
 type Node interface {
@@ -36,14 +36,20 @@ func NewProgram() *Program {
 }
 
 func (this *Program) PrintStatements() {
+    // TODO: Discover why this bullshit is not working
+    if len(this.Statements) == 0 { return }
     for i, stm := range this.Statements {
-        fmt.Printf("[%d] %s\n", i, stm)
+        if stm != nil {
+            fmt.Printf("[%d] %s\n", i, stm.String())
+        } else {
+            fmt.Printf("[%d] nil_statement\n", i)
+        }
     }
 }
 
 type LetStatement struct {
     Identifier string
-    Expression *Expression
+    Expression Expression
 }
 
 // @Impl
@@ -63,7 +69,7 @@ func NewLetStatement() *LetStatement {
 }
 
 type ReturnStatement struct {
-    Expression *Expression
+    Expression Expression
 }
 
 // @Impl
@@ -83,4 +89,57 @@ func (this *ReturnStatement) String() string {
 
 func NewReturnStatement() *ReturnStatement {
     return &ReturnStatement {}
+}
+
+type ExpressionStatement struct {
+    Expression Expression
+}
+
+// @Impl
+func (this *ExpressionStatement) node() {}
+
+// @Impl
+func (this *ExpressionStatement) statement() {}
+
+// @Impl
+func (this *ExpressionStatement) String() string {
+    return this.Expression.String() + ";"
+}
+
+func NewExpressionStatement() *ExpressionStatement {
+    return &ExpressionStatement {}
+}
+
+type Identifier struct {
+    Value string
+}
+
+// @Impl
+func (this *Identifier) node() {}
+
+// @Impl
+func (this *Identifier) expression() {}
+
+// @Impl
+func (this *Identifier) String() string { return this.Value }
+
+func NewIdentifier(value string) *Identifier {
+    return &Identifier { Value: value }
+}
+
+type IntegerLiteral struct {
+    Value int64
+}
+
+// @Impl
+func (this *IntegerLiteral) node() {}
+
+// @Impl
+func (this *IntegerLiteral) expression() {}
+
+// @Impl
+func (this *IntegerLiteral) String() string { return strconv.FormatInt(this.Value, 10) }
+
+func NewIntegerLiteral(value int64) *IntegerLiteral {
+    return &IntegerLiteral { Value: value }
 }
