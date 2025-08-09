@@ -44,7 +44,7 @@ func (this *Parser) addTokenError(tokenType string) {
 }
 
 func (this *Parser) parseLetStatement() *ast.LetStatement {
-    if !this.isCurr(token.LET) { return nil }
+    if !this.isCurr(token.LET) { return nil } // BEFORE
 
     stm := ast.NewLetStatement()
     hasError := false
@@ -70,13 +70,35 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
     // TODO: parse the expression later
     for !this.isCurr(token.SEMICOLON) { this.next() }
 
-    if !this.isCurr(token.SEMICOLON) || hasError { return nil }
+    if !this.isCurr(token.SEMICOLON) || hasError { return nil } // AFTER
 
     return stm // Parse should end with curr == token.SEMICOLON
 }
 
+func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
+    if !this.isCurr(token.RETURN) { return nil } // BEFORE
+
+    stm := ast.NewReturnStatement()
+
+    this.next()
+
+    // TODO: parse the expression later
+    for !this.isCurr(token.SEMICOLON) { this.next() }
+
+    if !this.isCurr(token.SEMICOLON) { return nil } // AFTER
+
+    return stm
+}
+
 func (this *Parser) parseStatement() ast.Statement {
-    return this.parseLetStatement()
+    switch this.curr.Type {
+    case token.LET:
+        return this.parseLetStatement()
+    case token.RETURN:
+        return this.parseReturnStatement()
+    default:
+        return nil
+    }
 }
 
 func (this *Parser) ParseProgram() *ast.Program {

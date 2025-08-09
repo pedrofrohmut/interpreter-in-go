@@ -61,3 +61,26 @@ func (this *LetStatement) String() string {
 func NewLetStatement() *LetStatement {
     return &LetStatement {}
 }
+
+type ReturnStatement struct {
+    Expression *Expression
+}
+
+// @Impl
+func (this *ReturnStatement) node() {}
+
+// @Impl
+func (this *ReturnStatement) statement() {}
+
+// @Impl
+func (this *ReturnStatement) String() string {
+    expression := "%TODO%"
+    if expression == "" {
+        return "return;"
+    }
+    return "return " + expression + ";"
+}
+
+func NewReturnStatement() *ReturnStatement {
+    return &ReturnStatement {}
+}

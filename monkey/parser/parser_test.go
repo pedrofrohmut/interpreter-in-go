@@ -23,3 +23,20 @@ func TestLetStatements(t *testing.T) {
 
     program.PrintStatements()
 }
+
+func TestReturnStatements(t *testing.T) {
+    input := `
+        return 5;
+        return 10;
+        return 15;
+    `
+    lexer := lexer.NewLexer(input)
+    parser := NewParser(lexer)
+    program := parser.ParseProgram()
+
+    if len(program.Statements) != 3 {
+        t.Fatalf("Expected program to have %d statements but got %d instead", 3, len(program.Statements))
+    }
+
+    program.PrintStatements()
+}
