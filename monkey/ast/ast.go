@@ -163,3 +163,24 @@ func (this *PrefixExpression) String() string {
 func NewPrefixExpression(operator string, value int64) *PrefixExpression {
     return &PrefixExpression { Operator: operator, Value: value }
 }
+
+type InfixExpression struct {
+    Operator string
+    Left Expression
+    Right Expression
+}
+
+// @Impl
+func (this *InfixExpression) node() {}
+
+// @Impl
+func (this *InfixExpression) expression() {}
+
+// @Impl
+func (this *InfixExpression) String() string {
+    return this.Left.String() + " " + this.Operator + " " + this.Right.String()
+}
+
+func NewInfixExpression(left Expression) *InfixExpression {
+    return &InfixExpression { Left: left }
+}

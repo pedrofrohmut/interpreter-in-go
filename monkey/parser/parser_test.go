@@ -147,3 +147,56 @@ func TestParsingPrefixExpression(t *testing.T) {
         }
     }
 }
+
+func TestParsingInfixExpression(t *testing.T) {
+    tests := []struct {
+        input string; left int64; operator string; right int64
+    } {
+        { "5 + 5;",  5, "+",  5 },
+        { "5 - 5;",  5, "-",  5 },
+        { "5 * 5;",  5, "*",  5 },
+        { "5 / 5;",  5, "/",  5 },
+        { "5 < 5;",  5, "<",  5 },
+        { "5 > 5;",  5, ">",  5 },
+        { "5 == 5;", 5, "==", 5 },
+        { "5 != 5;", 5, "!=", 5 },
+    }
+    var acc bytes.Buffer
+    for _, x := range tests { acc.WriteString(x.input + ";\n") }
+    input := acc.String()
+    lexer := lexer.NewLexer(input)
+    parser := NewParser(lexer)
+    program := parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != len(tests) {
+        t.Fatalf("Expected program to have %d statements but got %d instead", len(tests), len(program.Statements))
+    }
+    program.PrintStatements()
+
+    for i, test := range tests {
+        stm, ok := program.Statements[i].(*ast.ExpressionStatement)
+        if !ok {
+            t.Fatalf("Program first statement is not an ExpressionStatement, got %s instead", program.Statements[0])
+        }
+
+        infix, ok := stm.Expression.(*ast.InfixExpression)
+        if !ok {
+            t.Fatalf("Statement expression is not a infix expression, got %T instead", stm.Expression)
+        }
+
+        leftValue := infix.Left.(*ast.IntegerLiteral).Value
+        if leftValue != test.left {
+            t.Errorf("Expected infix expression left value to be %d but got %d instead", test.left, leftValue)
+        }
+
+        if infix.Operator != test.operator {
+            t.Errorf("Expected infix expression operator to be %s but got %s instead", test.operator, infix.Operator)
+        }
+
+        rightValue := infix.Right.(*ast.IntegerLiteral).Value
+        if rightValue != test.right {
+            t.Errorf("Expected infix expression right value to be %d but got %d instead", test.right, rightValue)
+        }
+    }
+}

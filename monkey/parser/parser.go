@@ -22,11 +22,12 @@ type Parser struct {
     peek token.Token
     errors []string
     leftParseFns map[string]LeftParseFn
-    InfixParseFns map[string]InfixParseFn
+    infixParseFns map[string]InfixParseFn
 }
 
 func NewParser(lexer *lexer.Lexer) *Parser {
     parser := &Parser { lex: lexer }
+
     parser.curr = lexer.GetNextToken()
     parser.peek = lexer.GetNextToken()
 
@@ -38,11 +39,25 @@ func NewParser(lexer *lexer.Lexer) *Parser {
     parser.leftParseFns[token.BANG]  = parser.parsePrefixExpression
     parser.leftParseFns[token.MINUS] = parser.parsePrefixExpression
 
+    parser.infixParseFns = make(map[string]InfixParseFn)
+    parser.infixParseFns[token.PLUS]     = parser.parseInfixExpression
+    parser.infixParseFns[token.MINUS]    = parser.parseInfixExpression
+    parser.infixParseFns[token.ASTERISK] = parser.parseInfixExpression
+    parser.infixParseFns[token.SLASH]    = parser.parseInfixExpression
+    parser.infixParseFns[token.LT]       = parser.parseInfixExpression
+    parser.infixParseFns[token.GT]       = parser.parseInfixExpression
+    parser.infixParseFns[token.EQ]       = parser.parseInfixExpression
+    parser.infixParseFns[token.NOT_EQ]   = parser.parseInfixExpression
+
     return parser
 }
 
 func (this *Parser) isCurr(tokenType string) bool {
     return this.curr.Type == tokenType
+}
+
+func (this *Parser) isPeek(tokenType string) bool {
+    return this.peek.Type == tokenType
 }
 
 func (this *Parser) next() {
@@ -112,7 +127,18 @@ func (this *Parser) parseExpression() ast.Expression {
         this.errors = append(this.errors, "Left parse function not found for: " + this.curr.Type)
         return nil
     }
-    return leftParseFn()
+    left := leftParseFn()
+
+    if this.isPeek(token.SEMICOLON) { return left }
+
+    this.next()
+    infixParseFn := this.infixParseFns[this.curr.Type]
+    if utils.IsNill(infixParseFn) {
+        this.errors = append(this.errors, "Infix parse function not found for: " + this.curr.Type)
+        return nil
+    }
+
+    return infixParseFn(left)
 }
 
 func (this *Parser) parseIdentifierExpression() ast.Expression {
@@ -135,6 +161,22 @@ func (this *Parser) parsePrefixExpression() ast.Expression {
     operator := this.curr.Literal
     this.next()
     return ast.NewPrefixExpression(operator, value)
+}
+
+func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+    exp := ast.NewInfixExpression(left)
+
+    exp.Operator = this.curr.Literal
+    this.next()
+
+    value, err := strconv.ParseInt(this.curr.Literal, 10, 64)
+    if err != nil {
+        this.errors = append(this.errors, "Could not convert right value of infix expression to int64")
+    }
+    exp.Right = ast.NewIntegerLiteral(value)
+    this.next()
+
+    return exp
 }
 
 func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
