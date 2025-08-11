@@ -12,9 +12,13 @@ import (
 
 func debugMain() {
     // Identifier Expressions
-    input := "foo;"
+    // input := "foo;"
+
     // Precedence
     // input := "1 + 2 + 3;"
+    // input := "a + b + c;"
+    // input := "a + b + c + d;"
+    input := "a + b; a + b + c; a + b + c + d;"
 
     // Prefix
     // input := "-1 + 2;"
@@ -46,6 +50,7 @@ func debugMain() {
     par := parser.NewParser(lex)
     pro := par.ParseProgram()
     _ = pro
+    // pro.PrintStatements()
     // s := pro.String()
     // _ = s
 }
@@ -60,12 +65,10 @@ func replMain() {
 }
 
 func main() {
-    debugMain()
-
-    // const debug = true // Toggle for debugging or to use the repl
-    // if debug {
-    //     debugMain()
-    // } else {
-    //     replMain()
-    // }
+    const debug = true // Toggle for debugging or to use the repl
+    if debug {
+        debugMain()
+    } else {
+        replMain()
+    }
 }

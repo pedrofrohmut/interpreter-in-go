@@ -178,7 +178,7 @@ func (this *InfixExpression) expression() {}
 
 // @Impl
 func (this *InfixExpression) String() string {
-    return this.Left.String() + " " + this.Operator + " " + this.Right.String()
+    return "(" + this.Left.String() + " " + this.Operator + " " + this.Right.String() + ")"
 }
 
 func NewInfixExpression(left Expression) *InfixExpression {

@@ -200,3 +200,34 @@ func TestParsingInfixExpression(t *testing.T) {
         }
     }
 }
+
+func TestOperatorPrecedence(t *testing.T) {
+    tests := []struct {
+          input string;                 expected string
+    } {
+        // { "-a * b",                     "((-a) * b)" },
+        // { "!-a",                        "(!(-a))" },
+        { "a + b + c",                  "((a + b) + c)" },
+        { "a + b - c",                  "((a + b) - c)" },
+        // { "a * b * c",                  "((a * b) * c)" },
+        // { "a * b / c",                  "((a * b) / c)" },
+        // { "a + b / c",                  "(a + (b / c))" },
+        // { "a + b * c + d / e - f",      "(((a + (b * c)) + (d / e)) - f)" },
+        // { "3 + 4",                      "(3 + 4)" },
+        // { "-5 * 5",                     "((-5) * 5)" },
+
+        { "a + b + c + d",              "(((a + b) + c) + d)" },
+    }
+    var acc bytes.Buffer
+    for _, test := range tests { acc.WriteString(test.input + ";\n") }
+    input := acc.String()
+    lexer := lexer.NewLexer(input)
+    parser := NewParser(lexer)
+    program := parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != len(tests) {
+        t.Fatalf("Expected programs to have %d statements but got %d instead", len(tests), len(program.Statements))
+    }
+    program.PrintStatements()
+}

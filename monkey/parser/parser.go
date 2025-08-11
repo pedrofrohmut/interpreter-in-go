@@ -11,6 +11,31 @@ import (
     "monkey/utils"
 )
 
+const (
+    // iota gives the constants a ascending numbers
+    // _ skips the 0 value
+    _ int = iota
+    LOWEST
+    EQUALS      // ==
+    LESSGREATER // > or <
+    SUM         // + -
+    PRODUCT     // * /
+    PREFIX      // -X or !X
+    CALL        // myFunction(X)
+)
+
+var precedences = map[string] int {
+    token.EQ:       EQUALS,
+    token.NOT_EQ:   EQUALS,
+    token.LT:       LESSGREATER,
+    token.GT:       LESSGREATER,
+    token.PLUS:     SUM,
+    token.MINUS:    SUM,
+    token.SLASH:    PRODUCT,
+    token.ASTERISK: PRODUCT,
+    token.LPAREN:   CALL,
+}
+
 type (
     LeftParseFn func() ast.Expression
     InfixParseFn func(ast.Expression) ast.Expression
@@ -101,7 +126,7 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
     // TODO: parse the expression later
     for !this.isCurr(token.SEMICOLON) { this.next() }
 
-    if !this.isCurr(token.SEMICOLON) || hasError { return nil } // AFTER
+    if hasError { return nil } // AFTER
 
     return stm // Parse should end with curr == token.SEMICOLON
 }
@@ -115,8 +140,6 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
 
     // TODO: parse the expression later
     for !this.isCurr(token.SEMICOLON) { this.next() }
-
-    if !this.isCurr(token.SEMICOLON) { return nil } // AFTER
 
     return stm
 }
@@ -132,13 +155,18 @@ func (this *Parser) parseExpression() ast.Expression {
     if this.isPeek(token.SEMICOLON) { return left }
 
     this.next()
-    infixParseFn := this.infixParseFns[this.curr.Type]
-    if utils.IsNill(infixParseFn) {
-        this.errors = append(this.errors, "Infix parse function not found for: " + this.curr.Type)
-        return nil
+
+    for !this.isCurr(token.SEMICOLON) {
+        infixParseFn := this.infixParseFns[this.curr.Type]
+        if utils.IsNill(infixParseFn) {
+            this.errors = append(this.errors, "ERROR: Infix parse function not found for: " + this.curr.Type)
+            return nil
+        }
+        left = infixParseFn(left)
+        this.next()
     }
 
-    return infixParseFn(left)
+    return left
 }
 
 func (this *Parser) parseIdentifierExpression() ast.Expression {
@@ -167,14 +195,15 @@ func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
     exp := ast.NewInfixExpression(left)
 
     exp.Operator = this.curr.Literal
+
     this.next()
 
-    value, err := strconv.ParseInt(this.curr.Literal, 10, 64)
-    if err != nil {
-        this.errors = append(this.errors, "Could not convert right value of infix expression to int64")
+    leftParseFn := this.leftParseFns[this.curr.Type]
+    if utils.IsNill(leftParseFn) {
+        this.errors = append(this.errors, "Left parse function not found for: " + this.curr.Type)
+        return nil
     }
-    exp.Right = ast.NewIntegerLiteral(value)
-    this.next()
+    exp.Right = leftParseFn()
 
     return exp
 }
@@ -182,11 +211,8 @@ func (this *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
     stm := ast.NewExpressionStatement()
     stm.Expression = this.parseExpression()
-    this.next()
-
-    if !this.isCurr(token.SEMICOLON) { return nil } // AFTER
-
-    return stm
+    if this.isPeek(token.SEMICOLON) { this.next() }
+    return stm // Parse should end with curr == token.SEMICOLON
 }
 
 func (this *Parser) parseStatement() ast.Statement {
@@ -209,7 +235,11 @@ func (this *Parser) ParseProgram() *ast.Program {
         if !utils.IsNill(stm) {
             program.Statements = append(program.Statements, stm)
         }
-        this.next()
+        if !this.isCurr(token.SEMICOLON) {
+            this.errors = append(this.errors, "The statement did not end with a semicolon")
+            return nil
+        }
+        this.next() // Jumps the semicolon
     }
     return program
 }
