@@ -16,9 +16,11 @@ func debugMain() {
 
     // Precedence
     // input := "1 + 2 + 3;"
+    input := "a + b;"
     // input := "a + b + c;"
     // input := "a + b + c + d;"
-    input := "a + b; a + b + c; a + b + c + d;"
+    // input := "a + b; a + b + c; a + b + c + d;"
+    // input := "a + b * c;"
 
     // Prefix
     // input := "-1 + 2;"
@@ -49,10 +51,13 @@ func debugMain() {
     lex := lexer.NewLexer(input)
     par := parser.NewParser(lex)
     pro := par.ParseProgram()
-    _ = pro
+
+    pro.PrintStatements()
     // pro.PrintStatements()
     // s := pro.String()
     // _ = s
+
+    _ = pro
 }
 
 func replMain() {

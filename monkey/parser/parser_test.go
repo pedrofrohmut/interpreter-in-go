@@ -152,14 +152,14 @@ func TestParsingInfixExpression(t *testing.T) {
     tests := []struct {
         input string; left int64; operator string; right int64
     } {
-        { "5 + 5;",  5, "+",  5 },
-        { "5 - 5;",  5, "-",  5 },
-        { "5 * 5;",  5, "*",  5 },
-        { "5 / 5;",  5, "/",  5 },
-        { "5 < 5;",  5, "<",  5 },
-        { "5 > 5;",  5, ">",  5 },
-        { "5 == 5;", 5, "==", 5 },
-        { "5 != 5;", 5, "!=", 5 },
+        { "5 + 5",  5, "+",  5 },
+        { "5 - 5",  5, "-",  5 },
+        { "5 * 5",  5, "*",  5 },
+        { "5 / 5",  5, "/",  5 },
+        { "5 < 5",  5, "<",  5 },
+        { "5 > 5",  5, ">",  5 },
+        { "5 == 5", 5, "==", 5 },
+        { "5 != 5", 5, "!=", 5 },
     }
     var acc bytes.Buffer
     for _, x := range tests { acc.WriteString(x.input + ";\n") }
@@ -216,7 +216,9 @@ func TestOperatorPrecedence(t *testing.T) {
         // { "3 + 4",                      "(3 + 4)" },
         // { "-5 * 5",                     "((-5) * 5)" },
 
+        // My Custom tests
         { "a + b + c + d",              "(((a + b) + c) + d)" },
+        { "a + b * c",                  "(a + (b * c))" },
     }
     var acc bytes.Buffer
     for _, test := range tests { acc.WriteString(test.input + ";\n") }
