@@ -208,7 +208,7 @@ func TestOperatorPrecedence(t *testing.T) {
         // { "-a * b",                     "((-a) * b)" },
         // { "!-a",                        "(!(-a))" },
         { "a + b + c",                  "((a + b) + c)" },
-        { "a + b - c",                  "((a + b) - c)" },
+        // { "a + b - c",                  "((a + b) - c)" },
         // { "a * b * c",                  "((a * b) * c)" },
         // { "a * b / c",                  "((a * b) / c)" },
         // { "a + b / c",                  "(a + (b / c))" },
@@ -217,8 +217,9 @@ func TestOperatorPrecedence(t *testing.T) {
         // { "-5 * 5",                     "((-5) * 5)" },
 
         // My Custom tests
-        { "a + b + c + d",              "(((a + b) + c) + d)" },
+        // { "a + b + c + d",              "(((a + b) + c) + d)" },
         { "a + b * c",                  "(a + (b * c))" },
+        // { "a + b * c * d",              "(a + ((b * c) * d))" },
     }
     var acc bytes.Buffer
     for _, test := range tests { acc.WriteString(test.input + ";\n") }

@@ -85,6 +85,10 @@ func (this *Parser) addTokenError(tokenType string) {
     this.errors = append(this.errors, err)
 }
 
+func (this *Parser) addError(msg string) {
+    this.errors = append(this.errors, msg)
+}
+
 func (this *Parser) parseLetStatement() *ast.LetStatement {
     if !this.isCurr(token.LET) { return nil } // BEFORE
 
@@ -273,82 +277,205 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
 
 /*
     With the same precedence for every operator:
-    return (left, c) => ((left, c), d) => (((left, c), d), e)
+    a + b + c + d
+    return (a, b) => ((a, b), c) => (((a, b), c), d)
 
     TODO: use precedence to ajust the expression tree
+
+    Every time you break precedence you start a new acc and Add it to the right
+    until you break precedence lower again
+    a + b * c - d
+    return ((a + (b * c)) - d)
+    if currPre >= peekPre {
+        acc = parseInfix(acc)
+    } else {
+        right = parseInfix(rightValue)
+    }
 */
-func (this *Parser) parseInfix(acc ast.Expression) ast.Expression {
-    currOpe := this.curr.Literal
-
-    this.next()
-
-    right := this.parsePrefixOrSymbol()
+func (this *Parser) OLD_parseInfix(acc ast.Expression) ast.Expression {
+    // All parseInfix call should start with a operator token in the curr position
+    if !token.IsOperator(this.curr) {
+        this.addError("Parse infix is expected to start with an operator token but found '" +
+            this.curr.Literal + "' instead")
+        return nil
+    }
 
     inf := &ast.InfixExpression {}
     inf.Left = acc
-    inf.Operator = currOpe
-    inf.Right = right
-
-    // Base case to break recursion
-    if this.isPeek(token.SEMICOLON) { return inf }
-
+    inf.Operator = this.curr.Literal
     this.next()
-
-    return this.parseInfix(inf)
-}
-
-func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-    stm := &ast.ExpressionStatement {}
-
-    first := this.parsePrefixOrSymbol()
+    inf.Right = this.parsePrefixOrSymbol()
 
     if this.isPeek(token.SEMICOLON) {
-        stm.Expression = first
-    } else {
-        this.next()
-        stm.Expression = this.parseInfix(first)
+        return inf
     }
 
+    this.next() // jumps to next operator
+
+    return this.OLD_parseInfix(inf)
+}
+
+// TODO: Change this method to have precedence to know when to break back
+// func (this *Parser) parseInfix(acc ast.Expression) ast.Expression {
+//     // All parseInfix call should start with a operator token in the curr position
+//     if !token.IsOperator(this.curr) {
+//         this.addError("Parse infix is expected to start with an operator token but found '" +
+//             this.curr.Literal + "' instead")
+//         return nil
+//     }
+//
+//     currOpe := this.curr.Literal
+//     currPre := this.currPrecedence()
+//
+//     this.next()
+//     rightValue := this.parsePrefixOrSymbol()
+//
+//     if this.isPeek(token.SEMICOLON) {
+//         inf := &ast.InfixExpression {}
+//         inf.Left = acc
+//         inf.Operator = currOpe
+//         inf.Right = rightValue
+//         return inf
+//     }
+//
+//     fmt.Printf("Precedence Curr: %d, Peek: %d\n", currPre, this.peekPrecedence())
+//
+//     // If precedence is not going up keep accumulating on Infix.Left
+//     if currPre >= this.peekPrecedence() {
+//         inf := &ast.InfixExpression {}
+//         inf.Left = acc
+//         inf.Operator = currOpe
+//         inf.Right = rightValue
+//
+//         // if this.isPeek(token.SEMICOLON) { return inf }
+//
+//         this.next() // goes to next operator
+//
+//         return this.parseInfix(inf)
+//     } else {
+//         newInf := &ast.InfixExpression {}
+//         newInf.Left = rightValue
+//         this.next()
+//         newInf.Operator = this.curr.Literal
+//         this.next()
+//         newInf.Right = this.parsePrefixOrSymbol()
+//
+//         inf := &ast.InfixExpression {}
+//         inf.Left = acc
+//         inf.Operator = currOpe
+//         inf.Right = newInf // ADD the right recursion here -> add left until precedence goes down
+//         // inf.Right = this.parseInfix(newInf)
+//
+//         return inf
+//     }
+// }
+        // newInf := &ast.InfixExpression {}
+        // newInf.Left = rightValue
+        // this.next()
+        // newInf.Operator = this.curr.Literal
+        // this.next()
+        // newInf.Right = this.parsePrefixOrSymbol()
+        //
+        // inf := &ast.InfixExpression {}
+        // inf.Left = acc
+        // inf.Operator = currOpe
+        // inf.Right = this.parseInfix(newInf)
+        //
+        // if this.isPeek(token.SEMICOLON) { return inf }
+        //
+        // this.next() // goes to next operator
+        //
+        // return this.parseInfix(inf)
+    //
+    // inf := &ast.InfixExpression {}
+    // inf.Left = acc
+    // inf.Operator = this.curr.Literal
+    // this.next()
+    // inf.Right = this.parsePrefixOrSymbol()
+    //
+    // if currOpe < this.peekPrecedence() || this.isPeek(token.SEMICOLON) {
+    //     return inf
+    // }
+    //
+    // this.next() // jumps to next operator
+    //
+    // return this.parseInfix(inf)
+
+// func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+//     stm := &ast.ExpressionStatement {}
+//
+//     first := this.parsePrefixOrSymbol()
+//
+//     if this.isPeek(token.SEMICOLON) {
+//         stm.Expression = first
+//     } else {
+//         this.next()
+//         stm.Expression = this.parseInfix(first)
+//     }
+//
+//     this.next()
+//     return stm
+// }
+
+// func (this *Parser) OLDparseExpression() ast.Expression {
+//     acc := this.parsePrefixOrSymbol()
+//
+//     for !this.isPeek(token.SEMICOLON) {
+//         this.next() // Jump to operator
+//         inf := &ast.InfixExpression {}
+//         inf.Left = acc
+//         inf.Operator = this.curr.Literal
+//         this.next() // Jump to right symbol or prefix expression
+//         inf.Right = this.parsePrefixOrSymbol()
+//         acc = inf
+//     }
+//
+//     return acc
+// }
+
+func (this *Parser) parseInfix(left ast.Expression, precedence int) ast.Expression {
+    inf := &ast.InfixExpression {}
+
+    inf.Left = left
+
+    inf.Operator = this.curr.Literal
+
+    // TODO: Check currPrecedence vs argument Precedence to decide what to do in the inf.Right
+
+    this.next()
+    inf.Right = this.parsePrefixOrSymbol()
+
+    return inf
+}
+
+func (this *Parser) parseExpression(precedence int) ast.Expression {
+    value := this.parsePrefixOrSymbol()
+
+    if this.isPeek(token.SEMICOLON) { return value }
+
+    acc := value
+
+    for {
+        this.next() // Move curr to operator
+
+        acc = this.parseInfix(acc, precedence)
+    }
+
+    return acc
+}
+
+/// From: a + b * c To: (a + (b * c))
+/// from: a + b * c * d / e + f + g * h
+/// to:   ((a + (((b * c) * d) / e) + f) + (g * h))
+/// 1. add to left every time precedence is the same or lower
+/// 2. create a new group every time it goes up
+/// 3. close the group when it goes lower again
+func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+    stm := &ast.ExpressionStatement {}
+    stm.Expression = this.parseExpression(HIGHEST)
     this.next()
     return stm
 }
-
-
-// func (this *Parser) parseExpression(precedence int) ast.Expression {
-//     leftParseFn := this.leftParseFns[this.curr.Type]
-//     if utils.IsNill(leftParseFn) {
-//         this.errors = append(this.errors, "Left parse function not found for: " + this.curr.Type)
-//         return nil
-//     }
-//     left := leftParseFn()
-//
-//     if this.isPeek(token.SEMICOLON) { return left }
-//
-//     if precedence <= this.peekPrecedence() { // a + b + c
-//     } else { // a + b * c
-//     }
-//
-//     // this.next()
-//     //
-//     // for !this.isCurr(token.SEMICOLON) {
-//     //     infixParseFn := this.infixParseFns[this.curr.Type]
-//     //     if utils.IsNill(infixParseFn) {
-//     //         this.errors = append(this.errors, "ERROR: Infix parse function not found for: " + this.curr.Type)
-//     //         return nil
-//     //     }
-//     //     left = infixParseFn(left)
-//     //     this.next()
-//     // }
-//     //
-//     // return left
-// }
-
-// func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-//     stm := ast.NewExpressionStatement()
-//     stm.Expression = this.parseExpression(LOWEST)
-//     if this.isPeek(token.SEMICOLON) { this.next() }
-//     return stm // Parse should end with curr == token.SEMICOLON
-// }
 
 func (this *Parser) parseStatement() ast.Statement {
     switch this.curr.Type {

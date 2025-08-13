@@ -57,3 +57,12 @@ func NewToken(tokenType string, value byte) Token {
 func NewTokenStr(tokenType string, value string) Token {
     return Token { Type: tokenType, Literal: value }
 }
+
+func IsOperator(token Token) bool {
+    switch token.Type {
+    case PLUS, MINUS, BANG, ASTERISK, SLASH, LT, GT, EQ, NOT_EQ:
+        return true
+    default:
+        return false
+    }
+}
