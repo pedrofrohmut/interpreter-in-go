@@ -206,22 +206,25 @@ func TestOperatorPrecedence(t *testing.T) {
     tests := []struct {
           input string;                 expected string
     } {
-        { "!-a",                        "(!(-a))"                         },
-        { "-a * b",                     "((-a) * b)"                      },
-        { "a + b + c",                  "((a + b) + c)"                      },
-        { "a + b - c",                  "((a + b) - c)"                   },
-        { "a * b * c",                  "((a * b) * c)"                   },
-        { "a * b / c",                  "((a * b) / c)"                   },
-        { "a + b / c",                  "(a + (b / c))"                   },
-        { "a + b * c + d / e - f",      "(((a + (b * c)) + (d / e)) - f)" },
-        { "3 + 4",                      "(3 + 4)"                         },
-        { "-5 * 5",                     "((-5) * 5)"                      },
+        { "-a * b",                     "((-a) * b)"                             },
+        { "!-a",                        "(!(-a))"                                },
+        { "a + b + c",                  "((a + b) + c)"                          },
+        { "a + b - c",                  "((a + b) - c)"                          },
+        { "a * b * c",                  "((a * b) * c)"                          },
+        { "a * b / c",                  "((a * b) / c)"                          },
+        { "a + b / c",                  "(a + (b / c))"                          },
+        { "a + b * c + d / e - f",      "(((a + (b * c)) + (d / e)) - f)"        },
+        { "3 + 4",                      "(3 + 4)"                                },
+        { "-5 * 5",                     "((-5) * 5)"                             },
+        { "5 > 4 == 3 < 4",             "((5 > 4) == (3 < 4))"                   },
+        { "5 < 4 != 3 > 4",             "((5 < 4) != (3 > 4))"                   },
+        { "3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" },
 
         // My Custom tests
-        { "a + b + c + d",              "(((a + b) + c) + d)"                },
-        { "a + b * c",                  "(a + (b * c))"                      },
-        { "a + b * c * d",              "(a + ((b * c) * d))"                },
-        { "a + b * c * d - e",          "((a + ((b * c) * d)) - e)"          },
+        { "a + b + c + d",              "(((a + b) + c) + d)"                    },
+        { "a + b * c",                  "(a + (b * c))"                          },
+        { "a + b * c * d",              "(a + ((b * c) * d))"                    },
+        { "a + b * c * d - e",          "((a + ((b * c) * d)) - e)"              },
     }
     var acc bytes.Buffer
     for _, test := range tests { acc.WriteString(test.input + ";\n") }
@@ -235,4 +238,17 @@ func TestOperatorPrecedence(t *testing.T) {
         t.Fatalf("Expected programs to have %d statements but got %d instead", len(tests), len(program.Statements))
     }
     program.PrintStatements()
+
+    for i, test := range tests {
+        stm, ok := program.Statements[i].(*ast.ExpressionStatement)
+        if !ok {
+            t.Fatalf("[%d] Program statement is not a ExpressionStatement, got %s instead", i, program.Statements[i])
+        }
+
+        var stmStr = stm.String()
+        var expected = test.expected + ";"
+        if stmStr != expected {
+            t.Errorf("[%d] Expected statement to be '%s', but got '%s' instead", i, stmStr, expected)
+        }
+    }
 }
