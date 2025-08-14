@@ -138,18 +138,9 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
     switch this.curr.Type {
     case token.BANG, token.MINUS:
         var pre = &ast.PrefixExpression {}
-        if this.isPeek(token.IDENT) {
-            pre.Value = ast.NewIdentifier(this.peek.Literal)
-        }
-        if this.isPeek(token.INT) {
-            result, err := strconv.ParseInt(this.peek.Literal, 10, 64)
-            if err != nil {
-                this.addError("Could not convert peek token literal to int64")
-            }
-            pre.Value = ast.NewIntegerLiteral(result)
-        }
         pre.Operator = this.curr.Literal
         this.next()
+        pre.Value = this.createNewInfixGroup(PREFIX)
         return pre
     case token.IDENT:
         return ast.NewIdentifier(this.curr.Literal)
