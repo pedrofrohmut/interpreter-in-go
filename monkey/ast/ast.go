@@ -146,7 +146,7 @@ func NewIntegerLiteral(value int64) *IntegerLiteral {
 
 type PrefixExpression struct {
     Operator string
-    Value int64
+    Value Expression
 }
 
 // @Impl
@@ -157,10 +157,10 @@ func (this *PrefixExpression) expression() {}
 
 // @Impl
 func (this *PrefixExpression) String() string {
-    return this.Operator + strconv.FormatInt(this.Value, 10)
+    return "(" + this.Operator + this.Value.String() + ")"
 }
 
-func NewPrefixExpression(operator string, value int64) *PrefixExpression {
+func NewPrefixExpression(operator string, value Expression) *PrefixExpression {
     return &PrefixExpression { Operator: operator, Value: value }
 }
 

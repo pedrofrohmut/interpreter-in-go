@@ -17,10 +17,11 @@ func debugMain() {
     // Precedence
     // input := "1 + 2 + 3;"
     // input := "a + b;"
-    input := "a + b + c;"
+    // input := "a + b + c;"
     // input := "a + b + c + d;"
     // input := "a + b; a + b + c; a + b + c + d;"
     // input := "a + b * c;"
+    input := "-a * b"
 
     // Prefix
     // input := "-1 + 2;"

@@ -6,6 +6,7 @@ import (
     "fmt"
     "testing"
     "bytes"
+    "strconv"
     "monkey/lexer"
     "monkey/ast"
 )
@@ -138,7 +139,7 @@ func TestParsingPrefixExpression(t *testing.T) {
             t.Fatalf("Statement expression is not a prefix expression, got %T instead", stm.Expression)
         }
 
-        if pref.Value != test.value {
+        if pref.Value.String() != strconv.FormatInt(test.value, 10) {
             t.Errorf("Expected prefix expression value to be %d but got %d instead", test.value, pref.Value)
         }
 
@@ -205,21 +206,22 @@ func TestOperatorPrecedence(t *testing.T) {
     tests := []struct {
           input string;                 expected string
     } {
-        // { "-a * b",                     "((-a) * b)" },
-        // { "!-a",                        "(!(-a))" },
-        { "a + b + c",                  "((a + b) + c)" },
-        // { "a + b - c",                  "((a + b) - c)" },
-        // { "a * b * c",                  "((a * b) * c)" },
-        // { "a * b / c",                  "((a * b) / c)" },
-        // { "a + b / c",                  "(a + (b / c))" },
-        // { "a + b * c + d / e - f",      "(((a + (b * c)) + (d / e)) - f)" },
-        // { "3 + 4",                      "(3 + 4)" },
-        // { "-5 * 5",                     "((-5) * 5)" },
+        // { "!-a",                        "(!(-a))"                         },
+        { "-a * b",                     "((-a) * b)"                      },
+        { "a + b + c",                  "((a + b) + c)"                      },
+        { "a + b - c",                  "((a + b) - c)"                   },
+        { "a * b * c",                  "((a * b) * c)"                   },
+        { "a * b / c",                  "((a * b) / c)"                   },
+        { "a + b / c",                  "(a + (b / c))"                   },
+        { "a + b * c + d / e - f",      "(((a + (b * c)) + (d / e)) - f)" },
+        { "3 + 4",                      "(3 + 4)"                         },
+        { "-5 * 5",                     "((-5) * 5)"                      },
 
         // My Custom tests
-        // { "a + b + c + d",              "(((a + b) + c) + d)" },
-        { "a + b * c",                  "(a + (b * c))" },
-        // { "a + b * c * d",              "(a + ((b * c) * d))" },
+        { "a + b + c + d",              "(((a + b) + c) + d)"                },
+        { "a + b * c",                  "(a + (b * c))"                      },
+        { "a + b * c * d",              "(a + ((b * c) * d))"                },
+        { "a + b * c * d - e",          "((a + ((b * c) * d)) - e)"          },
     }
     var acc bytes.Buffer
     for _, test := range tests { acc.WriteString(test.input + ";\n") }
