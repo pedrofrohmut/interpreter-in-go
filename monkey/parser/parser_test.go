@@ -286,6 +286,13 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
         { "a + b * c",                  "(a + (b * c))"                          },
         { "a + b * c * d",              "(a + ((b * c) * d))"                    },
         { "a + b * c * d - e",          "((a + ((b * c) * d)) - e)"              },
+
+        // Grouped Expressions
+        { "1 + (2 + 3) + 4",            "((1 + (2 + 3)) + 4)"                    },
+        { "(5 + 5) * 2",                "((5 + 5) * 2)"                          },
+        { "2 / (5 + 5)",                "(2 / (5 + 5))"                          },
+        { "-(5 + 5)",                   "(-(5 + 5))"                             },
+        { "!(true == true)",            "(!(true == true))"                      },
     }
     var acc bytes.Buffer
     for _, test := range tests { acc.WriteString(test.input + ";\n") }

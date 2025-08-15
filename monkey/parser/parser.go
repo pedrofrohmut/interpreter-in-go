@@ -143,7 +143,7 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
         pre.Value = this.parseExpression(PREFIX)
         return pre
     case token.TRUE, token.FALSE:
-        return &ast.Boolean { Value: this.isCurr(token.TRUE) } // Easy conv to bool xD
+        return &ast.Boolean { Value: this.isCurr(token.TRUE) } // Easy convert to bool trick :D
     case token.IDENT:
         return &ast.Identifier { Value: this.curr.Literal }
     case token.INT:
@@ -152,6 +152,15 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
             this.addError("Could not convert current token literal to int64")
         }
         return &ast.IntegerLiteral { Value: intValue }
+    case token.LPAREN:
+        this.next() // Jumps the token.LPAREN
+        var exp = this.parseExpression(LOWEST)
+        if !this.isPeek(token.RPAREN) {
+            this.addError("Grouped expression did not end with and token.RPAREN")
+            return nil
+        }
+        this.next() // Jumps the token.RPAREN
+        return exp
     default:
         this.addError("Invalid symbol or prefix to parse: " + this.curr.Type)
         return nil
