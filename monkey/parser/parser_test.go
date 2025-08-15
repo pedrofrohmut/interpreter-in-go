@@ -20,6 +20,58 @@ func checkParserErrors(t *testing.T, parser *Parser) {
     }
 }
 
+func testIdentifier(t *testing.T, expression ast.Expression, expected string) {
+    var iden, ok = expression.(*ast.Identifier)
+    if !ok {
+        t.Errorf("Expression is not an Identifier. Got %T instead", expression)
+        return
+    }
+    if iden.Value != expected {
+        t.Errorf("Expected Identifier value to be %s but found %s instead", expected, iden.Value)
+    }
+}
+
+func testIntegerLiteral(t *testing.T, expression ast.Expression, expectedValue int64) {
+    var intLit, ok = expression.(*ast.IntegerLiteral)
+    if !ok {
+        t.Errorf("Expression is not an IntegerLiteral. Got %T instead", expression)
+        return
+    }
+    if intLit.Value != expectedValue {
+        t.Errorf("Expected IntegerLiteral value to be %d but got %d instead", expectedValue, intLit.Value)
+    }
+}
+
+func testLiteralExpression(t *testing.T, expression ast.Expression, expected any) {
+    switch tmp := expected.(type) {
+    case int:
+        testIntegerLiteral(t, expression, int64(tmp))
+    case int64:
+        testIntegerLiteral(t, expression, tmp)
+    case string:
+        testIdentifier(t, expression, tmp)
+    default:
+        t.Errorf("Tested expression type is not a covered on testLiteralExpression. Got %T", expression)
+    }
+}
+
+func testInfixExpression(t *testing.T, expression ast.Expression, expectedLeft any,
+        expectedOperator string, expectedRight any) {
+    var inf, ok = expression.(*ast.InfixExpression)
+    if !ok {
+        t.Errorf("Expression is not an InfixExpression. Got %T instead", expression)
+        return
+    }
+    // Test Left Value
+    testLiteralExpression(t, inf.Left, expectedLeft)
+    // Test Operator
+    if inf.Operator != expectedOperator {
+        t.Errorf("Expected Operator to be '%s' but got '%s' instead", expectedOperator, inf.Operator)
+    }
+    // Test Right Value
+    testLiteralExpression(t, inf.Right, expectedRight)
+}
+
 func TestLetStatements(t *testing.T) {
     input := `
         let x = 5;
@@ -181,24 +233,7 @@ func TestParsingInfixExpression(t *testing.T) {
             t.Fatalf("Program first statement is not an ExpressionStatement, got %s instead", program.Statements[0])
         }
 
-        infix, ok := stm.Expression.(*ast.InfixExpression)
-        if !ok {
-            t.Fatalf("Statement expression is not a infix expression, got %T instead", stm.Expression)
-        }
-
-        leftValue := infix.Left.(*ast.IntegerLiteral).Value
-        if leftValue != test.left {
-            t.Errorf("Expected infix expression left value to be %d but got %d instead", test.left, leftValue)
-        }
-
-        if infix.Operator != test.operator {
-            t.Errorf("Expected infix expression operator to be %s but got %s instead", test.operator, infix.Operator)
-        }
-
-        rightValue := infix.Right.(*ast.IntegerLiteral).Value
-        if rightValue != test.right {
-            t.Errorf("Expected infix expression right value to be %d but got %d instead", test.right, rightValue)
-        }
+        testInfixExpression(t, stm.Expression, test.left, test.operator, test.right)
     }
 }
 
