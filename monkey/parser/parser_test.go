@@ -6,7 +6,7 @@ import (
     "fmt"
     "testing"
     "bytes"
-    "strconv"
+    _"strconv"
     "monkey/lexer"
     "monkey/ast"
 )
@@ -42,6 +42,17 @@ func testIntegerLiteral(t *testing.T, expression ast.Expression, expectedValue i
     }
 }
 
+func testBooleanLiteral(t *testing.T, expression ast.Expression, expected bool) {
+    var boo, ok = expression.(*ast.Boolean)
+    if !ok {
+        t.Errorf("Expression is not a Boolean. Got %T instead", expression)
+        return
+    }
+    if boo.Value != expected {
+        t.Errorf("Expected Boolean value to be '%t' but got '%t' instead", expected, boo.Value)
+    }
+}
+
 func testLiteralExpression(t *testing.T, expression ast.Expression, expected any) {
     switch tmp := expected.(type) {
     case int:
@@ -50,6 +61,8 @@ func testLiteralExpression(t *testing.T, expression ast.Expression, expected any
         testIntegerLiteral(t, expression, tmp)
     case string:
         testIdentifier(t, expression, tmp)
+    case bool:
+        testBooleanLiteral(t, expression, tmp)
     default:
         t.Errorf("Tested expression type is not a covered on testLiteralExpression. Got %T", expression)
     }
@@ -162,10 +175,12 @@ func TestIntegerExpression(t *testing.T) {
 
 func TestParsingPrefixExpression(t *testing.T) {
     tests := []struct {
-        input string; operator string; value int64
+        input string; operator string; value any
     } {
-        { "!5",  "!", 5  },
-        { "-15", "-", 15 },
+        { "!5",     "!", 5     },
+        { "-15",    "-", 15    },
+        { "!true",  "!", true  },
+        { "!false", "!", false },
     }
     var acc bytes.Buffer
     for _, x := range tests { acc.WriteString(x.input + ";\n") }
@@ -175,8 +190,8 @@ func TestParsingPrefixExpression(t *testing.T) {
     program := parser.ParseProgram()
 
     checkParserErrors(t, parser)
-    if len(program.Statements) != 2 {
-        t.Fatalf("Expected program to have %d statements but got %d instead", 2, len(program.Statements))
+    if len(program.Statements) != len(tests) {
+        t.Fatalf("Expected program to have %d statements but got %d instead", len(tests), len(program.Statements))
     }
     program.PrintStatements()
 
@@ -191,28 +206,33 @@ func TestParsingPrefixExpression(t *testing.T) {
             t.Fatalf("Statement expression is not a prefix expression, got %T instead", stm.Expression)
         }
 
-        if pref.Value.String() != strconv.FormatInt(test.value, 10) {
-            t.Errorf("Expected prefix expression value to be %d but got %d instead", test.value, pref.Value)
-        }
-
+        // Test Prefix Operator
         if pref.Operator != test.operator {
             t.Errorf("Expected prefix expression operator to be %s but got %s instead", test.operator, pref.Operator)
         }
+
+        // Test the Prefix Value
+        testLiteralExpression(t, pref.Value, test.value)
     }
 }
 
 func TestParsingInfixExpression(t *testing.T) {
     tests := []struct {
-        input string; left int64; operator string; right int64
+        input string; left any; operator string; right any
     } {
-        { "5 + 5",  5, "+",  5 },
-        { "5 - 5",  5, "-",  5 },
-        { "5 * 5",  5, "*",  5 },
-        { "5 / 5",  5, "/",  5 },
-        { "5 < 5",  5, "<",  5 },
-        { "5 > 5",  5, ">",  5 },
-        { "5 == 5", 5, "==", 5 },
-        { "5 != 5", 5, "!=", 5 },
+        { "5 + 5",          5,     "+",  5     },
+        { "5 - 5",          5,     "-",  5     },
+        { "5 * 5",          5,     "*",  5     },
+        { "5 / 5",          5,     "/",  5     },
+        { "5 < 5",          5,     "<",  5     },
+        { "5 > 5",          5,     ">",  5     },
+        { "5 == 5",         5,     "==", 5     },
+        { "5 != 5",         5,     "!=", 5     },
+
+        // Booleans
+        { "true == true",   true,  "==", true  },
+        { "true != false",  true,  "!=", false },
+        { "false == false", false, "==", false },
     }
     var acc bytes.Buffer
     for _, x := range tests { acc.WriteString(x.input + ";\n") }
@@ -237,7 +257,7 @@ func TestParsingInfixExpression(t *testing.T) {
     }
 }
 
-func TestOperatorPrecedence(t *testing.T) {
+func TestOperatorPrecedenceParsing(t *testing.T) {
     tests := []struct {
           input string;                 expected string
     } {
@@ -254,6 +274,12 @@ func TestOperatorPrecedence(t *testing.T) {
         { "5 > 4 == 3 < 4",             "((5 > 4) == (3 < 4))"                   },
         { "5 < 4 != 3 > 4",             "((5 < 4) != (3 > 4))"                   },
         { "3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" },
+
+        // Booleans
+        { "true",                       "true"                                   },
+        { "false",                      "false"                                  },
+        { "3 > 5 == false",             "((3 > 5) == false)"                     },
+        { "3 < 5 == true",              "((3 < 5) == true)"                      },
 
         // My Custom tests
         { "a + b + c + d",              "(((a + b) + c) + d)"                    },

@@ -184,3 +184,18 @@ func (this *InfixExpression) String() string {
 func NewInfixExpression(left Expression) *InfixExpression {
     return &InfixExpression { Left: left }
 }
+
+type Boolean struct {
+    Value bool
+}
+
+// @Impl
+func (this *Boolean) node() {}
+
+// @Impl
+func (this *Boolean) expression() {}
+
+// @Impl
+func (this *Boolean) String() string {
+    return strconv.FormatBool(this.Value)
+}

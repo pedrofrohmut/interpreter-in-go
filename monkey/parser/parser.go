@@ -124,7 +124,7 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
 func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
     if !this.isCurr(token.RETURN) { return nil } // BEFORE
 
-    stm := ast.NewReturnStatement()
+    var stm = ast.NewReturnStatement()
 
     this.next()
 
@@ -140,16 +140,18 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
         var pre = &ast.PrefixExpression {}
         pre.Operator = this.curr.Literal
         this.next()
-        pre.Value = this.createNewInfixGroup(PREFIX)
+        pre.Value = this.parseExpression(PREFIX)
         return pre
+    case token.TRUE, token.FALSE:
+        return &ast.Boolean { Value: this.isCurr(token.TRUE) } // Easy conv to bool xD
     case token.IDENT:
-        return ast.NewIdentifier(this.curr.Literal)
+        return &ast.Identifier { Value: this.curr.Literal }
     case token.INT:
-        intValue, err := strconv.ParseInt(this.curr.Literal, 10, 64)
+        var intValue, err = strconv.ParseInt(this.curr.Literal, 10, 64)
         if err != nil {
             this.addError("Could not convert current token literal to int64")
         }
-        return ast.NewIntegerLiteral(intValue)
+        return &ast.IntegerLiteral { Value: intValue }
     default:
         this.addError("Invalid symbol or prefix to parse: " + this.curr.Type)
         return nil
@@ -162,7 +164,7 @@ func (this *Parser) makeInfix(left ast.Expression) ast.Expression {
     inf.Left = left
     inf.Operator = this.curr.Literal
     var precedence = this.currPrecedence()
-    this.next() // Curr is next value
+    this.next() // Curr to next value
     inf.Right = this.createNewInfixGroup(precedence)
     return inf
 }
@@ -173,7 +175,7 @@ func (this *Parser) createNewInfixGroup(ctxPrecedence int) ast.Expression {
     var acc = parsedValue
 
     for !this.isPeek(token.SEMICOLON) && this.peekPrecedence() > ctxPrecedence {
-        this.next() // Curr is operator
+        this.next() // Curr to operator
         acc = this.makeInfix(acc)
     }
 
@@ -183,13 +185,13 @@ func (this *Parser) createNewInfixGroup(ctxPrecedence int) ast.Expression {
 /// 1. add to left every time precedence is the same or lower
 /// 2. create a new group every time it goes up
 /// 3. close the group when it goes lower again
-func (this *Parser) parseExpression() ast.Expression {
-    return this.createNewInfixGroup(LOWEST)
+func (this *Parser) parseExpression(precedence int) ast.Expression {
+    return this.createNewInfixGroup(precedence)
 }
 
 func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
     stm := &ast.ExpressionStatement {}
-    stm.Expression = this.parseExpression()
+    stm.Expression = this.parseExpression(LOWEST)
     this.next()
     return stm
 }
