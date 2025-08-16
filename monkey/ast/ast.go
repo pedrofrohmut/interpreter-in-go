@@ -4,7 +4,9 @@ package ast
 
 import (
     "fmt"
+    "bytes"
     "strconv"
+    "monkey/utils"
 )
 
 type Node interface {
@@ -198,4 +200,51 @@ func (this *Boolean) expression() {}
 // @Impl
 func (this *Boolean) String() string {
     return strconv.FormatBool(this.Value)
+}
+
+type StatementsBlock struct {
+    Statements []Statement
+}
+
+// @Impl
+func (this *StatementsBlock) node() {}
+
+// @Impl
+func (this *StatementsBlock) statement() {}
+
+// @Impl
+func (this *StatementsBlock) String() string {
+    var out bytes.Buffer
+    for _, stm := range this.Statements {
+        out.WriteString(stm.String())
+    }
+    return out.String()
+}
+
+type IfExpression struct {
+    Condition Expression
+    ConsequenceBlock *StatementsBlock
+    AlternativeBlock *StatementsBlock
+}
+
+// @Impl
+func (this *IfExpression) node() {}
+
+// @Impl
+func (this *IfExpression) expression() {}
+
+// @Impl
+func (this *IfExpression) String() string {
+    var out bytes.Buffer
+    out.WriteString("if " + this.Condition.String() + " {")
+
+    out.WriteString(this.ConsequenceBlock.String())
+
+    if !utils.IsNill(this.AlternativeBlock) {
+        out.WriteString("} else {")
+        out.WriteString(this.AlternativeBlock.String())
+    }
+
+    out.WriteString("}")
+    return out.String()
 }

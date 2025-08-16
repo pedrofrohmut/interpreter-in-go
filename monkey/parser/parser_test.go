@@ -320,3 +320,29 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
         }
     }
 }
+
+func TestParsingIfExpressions(t *testing.T) {
+    var input = "if (x < y) { x };"
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != 1 {
+        t.Fatalf("Expected programs to have %d statements but got %d instead", 1, len(program.Statements))
+    }
+    program.PrintStatements()
+}
+
+func TestParsingIfExpressions2(t *testing.T) {
+    var input = "if (x < y) { x } else { y };"
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != 1 {
+        t.Fatalf("Expected programs to have %d statements but got %d instead", 1, len(program.Statements))
+    }
+    program.PrintStatements()
+}

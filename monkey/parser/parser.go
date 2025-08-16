@@ -161,10 +161,65 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
         }
         this.next() // Jumps the token.RPAREN
         return exp
+    case token.IF:
+        return this.parseIfExpression()
     default:
-        this.addError("Invalid symbol or prefix to parse: " + this.curr.Type)
+        this.addError("Invalid or not covered symbol or prefix to parse: " + this.curr.Type)
         return nil
     }
+}
+
+func (this *Parser) parseIfExpression() ast.Expression {
+    // Curr is token.IF
+
+    if !this.isPeek(token.LPAREN) {
+        this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
+        return nil
+    }
+    this.next() // Jumps to token.LPAREN
+
+    this.next() // Jumps to first token in the condition
+
+    var exp = &ast.IfExpression {}
+    exp.Condition = this.parseExpression(LOWEST)
+
+    if !this.isPeek(token.RPAREN) {
+        this.addError("Expected token.RPAREN but got " + this.peek.Type + " instead")
+        return nil
+    }
+    this.next() // Jumps to token.RPAREN
+
+    if !this.isPeek(token.LBRACE) {
+        this.addError("Expected token.LBRACE but got " + this.peek.Type + " instead")
+        return nil
+    }
+    this.next() // Jumps to token.LBRACE
+
+    this.next() // Jumps to the first token in the consequence block
+
+    var consequences = []ast.Statement {}
+    for !this.isCurr(token.RBRACE) && !this.isCurr(token.EOF) {
+        var stm = this.parseStatement()
+        consequences = append(consequences, stm)
+        if this.isCurr(token.SEMICOLON) { this.next() } // Jumps the semicolon
+    }
+    exp.ConsequenceBlock = &ast.StatementsBlock { Statements: consequences }
+
+    if !this.isPeek(token.ELSE) { return exp }
+
+    this.next() // Jumps to token.ELSE
+    this.next() // Jumps to token.LBRACE
+    this.next() // Jumps to the first token in the alternative block
+
+    var alternatives = []ast.Statement {}
+    for !this.isCurr(token.RBRACE) && !this.isCurr(token.EOF) {
+        var stm = this.parseStatement()
+        alternatives = append(alternatives, stm)
+        if this.isCurr(token.SEMICOLON) { this.next() } // Jumps the semicolon
+    }
+    exp.AlternativeBlock = &ast.StatementsBlock { Statements: alternatives }
+
+    return exp
 }
 
 func (this *Parser) makeInfix(left ast.Expression) ast.Expression {

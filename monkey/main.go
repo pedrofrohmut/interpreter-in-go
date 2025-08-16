@@ -22,13 +22,14 @@ func debugMain() {
     // input := "a + b; a + b + c; a + b + c + d;"
     // input := "a + b * c;"
     // input := "-a * b"
-    input := "a + (b * c);"
+    // input := "a + (b * c);"
 
     // Prefix
     // input := "-1 + 2;"
 
     // IfElse
-    // input := "if (foo < bar) { 13 } else { 42 }"
+    input := "if (foo < bar) { 13 } else { 42 };"
+    // input := "if (foo < bar) { 13 };"
 
     // function literal
     // input := "fn (x, y) { x + y; }"
