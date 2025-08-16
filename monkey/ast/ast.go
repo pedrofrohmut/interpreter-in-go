@@ -6,6 +6,7 @@ import (
     "fmt"
     "bytes"
     "strconv"
+    "strings"
     "monkey/utils"
 )
 
@@ -246,5 +247,43 @@ func (this *IfExpression) String() string {
     }
 
     out.WriteString("}")
+    return out.String()
+}
+
+type FunctionLiteral struct {
+    Arguments []Identifier
+    Body *StatementsBlock
+}
+
+// @Impl
+func (this *FunctionLiteral) node() {}
+
+// @Impl
+func (this *FunctionLiteral) expression() {}
+
+// @Impl
+func (this *FunctionLiteral) String() string {
+    var out bytes.Buffer
+
+    var args = []string {}
+    for _, arg := range this.Arguments {
+        args = append(args, arg.String())
+    }
+
+    var stms = []string {}
+    for _, stm := range this.Body.Statements {
+        stms = append(stms, stm.String())
+    }
+
+    out.WriteString("fn (")
+    if len(args) > 0 {
+        out.WriteString(strings.Join(args, ", "))
+    }
+    out.WriteString(") {")
+    if len(stms) > 0 {
+        out.WriteString(" " + strings.Join(stms, " ") + " ")
+    }
+    out.WriteString("}")
+
     return out.String()
 }

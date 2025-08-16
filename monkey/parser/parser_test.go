@@ -7,6 +7,7 @@ import (
     "testing"
     "bytes"
     _"strconv"
+    "strings"
     "monkey/lexer"
     "monkey/ast"
 )
@@ -343,6 +344,25 @@ func TestParsingIfExpressions2(t *testing.T) {
     checkParserErrors(t, parser)
     if len(program.Statements) != 1 {
         t.Fatalf("Expected programs to have %d statements but got %d instead", 1, len(program.Statements))
+    }
+    program.PrintStatements()
+}
+
+func TestParsingFunctionLiterals(t *testing.T) {
+    var input = []string {
+        "fn () {}",
+        "fn (x) { x; }",
+        "fn (x, y) { x + y; }",
+        "fn (x, y, z) { x + y * z; }",
+        "fn (x, y, z) { let tmp = x + y; return tmp * z; }",
+    }
+    var lexer = lexer.NewLexer(strings.Join(input, ";\n"))
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != len(input) {
+        t.Fatalf("Expected programs to have %d statements but got %d instead", len(input), len(program.Statements))
     }
     program.PrintStatements()
 }

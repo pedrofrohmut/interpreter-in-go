@@ -163,6 +163,8 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
         return exp
     case token.IF:
         return this.parseIfExpression()
+    case token.FUNCTION:
+        return this.parseFunctionLiteral()
     default:
         this.addError("Invalid or not covered symbol or prefix to parse: " + this.curr.Type)
         return nil
@@ -220,6 +222,46 @@ func (this *Parser) parseIfExpression() ast.Expression {
     exp.AlternativeBlock = &ast.StatementsBlock { Statements: alternatives }
 
     return exp
+}
+
+func (this *Parser) parseFunctionLiteral() ast.Expression {
+    // Curr is token.FUNCTION
+
+    if !this.isPeek(token.LPAREN) {
+        this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
+        return nil
+    }
+    this.next() // Jumps to the token.LPAREN
+
+    var funLiteral = &ast.FunctionLiteral {}
+    funLiteral.Arguments = []ast.Identifier {}
+
+    this.next() // Jumps to the first token of the function arguments or the right paren if none
+
+    for !this.isCurr(token.RPAREN) { // Parse function args
+        var iden = ast.Identifier { Value: this.curr.Literal }
+        funLiteral.Arguments = append(funLiteral.Arguments, iden)
+        this.next()
+        if this.isCurr(token.COMMA) { this.next() }
+    }
+
+    if !this.isPeek(token.LBRACE) {
+        this.addError("Expected token.LBRACE but got " + this.peek.Type + " instead")
+        return nil
+    }
+    this.next() // Jumps to the token.LBRACE
+
+    this.next() // Jumps to the first token in the function body
+
+    var body = []ast.Statement {}
+    for !this.isCurr(token.RBRACE) {
+        var stm = this.parseStatement()
+        body = append(body, stm)
+        if this.isCurr(token.SEMICOLON) { this.next() } // Jumps the semicolon
+    }
+    funLiteral.Body = &ast.StatementsBlock { Statements: body }
+
+    return funLiteral
 }
 
 func (this *Parser) makeInfix(left ast.Expression) ast.Expression {
@@ -283,7 +325,7 @@ func (this *Parser) ParseProgram() *ast.Program {
             return nil
         }
 
-        if !this.isCurr(token.SEMICOLON) {
+        if !this.isCurr(token.SEMICOLON) && !this.isCurr(token.EOF) {
             this.addError("The statement did not end with a semicolon")
             return nil
         }

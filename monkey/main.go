@@ -28,11 +28,11 @@ func debugMain() {
     // input := "-1 + 2;"
 
     // IfElse
-    input := "if (foo < bar) { 13 } else { 42 };"
+    // input := "if (foo < bar) { 13 } else { 42 };"
     // input := "if (foo < bar) { 13 };"
 
     // function literal
-    // input := "fn (x, y) { x + y; }"
+    input := "fn (x, y) { x + y; }"
     // input := "fn (x, y) {}"
     // input := "fn () {}"
 
