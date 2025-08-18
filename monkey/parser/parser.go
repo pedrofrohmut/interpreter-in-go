@@ -80,6 +80,16 @@ func (this *Parser) peekPrecedence() int {
     return precedences[this.peek.Type]
 }
 
+func (this *Parser) Errors() []string {
+    return this.errors
+}
+
+func (this *Parser) PrintErrors() {
+    for i, err := range this.errors {
+        fmt.Printf("[%d] %s\n", i, err)
+    }
+}
+
 func (this *Parser) addTokenError(tokenType string) {
     err := fmt.Sprintf("Expected token to be %s but got %s instead", tokenType, this.curr.Type)
     this.errors = append(this.errors, err)

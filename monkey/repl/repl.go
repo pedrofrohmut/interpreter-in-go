@@ -36,22 +36,23 @@ func parserRepl() {
         fmt.Printf(">> ")
 
         scanner.Scan()
-        err := scanner.Err()
+        var err = scanner.Err()
         if err != nil { log.Fatal(err) }
 
-        line := scanner.Text()
+        var line = scanner.Text()
         if line == ":q" || line == ":quit" { break }
 
-        lex := lexer.NewLexer(line)
-        par := parser.NewParser(lex)
-        pro := par.ParseProgram()
+        var lexer = lexer.NewLexer(line)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
 
-        _ = pro
-        // if len(par.Errors()) > 0 {
-        //     par.PrintErrors()
-        // } else {
-        //     pro.PrintStatementsWithIndex()
-        // }
+        _ = program
+
+        if len(parser.Errors()) > 0 {
+            parser.PrintErrors()
+        } else {
+            program.PrintStatements()
+        }
     }
 }
 
