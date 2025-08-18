@@ -104,18 +104,18 @@ func TestParsingLetStatements(t *testing.T) {
 }
 
 func TestParsingReturnStatements(t *testing.T) {
-    input := `
-        return 5;
-        return 10;
-        return 15;
-    `
-    lexer := lexer.NewLexer(input)
+    var input = []string {
+        "return 5",
+        "return 10",
+        "return 15",
+    }
+    lexer := lexer.NewLexer(strings.Join(input, ";\n"))
     parser := NewParser(lexer)
     program := parser.ParseProgram()
 
     checkParserErrors(t, parser)
-    if len(program.Statements) != 3 {
-        t.Fatalf("Expected program to have %d statements but got %d instead", 3, len(program.Statements))
+    if len(program.Statements) != len(input) {
+        t.Fatalf("Expected program to have %d statements but got %d instead", len(input), len(program.Statements))
     }
     program.PrintStatements()
 }
@@ -315,7 +315,7 @@ func TestParsingOperatorPrecedence(t *testing.T) {
         }
 
         var stmStr = stm.String()
-        var expected = test.expected + ";"
+        var expected = test.expected
         if stmStr != expected {
             t.Errorf("[%d] Expected statement to be '%s', but got '%s' instead", i, stmStr, expected)
         }

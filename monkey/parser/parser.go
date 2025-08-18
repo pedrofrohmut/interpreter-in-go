@@ -91,19 +91,19 @@ func (this *Parser) addError(msg string) {
 
 func (this *Parser) parseLetStatement() *ast.LetStatement {
     // Start: Curr is token.LET
-
-    stm := ast.NewLetStatement()
+    var stm = &ast.LetStatement {}
     hasError := false
 
+    this.next() // Jumps to the token.IDENT
+
     // Check identifier
-    this.next()
     if !this.isCurr(token.IDENT) {
         this.addTokenError(token.IDENT)
         hasError = true
     }
     if !hasError {
         stm.Identifier = this.curr.Literal
-        this.next()
+        this.next() // Jumps to token.ASSIGN
     }
 
     // Check for asign symbol
@@ -111,25 +111,24 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
         this.addTokenError(token.ASSIGN)
         hasError = true
     }
-    this.next()
+    this.next() // Jumps to the first token of the expression
 
-    // TODO: parse the expression later
-    for !this.isCurr(token.SEMICOLON) { this.next() }
+    stm.Expression = this.parseExpression(LOWEST)
+    this.next() // Jumps to the token.SEMICOLON
 
-    if hasError { return nil } // AFTER
+    if hasError { return nil }
 
-    return stm // Parse should end with curr == token.SEMICOLON
+    return stm
 }
 
 func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
     // Start: Curr is token.RETURN
-
-    var stm = ast.NewReturnStatement()
+    var stm = &ast.ReturnStatement {}
 
     this.next()
 
-    // TODO: parse the expression later
-    for !this.isCurr(token.SEMICOLON) { this.next() }
+    stm.Expression = this.parseExpression(LOWEST)
+    this.next() // Jumps to the token.SEMICOLON
 
     return stm
 }
@@ -173,7 +172,6 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
 
 func (this *Parser) parseIfExpression() ast.Expression {
     // Start: Curr is token.IF
-
     if !this.isPeek(token.LPAREN) {
         this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
         return nil
@@ -226,7 +224,6 @@ func (this *Parser) parseIfExpression() ast.Expression {
 
 func (this *Parser) parseFunctionLiteral() ast.Expression {
     // Start: Curr is token.FUNCTION
-
     if !this.isPeek(token.LPAREN) {
         this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
         return nil
@@ -305,6 +302,9 @@ func (this *Parser) parseInfix(expression ast.Expression) ast.Expression {
     }
 }
 
+/// 1. add to left every time precedence is the same or lower
+/// 2. create a new group every time it goes up
+/// 3. close the group when it goes lower again
 func (this *Parser) createNewInfixGroup(ctxPrecedence int) ast.Expression {
     var parsedValue = this.parsePrefixOrSymbol()
 
@@ -318,9 +318,6 @@ func (this *Parser) createNewInfixGroup(ctxPrecedence int) ast.Expression {
     return acc
 }
 
-/// 1. add to left every time precedence is the same or lower
-/// 2. create a new group every time it goes up
-/// 3. close the group when it goes lower again
 func (this *Parser) parseExpression(precedence int) ast.Expression {
     return this.createNewInfixGroup(precedence)
 }

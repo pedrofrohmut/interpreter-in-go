@@ -11,6 +11,9 @@ import (
 )
 
 func debugMain() {
+    // Return Statement
+    input := "return a + b;"
+
     // Identifier Expressions
     // input := "foo;"
 
@@ -37,7 +40,7 @@ func debugMain() {
     // input := "fn () {}"
 
     // Call Expression
-    input := "add(1, 2 * 3, 4 + 5);"
+    // input := "add(1, 2 * 3, 4 + 5);"
 
     // Call Expression Precedence Test
     // input := "a + add(b * c) + d;" // => "((a + add((b * c))) + d)"

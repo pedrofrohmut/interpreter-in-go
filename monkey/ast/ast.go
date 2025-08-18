@@ -39,14 +39,8 @@ func NewProgram() *Program {
 }
 
 func (this *Program) PrintStatements() {
-    // TODO: Discover why this bullshit is not working
-    if len(this.Statements) == 0 { return }
     for i, stm := range this.Statements {
-        if stm != nil {
-            fmt.Printf("[%d] %s\n", i, stm.String())
-        } else {
-            fmt.Printf("[%d] nil_statement\n", i)
-        }
+        fmt.Printf("[%d] %s;\n", i, stm.String())
     }
 }
 
@@ -63,8 +57,12 @@ func (this *LetStatement) statement() {}
 
 // @Impl
 func (this *LetStatement) String() string {
-    expression := "%TODO%"
-    return "let " + this.Identifier + " = " + expression + ";"
+    var out bytes.Buffer
+    out.WriteString("let ")
+    out.WriteString(this.Identifier)
+    out.WriteString(" = ")
+    out.WriteString(this.Expression.String())
+    return out.String()
 }
 
 func NewLetStatement() *LetStatement {
@@ -83,11 +81,12 @@ func (this *ReturnStatement) statement() {}
 
 // @Impl
 func (this *ReturnStatement) String() string {
-    expression := "%TODO%"
-    if expression == "" {
-        return "return;"
-    }
-    return "return " + expression + ";"
+    if utils.IsNill(this.Expression) { return "return" }
+
+    var out bytes.Buffer
+    out.WriteString("return ")
+    out.WriteString(this.Expression.String())
+    return out.String()
 }
 
 func NewReturnStatement() *ReturnStatement {
@@ -106,7 +105,7 @@ func (this *ExpressionStatement) statement() {}
 
 // @Impl
 func (this *ExpressionStatement) String() string {
-    return this.Expression.String() + ";"
+    return this.Expression.String()
 }
 
 func NewExpressionStatement() *ExpressionStatement {
