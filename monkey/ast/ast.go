@@ -287,3 +287,30 @@ func (this *FunctionLiteral) String() string {
 
     return out.String()
 }
+
+type CallExpression struct {
+    Expression Expression
+    Parameters []Expression
+}
+
+// @Impl
+func (this *CallExpression) node() {}
+
+// @Impl
+func (this *CallExpression) expression() {}
+
+// @Impl
+func (this *CallExpression) String() string {
+    var out bytes.Buffer
+
+    var params = []string {}
+    for _, param := range this.Parameters {
+        params = append(params, param.String())
+    }
+
+    out.WriteString(this.Expression.String() + "(")
+    out.WriteString(strings.Join(params, ", "))
+    out.WriteString(")")
+
+    return out.String()
+}

@@ -90,7 +90,7 @@ func (this *Parser) addError(msg string) {
 }
 
 func (this *Parser) parseLetStatement() *ast.LetStatement {
-    if !this.isCurr(token.LET) { return nil } // BEFORE
+    // Start: Curr is token.LET
 
     stm := ast.NewLetStatement()
     hasError := false
@@ -122,7 +122,7 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
 }
 
 func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
-    if !this.isCurr(token.RETURN) { return nil } // BEFORE
+    // Start: Curr is token.RETURN
 
     var stm = ast.NewReturnStatement()
 
@@ -172,7 +172,7 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
 }
 
 func (this *Parser) parseIfExpression() ast.Expression {
-    // Curr is token.IF
+    // Start: Curr is token.IF
 
     if !this.isPeek(token.LPAREN) {
         this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
@@ -225,7 +225,7 @@ func (this *Parser) parseIfExpression() ast.Expression {
 }
 
 func (this *Parser) parseFunctionLiteral() ast.Expression {
-    // Curr is token.FUNCTION
+    // Start: Curr is token.FUNCTION
 
     if !this.isPeek(token.LPAREN) {
         this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
@@ -265,7 +265,7 @@ func (this *Parser) parseFunctionLiteral() ast.Expression {
 }
 
 func (this *Parser) makeInfix(left ast.Expression) ast.Expression {
-    // Curr is operator
+    // Start: Curr is operator
     var inf = &ast.InfixExpression {}
     inf.Left = left
     inf.Operator = this.curr.Literal
@@ -275,6 +275,36 @@ func (this *Parser) makeInfix(left ast.Expression) ast.Expression {
     return inf
 }
 
+func (this *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
+    // Start: Curr is token.LPAREN
+    var callExp = &ast.CallExpression {}
+    callExp.Expression = fn
+
+    this.next() // Jumps to token.RPAREN or to first token of parameters
+
+    callExp.Parameters = []ast.Expression {}
+    for !this.isCurr(token.RPAREN) {
+        var exp = this.parseExpression(LOWEST)
+        callExp.Parameters = append(callExp.Parameters, exp)
+        this.next()
+        if this.isCurr(token.COMMA) { this.next() }
+    }
+
+    return callExp
+}
+
+func (this *Parser) parseInfix(expression ast.Expression) ast.Expression {
+    switch this.curr.Type {
+    case token.PLUS, token.MINUS, token.SLASH, token.ASTERISK, token.EQ, token.NOT_EQ, token.LT, token.GT:
+        return this.makeInfix(expression)
+    case token.LPAREN:
+        return this.parseCallExpression(expression)
+    default:
+        this.addError("Invalid or not covered symbol for infix parse: " + this.curr.Type)
+        return nil
+    }
+}
+
 func (this *Parser) createNewInfixGroup(ctxPrecedence int) ast.Expression {
     var parsedValue = this.parsePrefixOrSymbol()
 
@@ -282,7 +312,7 @@ func (this *Parser) createNewInfixGroup(ctxPrecedence int) ast.Expression {
 
     for !this.isPeek(token.SEMICOLON) && this.peekPrecedence() > ctxPrecedence {
         this.next() // Curr to operator
-        acc = this.makeInfix(acc)
+        acc = this.parseInfix(acc)
     }
 
     return acc

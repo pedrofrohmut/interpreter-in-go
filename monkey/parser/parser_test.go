@@ -86,7 +86,7 @@ func testInfixExpression(t *testing.T, expression ast.Expression, expectedLeft a
     testLiteralExpression(t, inf.Right, expectedRight)
 }
 
-func TestLetStatements(t *testing.T) {
+func TestParsingLetStatements(t *testing.T) {
     input := `
         let x = 5;
         let y = 10;
@@ -103,7 +103,7 @@ func TestLetStatements(t *testing.T) {
     program.PrintStatements()
 }
 
-func TestReturnStatements(t *testing.T) {
+func TestParsingReturnStatements(t *testing.T) {
     input := `
         return 5;
         return 10;
@@ -120,7 +120,7 @@ func TestReturnStatements(t *testing.T) {
     program.PrintStatements()
 }
 
-func TestIdentifierExpression(t *testing.T) {
+func TestParsingIdentifierExpression(t *testing.T) {
     input := "foobar;"
     lexer := lexer.NewLexer(input)
     parser := NewParser(lexer)
@@ -147,7 +147,7 @@ func TestIdentifierExpression(t *testing.T) {
     }
 }
 
-func TestIntegerExpression(t *testing.T) {
+func TestParsingIntegerExpression(t *testing.T) {
     input := "1234;"
     lexer := lexer.NewLexer(input)
     parser := NewParser(lexer)
@@ -258,7 +258,7 @@ func TestParsingInfixExpression(t *testing.T) {
     }
 }
 
-func TestOperatorPrecedenceParsing(t *testing.T) {
+func TestParsingOperatorPrecedence(t *testing.T) {
     tests := []struct {
           input string;                 expected string
     } {
@@ -355,6 +355,23 @@ func TestParsingFunctionLiterals(t *testing.T) {
         "fn (x, y) { x + y; }",
         "fn (x, y, z) { x + y * z; }",
         "fn (x, y, z) { let tmp = x + y; return tmp * z; }",
+    }
+    var lexer = lexer.NewLexer(strings.Join(input, ";\n"))
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != len(input) {
+        t.Fatalf("Expected programs to have %d statements but got %d instead", len(input), len(program.Statements))
+    }
+    program.PrintStatements()
+}
+
+func TestParsingCallExpressions(t *testing.T) {
+    var input = []string {
+        "add(1, 2 * 3, 4 + 5)",
+        "fn (x, y) { x + y; }(2, 3)",
+        "calls(2, 3, fn (x, y) { x + y; })",
     }
     var lexer = lexer.NewLexer(strings.Join(input, ";\n"))
     var parser = NewParser(lexer)

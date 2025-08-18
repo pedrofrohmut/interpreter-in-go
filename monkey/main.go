@@ -32,12 +32,12 @@ func debugMain() {
     // input := "if (foo < bar) { 13 };"
 
     // function literal
-    input := "fn (x, y) { x + y; }"
+    // input := "fn (x, y) { x + y; }"
     // input := "fn (x, y) {}"
     // input := "fn () {}"
 
     // Call Expression
-    // input := "add(1, 2 * 3, 4 + 5);"
+    input := "add(1, 2 * 3, 4 + 5);"
 
     // Call Expression Precedence Test
     // input := "a + add(b * c) + d;" // => "((a + add((b * c))) + d)"
