@@ -9,6 +9,7 @@ import (
     "log"
     "monkey/lexer"
     "monkey/parser"
+    "monkey/evaluator"
 )
 
 func lexerRepl() {
@@ -46,12 +47,40 @@ func parserRepl() {
         var parser = parser.NewParser(lexer)
         var program = parser.ParseProgram()
 
-        _ = program
-
         if len(parser.Errors()) > 0 {
             parser.PrintErrors()
         } else {
             program.PrintStatements()
+        }
+    }
+}
+
+func evalRepl() {
+    fmt.Println("Tokenize then Parse and then Eval your input")
+    scanner := bufio.NewScanner(os.Stdin)
+    for {
+        fmt.Printf(">> ")
+
+        scanner.Scan()
+        var err = scanner.Err()
+        if err != nil { log.Fatal(err) }
+
+        var line = scanner.Text()
+        if line == ":q" || line == ":quit" { break }
+
+        var lexer = lexer.NewLexer(line)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+
+        if len(parser.Errors()) > 0 {
+            parser.PrintErrors()
+        }
+
+        var obj = evaluator.Eval(program)
+        if obj != nil {
+            fmt.Println(obj.Inspect())
+        } else {
+            fmt.Println("WARN: Evaluation result is nil")
         }
     }
 }
@@ -63,6 +92,8 @@ func Execute(replType string) {
         lexerRepl()
     case "parser":
         parserRepl()
+    case "eval":
+        evalRepl()
     default:
         fmt.Println("You need to pass what kind of REPL you want as argument.")
         fmt.Println("Options are: 'lexer' and 'parser'.")

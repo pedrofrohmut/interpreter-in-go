@@ -8,11 +8,12 @@ import (
     "monkey/repl"
     "monkey/lexer"
     "monkey/parser"
+    "monkey/evaluator"
 )
 
 func debugMain() {
     // Return Statement
-    input := "return a + b;"
+    // input := "return a + b;"
 
     // Identifier Expressions
     // input := "foo;"
@@ -54,21 +55,26 @@ func debugMain() {
     // input := "return 5;" // => "return 5"
     // input := "return 5 + 10;" // => "return (5 + 10)"
 
+    // Eval int
+    input := "5;"
+
     lex := lexer.NewLexer(input)
     par := parser.NewParser(lex)
     pro := par.ParseProgram()
+    eva := evaluator.Eval(pro.Statements[0])
 
     // pro.PrintStatements()
     // pro.PrintStatements()
     // s := pro.String()
     // _ = s
 
+    _ = eva
     _ = pro
 }
 
 func replMain() {
     if len(os.Args) < 2 {
-        fmt.Println("You did not provided the repl type. Add 'lexer' or 'parser' as an argument.")
+        fmt.Println("You did not provided the repl type. Add 'lexer', 'parser' or 'eval' as an argument.")
         os.Exit(0)
     }
     replType := os.Args[1]
