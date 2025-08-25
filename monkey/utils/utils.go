@@ -6,7 +6,6 @@ import (
     "fmt"
     "bytes"
     "reflect"
-    "testing"
 )
 
 func IsNill(tmp any) bool {
@@ -38,12 +37,4 @@ func GetInput[T any](args []T) (string, error) {
         out.WriteString(val + ";\n")
     }
     return out.String(), nil
-}
-
-func TryGetInput[T any](t *testing.T, tests []T) string {
-    var input, err = GetInput(tests)
-    if err != nil {
-        t.Fatalf("ERROR: Could not get input from tests")
-    }
-    return input
 }
