@@ -5,7 +5,12 @@ package evaluator
 import (
     "monkey/object"
     "monkey/ast"
-    _"fmt"
+)
+
+var (
+    TRUE = &object.Boolean { Value: true }
+    FALSE = &object.Boolean { Value: false }
+    NULL = &object.Null {}
 )
 
 func evalStatements(statements []ast.Statement) object.Object {
@@ -24,19 +29,53 @@ func evalStatements(statements []ast.Statement) object.Object {
 func Eval(node ast.Node) object.Object {
     switch node := node.(type) {
 
-    // Statements
+// Statements
     case *ast.Program:
         return evalStatements(node.Statements)
 
     case *ast.ExpressionStatement:
         return Eval(node.Expression)
 
-    // Expressions
+// Expressions
+    case *ast.PrefixExpression:
+        switch node.Operator {
+        case "-":
+            var evaluated = Eval(node.Value)
+            switch x := evaluated.(type) {
+            case *object.Integer:
+                return &object.Integer { Value: -x.Value }
+            default:
+                return NULL
+            }
+        case "!":
+            var evaluated = Eval(node.Value)
+            switch x := evaluated.(type) {
+            case *object.Boolean:
+                if x.Value == true {
+                    return FALSE
+                } else {
+                    return TRUE
+                }
+            case *object.Integer:
+                if x.Value <= 0 {
+                    return TRUE
+                } else {
+                    return FALSE
+                }
+            default:
+                return NULL
+            }
+        }
+
     case *ast.IntegerLiteral:
         return &object.Integer { Value: node.Value }
 
     case *ast.Boolean:
-        return &object.Boolean { Value: node.Value }
+        if node.Value {
+            return TRUE
+        } else {
+            return FALSE
+        }
 
     }
 

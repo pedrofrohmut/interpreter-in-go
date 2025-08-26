@@ -56,7 +56,10 @@ func debugMain() {
     // input := "return 5 + 10;" // => "return (5 + 10)"
 
     // Eval int
-    input := "5;"
+    // input := "5;"
+
+    // Eval Bang
+    input := "!false;"
 
     lex := lexer.NewLexer(input)
     par := parser.NewParser(lex)
@@ -82,7 +85,7 @@ func replMain() {
 }
 
 func main() {
-    const debug = false // Toggle for debugging or to use the repl
+    const debug = true // Toggle for debugging or to use the repl
     if debug {
         debugMain()
     } else {
