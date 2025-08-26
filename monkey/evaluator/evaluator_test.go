@@ -123,7 +123,7 @@ func TestEvalBangOperator(t *testing.T) {
         var evaluated = Eval(stm)
         var res, ok = evaluated.(*object.Boolean)
         if !ok {
-            t.Errorf("Evaluated statement was not evaluated to an object.Boolean. Got %T instead", stm)
+            t.Errorf("Evaluated statement was not evaluated to an object.Boolean. Got %T instead", evaluated)
             continue
         }
         if res.Value != tests[i].expected {
@@ -143,6 +143,9 @@ func TestIfElseExpressions(t *testing.T) {
         { "if (1 > 2) { 10 }", nil },
         { "if (1 > 2) { 10 } else { 20 }", 20 },
         { "if (1 < 2) { 10 } else { 20 }", 10 },
+
+        { "if (true) { 123 } else { 666 }", 123 },
+        { "if (false) { 123 } else { 666 }", 666 },
     }
 
     var input = test_utils.TryGetInput(t, tests)
@@ -152,4 +155,26 @@ func TestIfElseExpressions(t *testing.T) {
 
     test_utils.CheckForParserErrors(t, parser)
     test_utils.CheckProgram(t, program, len(tests))
+
+    for i, stm := range program.Statements {
+        var evaluated = Eval(stm)
+
+        switch x := tests[i].expected.(type) { // Switch on expected type
+        case int:
+            var res, ok = evaluated.(*object.Integer)
+            if !ok {
+                t.Errorf("Expected evaluated object to be type of object.Integer. Got %T instead", evaluated)
+                continue
+            }
+            if res.Value != int64(x) {
+                t.Errorf("Expected result object.Integer value to be %d but got %d instead", x, res.Value)
+            }
+        case nil:
+           var _, ok = evaluated.(*object.Null)
+           if !ok {
+               t.Errorf("Expected evaluated object to be type of object.Null. Got %T instead", evaluated)
+               continue
+           }
+        }
+    }
 }

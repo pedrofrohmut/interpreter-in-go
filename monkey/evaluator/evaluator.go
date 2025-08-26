@@ -30,12 +30,25 @@ func boolToObjBoolean(check bool) *object.Boolean {
     if check { return TRUE } else { return FALSE }
 }
 
+func isTruthy(check any) bool {
+    switch x := check.(type) {
+    case int:
+        return x > 0
+    case int64:
+        return x > 0
+    case bool:
+        return x
+    default:
+        return false
+    }
+}
+
 func Eval(node ast.Node) object.Object {
     switch node := node.(type) {
 
 // Statements
-    case *ast.Program:
-        return evalStatements(node.Statements)
+    // case *ast.Program:
+    //     return evalStatements(node.Statements)
 
     case *ast.ExpressionStatement:
         return Eval(node.Expression)
@@ -55,9 +68,9 @@ func Eval(node ast.Node) object.Object {
             var evaluated = Eval(node.Value)
             switch x := evaluated.(type) {
             case *object.Boolean:
-                return boolToObjBoolean(x.Value == false)
+                return boolToObjBoolean(!isTruthy(x.Value))
             case *object.Integer:
-                return boolToObjBoolean(x.Value <= 0)
+                return boolToObjBoolean(!isTruthy(x.Value))
             default:
                 return NULL
             }
@@ -66,7 +79,6 @@ func Eval(node ast.Node) object.Object {
     case *ast.InfixExpression:
         var left, okLeft = Eval(node.Left).(*object.Integer)
         var right, okRight = Eval(node.Right).(*object.Integer)
-
         if !okLeft || !okRight {
             return NULL
         }
@@ -92,6 +104,26 @@ func Eval(node ast.Node) object.Object {
             return boolToObjBoolean(left.Value > right.Value)
         }
 
+    case *ast.IfExpression:
+        var conditionResult = Eval(node.Condition)
+        switch x := conditionResult.(type) {
+        case *object.Boolean:
+            if isTruthy(x.Value) {
+                return Eval(node.ConsequenceBlock.Statements[0])
+            } else if node.AlternativeBlock != nil {
+                return Eval(node.AlternativeBlock.Statements[0])
+            } else {
+                return NULL
+            }
+        case *object.Integer:
+            if isTruthy(x.Value) {
+                return Eval(node.ConsequenceBlock.Statements[0])
+            } else if node.AlternativeBlock != nil {
+                return Eval(node.AlternativeBlock.Statements[0])
+            } else {
+                return NULL
+            }
+        }
 
     case *ast.IntegerLiteral:
         return &object.Integer { Value: node.Value }
