@@ -26,6 +26,10 @@ func evalStatements(statements []ast.Statement) object.Object {
     return Eval(statements[len(statements) - 1]) // TODO: Just takes the last to compile
 }
 
+func boolToObjBoolean(check bool) *object.Boolean {
+    if check { return TRUE } else { return FALSE }
+}
+
 func Eval(node ast.Node) object.Object {
     switch node := node.(type) {
 
@@ -51,31 +55,49 @@ func Eval(node ast.Node) object.Object {
             var evaluated = Eval(node.Value)
             switch x := evaluated.(type) {
             case *object.Boolean:
-                if x.Value == true {
-                    return FALSE
-                } else {
-                    return TRUE
-                }
+                return boolToObjBoolean(x.Value == false)
             case *object.Integer:
-                if x.Value <= 0 {
-                    return TRUE
-                } else {
-                    return FALSE
-                }
+                return boolToObjBoolean(x.Value <= 0)
             default:
                 return NULL
             }
         }
 
+    case *ast.InfixExpression:
+        var left, okLeft = Eval(node.Left).(*object.Integer)
+        var right, okRight = Eval(node.Right).(*object.Integer)
+
+        if !okLeft || !okRight {
+            return NULL
+        }
+
+        switch node.Operator {
+    // Math operations
+        case "+":
+            return &object.Integer { Value: left.Value + right.Value }
+        case "-":
+            return &object.Integer { Value: left.Value - right.Value }
+        case "*":
+            return &object.Integer { Value: left.Value * right.Value }
+        case "/":
+            return &object.Integer { Value: left.Value / right.Value }
+    // Booleans operations
+        case "==":
+            return boolToObjBoolean(left.Value == right.Value)
+        case "!=":
+            return boolToObjBoolean(left.Value != right.Value)
+        case "<":
+            return boolToObjBoolean(left.Value < right.Value)
+        case ">":
+            return boolToObjBoolean(left.Value > right.Value)
+        }
+
+
     case *ast.IntegerLiteral:
         return &object.Integer { Value: node.Value }
 
     case *ast.Boolean:
-        if node.Value {
-            return TRUE
-        } else {
-            return FALSE
-        }
+        return boolToObjBoolean(node.Value)
 
     }
 

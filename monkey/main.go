@@ -85,7 +85,7 @@ func replMain() {
 }
 
 func main() {
-    const debug = true // Toggle for debugging or to use the repl
+    const debug = false // Toggle for debugging or to use the repl
     if debug {
         debugMain()
     } else {
