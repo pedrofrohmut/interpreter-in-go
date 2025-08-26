@@ -7,7 +7,7 @@ import (
     "monkey/lexer"
     "monkey/parser"
     "monkey/object"
-    "monkey/tezts"
+    "monkey/test_utils"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
@@ -39,13 +39,13 @@ func TestEvalIntegerExpression(t *testing.T) {
         { "(5 + 10 * 2 + 15 / 3) * 2 + -10", 50 },
     }
 
-    var input = tezts.TryGetInput(t, tests)
+    var input = test_utils.TryGetInput(t, tests)
     var lexer = lexer.NewLexer(input)
     var parser = parser.NewParser(lexer)
     var program = parser.ParseProgram()
 
-    tezts.CheckForParserErrors(t, parser)
-    tezts.CheckProgram(t, program, len(tests))
+    test_utils.CheckForParserErrors(t, parser)
+    test_utils.CheckProgram(t, program, len(tests))
 
     for i, stm := range program.Statements {
         var evaluated = Eval(stm)
@@ -78,13 +78,13 @@ func TestEvalBooleanExpression(t *testing.T) {
         { "1 != 2", true  },
     }
 
-    var input = tezts.TryGetInput(t, tests)
+    var input = test_utils.TryGetInput(t, tests)
     var lexer = lexer.NewLexer(input)
     var parser = parser.NewParser(lexer)
     var program = parser.ParseProgram()
 
-    tezts.CheckForParserErrors(t, parser)
-    tezts.CheckProgram(t, program, len(tests))
+    test_utils.CheckForParserErrors(t, parser)
+    test_utils.CheckProgram(t, program, len(tests))
 
     for i, stm := range program.Statements {
         var evaluated = Eval(stm)
@@ -111,13 +111,13 @@ func TestEvalBangOperator(t *testing.T) {
         { "!!5", true },
     }
 
-    var input = tezts.TryGetInput(t, tests)
+    var input = test_utils.TryGetInput(t, tests)
     var lexer = lexer.NewLexer(input)
     var parser = parser.NewParser(lexer)
     var program = parser.ParseProgram()
 
-    tezts.CheckForParserErrors(t, parser)
-    tezts.CheckProgram(t, program, len(tests))
+    test_utils.CheckForParserErrors(t, parser)
+    test_utils.CheckProgram(t, program, len(tests))
 
     for i, stm := range program.Statements {
         var evaluated = Eval(stm)
@@ -130,4 +130,26 @@ func TestEvalBangOperator(t *testing.T) {
             t.Errorf("Expected result object value to be %t but got %t instead", tests[i].expected, res.Value)
         }
     }
+}
+
+func TestIfElseExpressions(t *testing.T) {
+    var tests = []struct {
+        input string; expected any
+    } {
+        { "if (true) { 10 }", 10 },
+        { "if (false) { 10 }", nil },
+        { "if (1) { 10 }", 10 },
+        { "if (1 < 2) { 10 }", 10 },
+        { "if (1 > 2) { 10 }", nil },
+        { "if (1 > 2) { 10 } else { 20 }", 20 },
+        { "if (1 < 2) { 10 } else { 20 }", 10 },
+    }
+
+    var input = test_utils.TryGetInput(t, tests)
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    test_utils.CheckForParserErrors(t, parser)
+    test_utils.CheckProgram(t, program, len(tests))
 }

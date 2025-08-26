@@ -1,7 +1,7 @@
 // Have to use this weird name because golang do some auto stuff with 'tests'
 // And cannot just put on utils because of cycling imports
 
-package tezts
+package test_utils
 
 import (
     "monkey/utils"
