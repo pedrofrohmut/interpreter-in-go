@@ -178,3 +178,50 @@ func TestIfElseExpressions(t *testing.T) {
         }
     }
 }
+
+func TestReturnStatements(t *testing.T) {
+    var tests = []struct {
+        input string; expected int64
+    } {
+        { "return 5", 5 },
+        { "return 10", 10 },
+        { "return 15", 15 },
+        { "return 2 * 10", 20 },
+        { "return 2 * 5; 9", 10 },
+        { "9; return 3 * 7; 9", 21 },
+        {
+            `
+                if (10 > 1) {
+                    if (10 > 1) {
+                        return 10;
+                    }
+                    return 1;
+                }
+            `,
+            10,
+        },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+
+        test_utils.CheckForParserErrors(t, parser)
+
+        var evaluated = Eval(program)
+        var returnObj, ok = evaluated.(*object.ReturnValue)
+        if !ok {
+            t.Errorf("Expected evaluated object to be type of object.ReturnValue. Got %T instead", evaluated)
+            continue
+        }
+        var intObj, ok2 = returnObj.Value.(*object.Integer)
+        if !ok2 {
+            t.Errorf("Expected return object value to be type of object.Integer. Got %T instead", returnObj.Value)
+            continue
+        }
+        if intObj.Value != test.expected {
+            t.Errorf("Expected return value object to be object.Integer with value %d but got %d instead", test.expected, intObj.Value)
+        }
+    }
+}

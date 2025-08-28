@@ -59,12 +59,17 @@ func debugMain() {
     // input := "5;"
 
     // Eval Bang
-    input := "!false;"
+    // input := "!false;"
 
-    lex := lexer.NewLexer(input)
-    par := parser.NewParser(lex)
-    pro := par.ParseProgram()
-    eva := evaluator.Eval(pro.Statements[0])
+    // Eval Return
+    // input := "9; return 3 * 7; 9;"
+    input := "return 3 * 7;"
+
+    lexer := lexer.NewLexer(input)
+    parser := parser.NewParser(lexer)
+    program := parser.ParseProgram()
+    // eva := evaluator.Eval(pro.Statements[0])
+    eva := evaluator.Eval(program)
 
     // pro.PrintStatements()
     // pro.PrintStatements()
@@ -72,7 +77,7 @@ func debugMain() {
     // _ = s
 
     _ = eva
-    _ = pro
+    _ = program
 }
 
 func replMain() {
@@ -85,7 +90,7 @@ func replMain() {
 }
 
 func main() {
-    const debug = false // Toggle for debugging or to use the repl
+    const debug = true // Toggle for debugging or to use the repl
     if debug {
         debugMain()
     } else {

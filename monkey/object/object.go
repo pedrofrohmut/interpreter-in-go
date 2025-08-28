@@ -7,9 +7,10 @@ import (
 )
 
 const (
-    INT_OBJ = "INTEGER"
-    BOOL_OBJ = "BOOLEAN"
-    NULL_OBJ = "NULL"
+    IntType = "INTEGER_TYPE"
+    BoolType = "BOOLEAN_TYPE"
+    NullType = "NULL_TYPE"
+    ReturnType = "RETURN_TYPE"
 )
 
 type ObjectType string
@@ -30,7 +31,7 @@ func (this *Integer) Inspect() string {
 
 // @Impl
 func (this *Integer) Type() ObjectType {
-    return INT_OBJ
+    return IntType
 }
 
 type Boolean struct {
@@ -44,7 +45,7 @@ func (this *Boolean) Inspect() string {
 
 // @Impl
 func (this *Boolean) Type() ObjectType {
-    return BOOL_OBJ
+    return BoolType
 }
 
 type Null struct {}
@@ -56,5 +57,19 @@ func (this *Null) Inspect() string {
 
 // @Impl
 func (this *Null) Type() ObjectType {
-    return NULL_OBJ
+    return NullType
+}
+
+type ReturnValue struct {
+    Value Object
+}
+
+// @Impl
+func (this *ReturnValue) Inspect() string {
+    return this.Value.Inspect()
+}
+
+// @Impl
+func (this *ReturnValue) Type() ObjectType {
+    return ReturnType
 }

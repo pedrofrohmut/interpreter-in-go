@@ -15,15 +15,17 @@ var (
 
 func evalStatements(statements []ast.Statement) object.Object {
     if len(statements) == 0 { return nil }
-    // var evtds = []object.Object {}
-    // for _, stm := range statements {
-    //     var evtd = Eval(stm)
-    //     if evtd != nil {
-    //         evtds = append(evtds, evtd)
-    //     }
-    // }
-    // fmt.Println(evtds)
-    return Eval(statements[len(statements) - 1]) // TODO: Just takes the last to compile
+
+    var result object.Object
+
+    for _, stm := range statements {
+        result = Eval(stm)
+        if result.Type() == object.ReturnType { // Return early when return type is found
+            return result
+        }
+    }
+
+    return result // Return the last eval if no return is defined
 }
 
 func objFromBool(check bool) *object.Boolean {
@@ -47,8 +49,17 @@ func Eval(node ast.Node) object.Object {
     switch node := node.(type) {
 
 // Statements
-    // case *ast.Program:
-    //     return evalStatements(node.Statements)
+    case *ast.Program:
+        return evalStatements(node.Statements)
+
+    case *ast.ReturnStatement:
+        var value = Eval(node.Expression)
+        switch x := value.(type) {
+        case *object.Null:
+            return &object.ReturnValue { Value: ObjNull }
+        default:
+            return &object.ReturnValue { Value: x }
+        }
 
     case *ast.ExpressionStatement:
         return Eval(node.Expression)
@@ -104,6 +115,7 @@ func Eval(node ast.Node) object.Object {
             return objFromBool(left.Value > right.Value)
         }
 
+// TODO: Make if eval all needed statements
     case *ast.IfExpression:
         var conditionResult = Eval(node.Condition)
         switch x := conditionResult.(type) {
