@@ -7,10 +7,11 @@ import (
 )
 
 const (
-    IntType = "INTEGER_TYPE"
-    BoolType = "BOOLEAN_TYPE"
-    NullType = "NULL_TYPE"
+    IntType    = "INTEGER_TYPE"
+    BoolType   = "BOOLEAN_TYPE"
+    NullType   = "NULL_TYPE"
     ReturnType = "RETURN_TYPE"
+    ErrorType  = "ERROR_TYPE"
 )
 
 type ObjectType string
@@ -72,4 +73,18 @@ func (this *ReturnValue) Inspect() string {
 // @Impl
 func (this *ReturnValue) Type() ObjectType {
     return ReturnType
+}
+
+type Error struct {
+    Message string
+}
+
+// @Impl
+func (this *Error) Inspect() string {
+    return fmt.Sprintf("ERROR: %s", this.Message)
+}
+
+// @Impl
+func (this *Error) Type() ObjectType {
+    return ErrorType
 }

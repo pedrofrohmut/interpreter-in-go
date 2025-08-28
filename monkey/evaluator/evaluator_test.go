@@ -14,28 +14,28 @@ func TestEvalIntegerExpression(t *testing.T) {
     var tests = []struct {
         input string; expected int64
     } {
-        { "5", 5 },
+        { "5",  5  },
         { "10", 10 },
         { "15", 15 },
 
         // Prefix Expressions
-        { "-5", -5 },
+        { "-5",  -5  },
         { "-10", -10 },
         { "-15", -15 },
 
         // Infix Expressions
-        { "5 + 5", 10 },
-        { "5 + 5 + 5", 15 },
-        { "5 + 5 + 5 + 5 - 10", 10 },
-        { "2 * 2 * 2 * 2 * 2", 32 },
-        { "-50 + 100 + -50", 0 },
-        { "5 * 2 + 10", 20 },
-        { "5 + 2 * 10", 25 },
-        { "20 + 2 * -10", 0 },
-        { "50 / 2 * 2 + 10", 60 },
-        { "2 * (5 + 10)", 30 },
-        { "3 * 3 * 3 + 10", 37 },
-        { "3 * (3 * 3) + 10", 37 },
+        { "5 + 5",                           10 },
+        { "5 + 5 + 5",                       15 },
+        { "5 + 5 + 5 + 5 - 10",              10 },
+        { "2 * 2 * 2 * 2 * 2",               32 },
+        { "-50 + 100 + -50",                 0  },
+        { "5 * 2 + 10",                      20 },
+        { "5 + 2 * 10",                      25 },
+        { "20 + 2 * -10",                    0  },
+        { "50 / 2 * 2 + 10",                 60 },
+        { "2 * (5 + 10)",                    30 },
+        { "3 * 3 * 3 + 10",                  37 },
+        { "3 * (3 * 3) + 10",                37 },
         { "(5 + 10 * 2 + 15 / 3) * 2 + -10", 50 },
     }
 
@@ -103,12 +103,12 @@ func TestEvalBangOperator(t *testing.T) {
     var tests = []struct {
         input string; expected bool
     } {
-        { "!true", false },
-        { "!false", true },
-        { "!!true", true },
+        { "!true",   false },
+        { "!false",  true  },
+        { "!!true",  true  },
         { "!!false", false },
-        { "!5", false },
-        { "!!5", true },
+        { "!5",      false },
+        { "!!5",     true  },
     }
 
     var input = test_utils.TryGetInput(t, tests)
@@ -136,15 +136,15 @@ func TestIfElseExpressions(t *testing.T) {
     var tests = []struct {
         input string; expected any
     } {
-        { "if (true) { 10 }", 10 },
-        { "if (false) { 10 }", nil },
-        { "if (1) { 10 }", 10 },
-        { "if (1 < 2) { 10 }", 10 },
-        { "if (1 > 2) { 10 }", nil },
-        { "if (1 > 2) { 10 } else { 20 }", 20 },
-        { "if (1 < 2) { 10 } else { 20 }", 10 },
+        { "if (true) { 10 }",                10  },
+        { "if (false) { 10 }",               nil },
+        { "if (1) { 10 }",                   10  },
+        { "if (1 < 2) { 10 }",               10  },
+        { "if (1 > 2) { 10 }",               nil },
+        { "if (1 > 2) { 10 } else { 20 }",   20  },
+        { "if (1 < 2) { 10 } else { 20 }",   10  },
 
-        { "if (true) { 123 } else { 666 }", 123 },
+        { "if (true) { 123 } else { 666 }",  123 },
         { "if (false) { 123 } else { 666 }", 666 },
     }
 
@@ -183,12 +183,12 @@ func TestReturnStatements(t *testing.T) {
     var tests = []struct {
         input string; expected int64
     } {
-        { "return 5", 5 },
-        { "return 10", 10 },
-        { "return 15", 15 },
-        { "return 2 * 10", 20 },
-        { "return 2 * 5; 9", 10 },
-        { "9; return 3 * 7; 9", 21 },
+        { "return 5;",           5  },
+        { "return 10;",          10 },
+        { "return 15;",          15 },
+        { "return 2 * 10;",      20 },
+        { "return 2 * 5; 9;",    10 },
+        { "9; return 3 * 7; 9;", 21 },
         {
             `
                 if (10 > 1) {
@@ -222,6 +222,48 @@ func TestReturnStatements(t *testing.T) {
         }
         if intObj.Value != test.expected {
             t.Errorf("Expected return value object to be object.Integer with value %d but got %d instead", test.expected, intObj.Value)
+        }
+    }
+}
+
+func TestErrorHandling(t *testing.T) {
+    var tests = []struct {
+        input string; expected string
+    } {
+        { "5 + true;",                     "type mismatch: Integer + Boolean"    },
+        { "5 + true; 9;",                  "type mismatch: Integer + Boolean"    },
+        { "-true;",                        "unknown operator: -Boolean"          },
+        { "true + false;",                 "unknown operator: Boolean + Boolean" },
+        { "5; true + false; 5;",           "unknown operator: Boolean + Boolean" },
+        { "if (10 > 1) { true + false; }", "unknown operator: Boolean + Boolean" },
+        {
+            `
+                if (10 > 1) {
+                    if (10 > 1) {
+                        return true + false;
+                    }
+                    return 1;
+                }
+            `,
+            "unknown operator: Boolean + Boolean",
+        },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+
+        test_utils.CheckForParserErrors(t, parser)
+
+        var evaluated = Eval(program)
+        var errObj, ok = evaluated.(*object.Error)
+        if !ok {
+            t.Errorf("Expected evaluated object to be of object.Error. Got %T instead", evaluated)
+            continue
+        }
+        if errObj.Message != test.expected {
+            t.Errorf("Expected error object message to be %s but got %s instead", test.expected, errObj.Message)
         }
     }
 }

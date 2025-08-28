@@ -63,7 +63,10 @@ func debugMain() {
 
     // Eval Return
     // input := "9; return 3 * 7; 9;"
-    input := "return 3 * 7;"
+    // input := "return 3 * 7;"
+
+    // Eval error
+    input := "5 + true;"
 
     lexer := lexer.NewLexer(input)
     parser := parser.NewParser(lexer)
