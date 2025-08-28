@@ -15,26 +15,25 @@ const (
     // iota gives the constants a ascending numbers
     // _ skips the 0 value
     _ int = iota
-    LOWEST
-    EQUALS      // ==
-    LESSGREATER // > or <
-    SUM         // + -
-    PRODUCT     // * /
-    PREFIX      // -X or !X
-    CALL        // myFunction(X)
-    HIGHEST
+    Lowest
+    Equals      // ==
+    LessGreater // > or <
+    Sum         // + -
+    Product     // * /
+    Prefix      // -X or !X
+    Call        // myFunction(X)
 )
 
 var precedences = map[string] int {
-    token.EQ:       EQUALS,
-    token.NOT_EQ:   EQUALS,
-    token.LT:       LESSGREATER,
-    token.GT:       LESSGREATER,
-    token.PLUS:     SUM,
-    token.MINUS:    SUM,
-    token.SLASH:    PRODUCT,
-    token.ASTERISK: PRODUCT,
-    token.LPAREN:   CALL,
+    token.Eq:       Equals,
+    token.NotEq:   Equals,
+    token.Lt:       LessGreater,
+    token.Gt:       LessGreater,
+    token.Plus:     Sum,
+    token.Minus:    Sum,
+    token.Slash:    Product,
+    token.Asterisk: Product,
+    token.Lparen:   Call,
 }
 
 type Parser struct {
@@ -69,7 +68,7 @@ func (this *Parser) next() {
 }
 
 func (this *Parser) hasNext() bool {
-    return this.curr.Type != token.EOF
+    return this.curr.Type != token.Eof
 }
 
 func (this *Parser) currPrecedence() int {
@@ -107,8 +106,8 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
     this.next() // Jumps to the token.IDENT
 
     // Check identifier
-    if !this.isCurr(token.IDENT) {
-        this.addTokenError(token.IDENT)
+    if !this.isCurr(token.Ident) {
+        this.addTokenError(token.Ident)
         hasError = true
     }
     if !hasError {
@@ -117,13 +116,13 @@ func (this *Parser) parseLetStatement() *ast.LetStatement {
     }
 
     // Check for asign symbol
-    if !this.isCurr(token.ASSIGN) {
-        this.addTokenError(token.ASSIGN)
+    if !this.isCurr(token.Assign) {
+        this.addTokenError(token.Assign)
         hasError = true
     }
     this.next() // Jumps to the first token of the expression
 
-    stm.Expression = this.parseExpression(LOWEST)
+    stm.Expression = this.parseExpression(Lowest)
     this.next() // Jumps to the token.SEMICOLON
 
     if hasError { return nil }
@@ -137,7 +136,7 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
 
     this.next()
 
-    stm.Expression = this.parseExpression(LOWEST)
+    stm.Expression = this.parseExpression(Lowest)
     this.next() // Jumps to the token.SEMICOLON
 
     return stm
@@ -145,34 +144,34 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 func (this *Parser) parsePrefixOrSymbol() ast.Expression {
     switch this.curr.Type {
-    case token.BANG, token.MINUS:
+    case token.Bang, token.Minus:
         var pre = &ast.PrefixExpression {}
         pre.Operator = this.curr.Literal
         this.next()
-        pre.Value = this.parseExpression(PREFIX)
+        pre.Value = this.parseExpression(Prefix)
         return pre
-    case token.TRUE, token.FALSE:
-        return &ast.Boolean { Value: this.isCurr(token.TRUE) } // Easy convert to bool trick :D
-    case token.IDENT:
+    case token.True, token.False:
+        return &ast.Boolean { Value: this.isCurr(token.True) } // Easy convert to bool trick :D
+    case token.Ident:
         return &ast.Identifier { Value: this.curr.Literal }
-    case token.INT:
+    case token.Int:
         var intValue, err = strconv.ParseInt(this.curr.Literal, 10, 64)
         if err != nil {
             this.addError("Could not convert current token literal to int64")
         }
         return &ast.IntegerLiteral { Value: intValue }
-    case token.LPAREN:
+    case token.Lparen:
         this.next() // Jumps the token.LPAREN
-        var exp = this.parseExpression(LOWEST)
-        if !this.isPeek(token.RPAREN) {
+        var exp = this.parseExpression(Lowest)
+        if !this.isPeek(token.Rparen) {
             this.addError("Grouped expression did not end with and token.RPAREN")
             return nil
         }
         this.next() // Jumps the token.RPAREN
         return exp
-    case token.IF:
+    case token.If:
         return this.parseIfExpression()
-    case token.FUNCTION:
+    case token.Function:
         return this.parseFunctionLiteral()
     default:
         this.addError("Invalid or not covered symbol or prefix to parse: " + this.curr.Type)
@@ -182,7 +181,7 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
 
 func (this *Parser) parseIfExpression() ast.Expression {
     // Start: Curr is token.IF
-    if !this.isPeek(token.LPAREN) {
+    if !this.isPeek(token.Lparen) {
         this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
         return nil
     }
@@ -191,15 +190,15 @@ func (this *Parser) parseIfExpression() ast.Expression {
     this.next() // Jumps to first token in the condition
 
     var exp = &ast.IfExpression {}
-    exp.Condition = this.parseExpression(LOWEST)
+    exp.Condition = this.parseExpression(Lowest)
 
-    if !this.isPeek(token.RPAREN) {
+    if !this.isPeek(token.Rparen) {
         this.addError("Expected token.RPAREN but got " + this.peek.Type + " instead")
         return nil
     }
     this.next() // Jumps to token.RPAREN
 
-    if !this.isPeek(token.LBRACE) {
+    if !this.isPeek(token.Lbrace) {
         this.addError("Expected token.LBRACE but got " + this.peek.Type + " instead")
         return nil
     }
@@ -208,24 +207,24 @@ func (this *Parser) parseIfExpression() ast.Expression {
     this.next() // Jumps to the first token in the consequence block
 
     var consequences = []ast.Statement {}
-    for !this.isCurr(token.RBRACE) && !this.isCurr(token.EOF) {
+    for !this.isCurr(token.Rbrace) && !this.isCurr(token.Eof) {
         var stm = this.parseStatement()
         consequences = append(consequences, stm)
-        if this.isCurr(token.SEMICOLON) { this.next() } // Jumps the semicolon
+        if this.isCurr(token.Semicolon) { this.next() } // Jumps the semicolon
     }
     exp.ConsequenceBlock = &ast.StatementsBlock { Statements: consequences }
 
-    if !this.isPeek(token.ELSE) { return exp }
+    if !this.isPeek(token.Else) { return exp }
 
     this.next() // Jumps to token.ELSE
     this.next() // Jumps to token.LBRACE
     this.next() // Jumps to the first token in the alternative block
 
     var alternatives = []ast.Statement {}
-    for !this.isCurr(token.RBRACE) && !this.isCurr(token.EOF) {
+    for !this.isCurr(token.Rbrace) && !this.isCurr(token.Eof) {
         var stm = this.parseStatement()
         alternatives = append(alternatives, stm)
-        if this.isCurr(token.SEMICOLON) { this.next() } // Jumps the semicolon
+        if this.isCurr(token.Semicolon) { this.next() } // Jumps the semicolon
     }
     exp.AlternativeBlock = &ast.StatementsBlock { Statements: alternatives }
 
@@ -234,7 +233,7 @@ func (this *Parser) parseIfExpression() ast.Expression {
 
 func (this *Parser) parseFunctionLiteral() ast.Expression {
     // Start: Curr is token.FUNCTION
-    if !this.isPeek(token.LPAREN) {
+    if !this.isPeek(token.Lparen) {
         this.addError("Expected token.LPAREN but got " + this.peek.Type + " instead")
         return nil
     }
@@ -245,14 +244,14 @@ func (this *Parser) parseFunctionLiteral() ast.Expression {
 
     this.next() // Jumps to the first token of the function arguments or the right paren if none
 
-    for !this.isCurr(token.RPAREN) { // Parse function args
+    for !this.isCurr(token.Rparen) { // Parse function args
         var iden = ast.Identifier { Value: this.curr.Literal }
         funLiteral.Arguments = append(funLiteral.Arguments, iden)
         this.next()
-        if this.isCurr(token.COMMA) { this.next() }
+        if this.isCurr(token.Comma) { this.next() }
     }
 
-    if !this.isPeek(token.LBRACE) {
+    if !this.isPeek(token.Lbrace) {
         this.addError("Expected token.LBRACE but got " + this.peek.Type + " instead")
         return nil
     }
@@ -261,10 +260,10 @@ func (this *Parser) parseFunctionLiteral() ast.Expression {
     this.next() // Jumps to the first token in the function body
 
     var body = []ast.Statement {}
-    for !this.isCurr(token.RBRACE) {
+    for !this.isCurr(token.Rbrace) {
         var stm = this.parseStatement()
         body = append(body, stm)
-        if this.isCurr(token.SEMICOLON) { this.next() } // Jumps the semicolon
+        if this.isCurr(token.Semicolon) { this.next() } // Jumps the semicolon
     }
     funLiteral.Body = &ast.StatementsBlock { Statements: body }
 
@@ -290,11 +289,11 @@ func (this *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
     this.next() // Jumps to token.RPAREN or to first token of parameters
 
     callExp.Parameters = []ast.Expression {}
-    for !this.isCurr(token.RPAREN) {
-        var exp = this.parseExpression(LOWEST)
+    for !this.isCurr(token.Rparen) {
+        var exp = this.parseExpression(Lowest)
         callExp.Parameters = append(callExp.Parameters, exp)
         this.next()
-        if this.isCurr(token.COMMA) { this.next() }
+        if this.isCurr(token.Comma) { this.next() }
     }
 
     return callExp
@@ -302,9 +301,9 @@ func (this *Parser) parseCallExpression(fn ast.Expression) ast.Expression {
 
 func (this *Parser) parseInfix(expression ast.Expression) ast.Expression {
     switch this.curr.Type {
-    case token.PLUS, token.MINUS, token.SLASH, token.ASTERISK, token.EQ, token.NOT_EQ, token.LT, token.GT:
+    case token.Plus, token.Minus, token.Slash, token.Asterisk, token.Eq, token.NotEq, token.Lt, token.Gt:
         return this.makeInfix(expression)
-    case token.LPAREN:
+    case token.Lparen:
         return this.parseCallExpression(expression)
     default:
         this.addError("Invalid or not covered symbol for infix parse: " + this.curr.Type)
@@ -320,7 +319,7 @@ func (this *Parser) createNewInfixGroup(ctxPrecedence int) ast.Expression {
 
     var acc = parsedValue
 
-    for !this.isPeek(token.SEMICOLON) && this.peekPrecedence() > ctxPrecedence {
+    for !this.isPeek(token.Semicolon) && this.peekPrecedence() > ctxPrecedence {
         this.next() // Curr to operator
         acc = this.parseInfix(acc)
     }
@@ -334,18 +333,18 @@ func (this *Parser) parseExpression(precedence int) ast.Expression {
 
 func (this *Parser) parseExpressionStatement() *ast.ExpressionStatement {
     stm := &ast.ExpressionStatement {}
-    stm.Expression = this.parseExpression(LOWEST)
+    stm.Expression = this.parseExpression(Lowest)
     this.next()
     return stm
 }
 
 func (this *Parser) parseStatement() ast.Statement {
     switch this.curr.Type {
-    case token.LET:
+    case token.Let:
         return this.parseLetStatement()
-    case token.RETURN:
+    case token.Return:
         return this.parseReturnStatement()
-    case token.ILLEGAL:
+    case token.Illegal:
         return nil
     default:
         return this.parseExpressionStatement()
@@ -362,7 +361,7 @@ func (this *Parser) ParseProgram() *ast.Program {
             return nil
         }
 
-        if !this.isCurr(token.SEMICOLON) && !this.isCurr(token.EOF) {
+        if !this.isCurr(token.Semicolon) && !this.isCurr(token.Eof) {
             this.addError("The statement did not end with a semicolon")
             return nil
         }

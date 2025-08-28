@@ -4,45 +4,45 @@ package token
 
 const (
     // Special types
-    ILLEGAL    = "ILLEGAL"
-    EOF        = "EOF"
+    Illegal    = "ILLEGAL"
+    Eof        = "EOF"
 
     // indentifiers + literals
-    IDENT      = "IDENT" // add, foobar, x, y
-    INT        = "INT"
+    Ident      = "IDENT" // add, foobar, x, y
+    Int        = "INT"
 
     // Operators
-    ASSIGN     = "="
-    PLUS       = "+"
-    MINUS      = "-"
-    BANG       = "!"
-    ASTERISK   = "*"
-    SLASH      = "/"
+    Assign     = "="
+    Plus       = "+"
+    Minus      = "-"
+    Bang       = "!"
+    Asterisk   = "*"
+    Slash      = "/"
 
     // Comparison
-    LT         = "<"
-    GT         = ">"
-    EQ         = "=="
-    NOT_EQ     = "!="
+    Lt         = "<"
+    Gt         = ">"
+    Eq         = "=="
+    NotEq     = "!="
 
     // Delimiters
-    COMMA      = ","
-    SEMICOLON  = ";"
+    Comma      = ","
+    Semicolon  = ";"
 
     // Grouping
-    LPAREN     = "("
-    RPAREN     = ")"
-    LBRACE     = "{"
-    RBRACE     = "}"
+    Lparen     = "("
+    Rparen     = ")"
+    Lbrace     = "{"
+    Rbrace     = "}"
 
     // Keywords
-    FUNCTION   = "FUNCTION"
-    LET        = "LET"
-    TRUE       = "TRUE"
-    FALSE      = "FALSE"
-    IF         = "IF"
-    ELSE       = "ELSE"
-    RETURN     = "RETURN"
+    Function   = "FUNCTION"
+    Let        = "LET"
+    True       = "TRUE"
+    False      = "FALSE"
+    If         = "IF"
+    Else       = "ELSE"
+    Return     = "RETURN"
 )
 
 type Token struct {
@@ -60,7 +60,7 @@ func NewTokenStr(tokenType string, value string) Token {
 
 func IsOperator(token Token) bool {
     switch token.Type {
-    case PLUS, MINUS, BANG, ASTERISK, SLASH, LT, GT, EQ, NOT_EQ:
+    case Plus, Minus, Bang, Asterisk, Slash, Lt, Gt, Eq, NotEq:
         return true
     default:
         return false

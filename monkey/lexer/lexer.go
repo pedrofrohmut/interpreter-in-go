@@ -113,76 +113,76 @@ func (this *Lexer) GetNextToken() token.Token {
     case '=':
         switch this.getNextCh() {
         case '=':
-            tk = token.NewTokenStr(token.EQ, "==")
+            tk = token.NewTokenStr(token.Eq, "==")
             this.nextPos() // Needed for 2 characters operators
         default:
-            tk = token.NewToken(token.ASSIGN, this.getCh())
+            tk = token.NewToken(token.Assign, this.getCh())
         }
     case '+':
-        tk = token.NewToken(token.PLUS, this.getCh())
+        tk = token.NewToken(token.Plus, this.getCh())
     case '-':
-        tk = token.NewToken(token.MINUS, this.getCh())
+        tk = token.NewToken(token.Minus, this.getCh())
     case '!':
         switch this.getNextCh() {
         case '=':
-            tk = token.NewTokenStr(token.NOT_EQ, "!=")
+            tk = token.NewTokenStr(token.NotEq, "!=")
             this.nextPos() // Needed for 2 characters operators
         default:
-            tk = token.NewToken(token.BANG, this.getCh())
+            tk = token.NewToken(token.Bang, this.getCh())
         }
     case '*':
-        tk = token.NewToken(token.ASTERISK, this.getCh())
+        tk = token.NewToken(token.Asterisk, this.getCh())
     case '/':
-        tk = token.NewToken(token.SLASH, this.getCh())
+        tk = token.NewToken(token.Slash, this.getCh())
     case '<':
-        tk = token.NewToken(token.LT, this.getCh())
+        tk = token.NewToken(token.Lt, this.getCh())
     case '>':
-        tk = token.NewToken(token.GT, this.getCh())
+        tk = token.NewToken(token.Gt, this.getCh())
 
     // Delimiter
     case ',':
-        tk = token.NewToken(token.COMMA, this.getCh())
+        tk = token.NewToken(token.Comma, this.getCh())
     case ';':
-        tk = token.NewToken(token.SEMICOLON, this.getCh())
+        tk = token.NewToken(token.Semicolon, this.getCh())
 
     case '(':
-        tk = token.NewToken(token.LPAREN, this.getCh())
+        tk = token.NewToken(token.Lparen, this.getCh())
     case ')':
-        tk = token.NewToken(token.RPAREN, this.getCh())
+        tk = token.NewToken(token.Rparen, this.getCh())
     case '{':
-        tk = token.NewToken(token.LBRACE, this.getCh())
+        tk = token.NewToken(token.Lbrace, this.getCh())
     case '}':
-        tk = token.NewToken(token.RBRACE, this.getCh())
+        tk = token.NewToken(token.Rbrace, this.getCh())
 
     case 0:
-        tk = token.NewTokenStr(token.EOF, "")
+        tk = token.NewTokenStr(token.Eof, "")
     default:
         switch {
         case isIdentLetter(this.getCh()) == true:
             ident := this.readIdentifier()
             switch ident {
             case "true":
-                tk = token.NewTokenStr(token.TRUE, ident)
+                tk = token.NewTokenStr(token.True, ident)
             case "false":
-                tk = token.NewTokenStr(token.FALSE, ident)
+                tk = token.NewTokenStr(token.False, ident)
             case "let":
-                tk = token.NewTokenStr(token.LET, ident)
+                tk = token.NewTokenStr(token.Let, ident)
             case "fn":
-                tk = token.NewTokenStr(token.FUNCTION, ident)
+                tk = token.NewTokenStr(token.Function, ident)
             case "return":
-                tk = token.NewTokenStr(token.RETURN, ident)
+                tk = token.NewTokenStr(token.Return, ident)
             case "if":
-                tk = token.NewTokenStr(token.IF, ident)
+                tk = token.NewTokenStr(token.If, ident)
             case "else":
-                tk = token.NewTokenStr(token.ELSE, ident)
+                tk = token.NewTokenStr(token.Else, ident)
             default:
-                tk = token.NewTokenStr(token.IDENT, ident)
+                tk = token.NewTokenStr(token.Ident, ident)
             }
         case isIntNumber(this.getCh()) :
             num := this.readIntNumber()
-            tk = token.NewTokenStr(token.INT, num)
+            tk = token.NewTokenStr(token.Int, num)
         default:
-            tk = token.NewToken(token.ILLEGAL, this.getCh())
+            tk = token.NewToken(token.Illegal, this.getCh())
         }
     }
 
@@ -206,7 +206,7 @@ func (this *Lexer) PrintChars() {
 func (this *Lexer) PrintTokens() {
     i := 0
     tk := this.GetNextToken()
-    for tk.Type != token.EOF {
+    for tk.Type != token.Eof {
         fmt.Printf("[%d] %+v\n", i, tk)
         tk = this.GetNextToken()
     }

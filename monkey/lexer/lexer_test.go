@@ -57,15 +57,15 @@ func TestGetNextToken(t *testing.T) {
     lx := NewLexer(input)
 
     tests := []ExpectedToken {
-        {token.ASSIGN,    "="},
-        {token.PLUS,      "+"},
-        {token.LPAREN,    "("},
-        {token.RPAREN,    ")"},
-        {token.LBRACE,    "{"},
-        {token.RBRACE,    "}"},
-        {token.COMMA,     ","},
-        {token.SEMICOLON, ";"},
-        {token.EOF,       ""},
+        {token.Assign,    "="},
+        {token.Plus,      "+"},
+        {token.Lparen,    "("},
+        {token.Rparen,    ")"},
+        {token.Lbrace,    "{"},
+        {token.Rbrace,    "}"},
+        {token.Comma,     ","},
+        {token.Semicolon, ";"},
+        {token.Eof,       ""},
     }
 
     checksForNextToken(lx, t, tests)
@@ -76,11 +76,11 @@ func TestGetNextToken2(t *testing.T) {
     lx := NewLexer(input)
 
     tests := [] ExpectedToken {
-        {token.LET, "let"},
-        {token.IDENT, "five"},
-        {token.ASSIGN, "="},
-        {token.INT, "5"},
-        {token.SEMICOLON, ";"},
+        {token.Let, "let"},
+        {token.Ident, "five"},
+        {token.Assign, "="},
+        {token.Int, "5"},
+        {token.Semicolon, ";"},
     }
 
     checksForNextToken(lx, t, tests)
@@ -101,45 +101,45 @@ func TestGetNextToken3(t *testing.T) {
 
     tests := [] ExpectedToken {
         // Statement 1
-        {token.LET, "let"},
-        {token.IDENT, "five"},
-        {token.ASSIGN, "="},
-        {token.INT, "5"},
-        {token.SEMICOLON, ";"},
+        {token.Let, "let"},
+        {token.Ident, "five"},
+        {token.Assign, "="},
+        {token.Int, "5"},
+        {token.Semicolon, ";"},
         // Statement 2
-        {token.LET, "let"},
-        {token.IDENT, "ten"},
-        {token.ASSIGN, "="},
-        {token.INT, "10"},
-        {token.SEMICOLON, ";"},
+        {token.Let, "let"},
+        {token.Ident, "ten"},
+        {token.Assign, "="},
+        {token.Int, "10"},
+        {token.Semicolon, ";"},
         // Statement 3
-        {token.LET, "let"},
-        {token.IDENT, "add"},
-        {token.ASSIGN, "="},
-        {token.FUNCTION, "fn"},
-        {token.LPAREN, "("},
-        {token.IDENT, "x"},
-        {token.COMMA, ","},
-        {token.IDENT, "y"},
-        {token.RPAREN, ")"},
-        {token.LBRACE, "{"},
-        {token.IDENT, "x"},
-        {token.PLUS, "+"},
-        {token.IDENT, "y"},
-        {token.SEMICOLON, ";"},
-        {token.RBRACE, "}"},
-        {token.SEMICOLON, ";"},
+        {token.Let, "let"},
+        {token.Ident, "add"},
+        {token.Assign, "="},
+        {token.Function, "fn"},
+        {token.Lparen, "("},
+        {token.Ident, "x"},
+        {token.Comma, ","},
+        {token.Ident, "y"},
+        {token.Rparen, ")"},
+        {token.Lbrace, "{"},
+        {token.Ident, "x"},
+        {token.Plus, "+"},
+        {token.Ident, "y"},
+        {token.Semicolon, ";"},
+        {token.Rbrace, "}"},
+        {token.Semicolon, ";"},
         // Statement 4
-        {token.LET, "let"},
-        {token.IDENT, "result"},
-        {token.ASSIGN, "="},
-        {token.IDENT, "add"},
-        {token.LPAREN, "("},
-        {token.IDENT, "five"},
-        {token.COMMA, ","},
-        {token.IDENT, "ten"},
-        {token.RPAREN, ")"},
-        {token.SEMICOLON, ";"},
+        {token.Let, "let"},
+        {token.Ident, "result"},
+        {token.Assign, "="},
+        {token.Ident, "add"},
+        {token.Lparen, "("},
+        {token.Ident, "five"},
+        {token.Comma, ","},
+        {token.Ident, "ten"},
+        {token.Rparen, ")"},
+        {token.Semicolon, ";"},
     }
 
     checksForNextToken(lx, t, tests)
@@ -154,19 +154,19 @@ func TestGetNextToken4(t *testing.T) {
 
     tests := [] ExpectedToken {
         // Statement 1
-        {token.BANG, "!"},
-        {token.MINUS, "-"},
-        {token.SLASH, "/"},
-        {token.ASTERISK, "*"},
-        {token.INT, "5"},
-        {token.SEMICOLON, ";"},
+        {token.Bang, "!"},
+        {token.Minus, "-"},
+        {token.Slash, "/"},
+        {token.Asterisk, "*"},
+        {token.Int, "5"},
+        {token.Semicolon, ";"},
         // Statement 2
-        {token.INT, "5"},
-        {token.LT, "<"},
-        {token.INT, "10"},
-        {token.GT, ">"},
-        {token.INT, "5"},
-        {token.SEMICOLON, ";"},
+        {token.Int, "5"},
+        {token.Lt, "<"},
+        {token.Int, "10"},
+        {token.Gt, ">"},
+        {token.Int, "5"},
+        {token.Semicolon, ";"},
     }
 
     checksForNextToken(lx, t, tests)
@@ -184,27 +184,27 @@ func TestGetNextToken5(t *testing.T) {
 
     tests := []ExpectedToken {
         // Line 1
-        {token.IF, "if"},
-        {token.LPAREN, "("},
-        {token.INT, "5"},
-        {token.LT, "<"},
-        {token.INT, "10"},
-        {token.RPAREN, ")"},
-        {token.LBRACE, "{"},
+        {token.If, "if"},
+        {token.Lparen, "("},
+        {token.Int, "5"},
+        {token.Lt, "<"},
+        {token.Int, "10"},
+        {token.Rparen, ")"},
+        {token.Lbrace, "{"},
         // Line 2
-        {token.RETURN, "return"},
-        {token.TRUE, "true"},
-        {token.SEMICOLON, ";"},
+        {token.Return, "return"},
+        {token.True, "true"},
+        {token.Semicolon, ";"},
         // Line 3
-        {token.RBRACE, "}"},
-        {token.ELSE, "else"},
-        {token.LBRACE, "{"},
+        {token.Rbrace, "}"},
+        {token.Else, "else"},
+        {token.Lbrace, "{"},
         // Line 4
-        {token.RETURN, "return"},
-        {token.FALSE, "false"},
-        {token.SEMICOLON, ";"},
+        {token.Return, "return"},
+        {token.False, "false"},
+        {token.Semicolon, ";"},
         // Line 5
-        {token.RBRACE, "}"},
+        {token.Rbrace, "}"},
     }
 
     checksForNextToken(lx, t, tests)
@@ -219,15 +219,15 @@ func TestNextToken6(t *testing.T) {
 
     tests := []ExpectedToken {
         // Statement 1
-        {token.INT, "10"},
-        {token.EQ, "=="},
-        {token.INT, "10"},
-        {token.SEMICOLON, ";"},
+        {token.Int, "10"},
+        {token.Eq, "=="},
+        {token.Int, "10"},
+        {token.Semicolon, ";"},
         // Statement 2
-        {token.INT, "9"},
-        {token.NOT_EQ, "!="},
-        {token.INT, "10"},
-        {token.SEMICOLON, ";"},
+        {token.Int, "9"},
+        {token.NotEq, "!="},
+        {token.Int, "10"},
+        {token.Semicolon, ";"},
     }
 
     checksForNextToken(lx, t, tests)
@@ -239,40 +239,40 @@ func TextNextTokenAllTokens(t *testing.T) {
 
     tests := []ExpectedToken {
         // Identifier + literals
-        {token.IDENT, "foo"},
-        {token.INT, "5"},
+        {token.Ident, "foo"},
+        {token.Int, "5"},
 
         // Operators
-        {token.ASSIGN, "="},
-        {token.MINUS, "-"},
-        {token.BANG, "!"},
-        {token.ASTERISK, "*"},
-        {token.SLASH, "/"},
+        {token.Assign, "="},
+        {token.Minus, "-"},
+        {token.Bang, "!"},
+        {token.Asterisk, "*"},
+        {token.Slash, "/"},
 
         // Comparison
-        {token.LT, "<"},
-        {token.GT, ">"},
-        {token.EQ, "=="},
-        {token.NOT_EQ, "!="},
+        {token.Lt, "<"},
+        {token.Gt, ">"},
+        {token.Eq, "=="},
+        {token.NotEq, "!="},
 
         // Delimiters
-        {token.COMMA, ","},
-        {token.SEMICOLON, ";"},
+        {token.Comma, ","},
+        {token.Semicolon, ";"},
 
         // Grouping
-        {token.LPAREN, "("},
-        {token.RPAREN, ")"},
-        {token.LBRACE, "{"},
-        {token.RBRACE, "}"},
+        {token.Lparen, "("},
+        {token.Rparen, ")"},
+        {token.Lbrace, "{"},
+        {token.Rbrace, "}"},
 
         // Keywords
-        {token.FUNCTION, "fn"},
-        {token.LET, "let"},
-        {token.TRUE, "true"},
-        {token.FALSE, "false"},
-        {token.IF, "if"},
-        {token.ELSE, "else"},
-        {token.RETURN, "return"},
+        {token.Function, "fn"},
+        {token.Let, "let"},
+        {token.True, "true"},
+        {token.False, "false"},
+        {token.If, "if"},
+        {token.Else, "else"},
+        {token.Return, "return"},
     }
 
     checksForNextToken(lx, t, tests)

@@ -8,9 +8,9 @@ import (
 )
 
 var (
-    TRUE = &object.Boolean { Value: true }
-    FALSE = &object.Boolean { Value: false }
-    NULL = &object.Null {}
+    ObjTrue = &object.Boolean { Value: true }
+    ObjFalse = &object.Boolean { Value: false }
+    ObjNull = &object.Null {}
 )
 
 func evalStatements(statements []ast.Statement) object.Object {
@@ -26,8 +26,8 @@ func evalStatements(statements []ast.Statement) object.Object {
     return Eval(statements[len(statements) - 1]) // TODO: Just takes the last to compile
 }
 
-func boolToObjBoolean(check bool) *object.Boolean {
-    if check { return TRUE } else { return FALSE }
+func objFromBool(check bool) *object.Boolean {
+    if check { return ObjTrue } else { return ObjFalse }
 }
 
 func isTruthy(check any) bool {
@@ -62,17 +62,17 @@ func Eval(node ast.Node) object.Object {
             case *object.Integer:
                 return &object.Integer { Value: -x.Value }
             default:
-                return NULL
+                return ObjNull
             }
         case "!":
             var evaluated = Eval(node.Value)
             switch x := evaluated.(type) {
             case *object.Boolean:
-                return boolToObjBoolean(!isTruthy(x.Value))
+                return objFromBool(!isTruthy(x.Value))
             case *object.Integer:
-                return boolToObjBoolean(!isTruthy(x.Value))
+                return objFromBool(!isTruthy(x.Value))
             default:
-                return NULL
+                return ObjNull
             }
         }
 
@@ -80,7 +80,7 @@ func Eval(node ast.Node) object.Object {
         var left, okLeft = Eval(node.Left).(*object.Integer)
         var right, okRight = Eval(node.Right).(*object.Integer)
         if !okLeft || !okRight {
-            return NULL
+            return ObjNull
         }
 
         switch node.Operator {
@@ -95,13 +95,13 @@ func Eval(node ast.Node) object.Object {
             return &object.Integer { Value: left.Value / right.Value }
     // Booleans operations
         case "==":
-            return boolToObjBoolean(left.Value == right.Value)
+            return objFromBool(left.Value == right.Value)
         case "!=":
-            return boolToObjBoolean(left.Value != right.Value)
+            return objFromBool(left.Value != right.Value)
         case "<":
-            return boolToObjBoolean(left.Value < right.Value)
+            return objFromBool(left.Value < right.Value)
         case ">":
-            return boolToObjBoolean(left.Value > right.Value)
+            return objFromBool(left.Value > right.Value)
         }
 
     case *ast.IfExpression:
@@ -113,7 +113,7 @@ func Eval(node ast.Node) object.Object {
             } else if node.AlternativeBlock != nil {
                 return Eval(node.AlternativeBlock.Statements[0])
             } else {
-                return NULL
+                return ObjNull
             }
         case *object.Integer:
             if isTruthy(x.Value) {
@@ -121,7 +121,7 @@ func Eval(node ast.Node) object.Object {
             } else if node.AlternativeBlock != nil {
                 return Eval(node.AlternativeBlock.Statements[0])
             } else {
-                return NULL
+                return ObjNull
             }
         }
 
@@ -129,7 +129,7 @@ func Eval(node ast.Node) object.Object {
         return &object.Integer { Value: node.Value }
 
     case *ast.Boolean:
-        return boolToObjBoolean(node.Value)
+        return objFromBool(node.Value)
 
     }
 
