@@ -15,7 +15,7 @@ var (
 )
 
 func isError(obj object.Object) bool {
-    return obj.Type() == object.ErrorType
+    return obj != nil && obj.Type() == object.ErrorType
 }
 
 func getMsgTypeFor(objType object.ObjectType) string {
@@ -179,6 +179,7 @@ func Eval(node ast.Node) object.Object {
     case *ast.IfExpression:
         var conditionResult = Eval(node.Condition)
         if isError(conditionResult) { return conditionResult }
+
         switch x := conditionResult.(type) {
         case *object.Boolean:
             if isTruthy(x.Value) {
