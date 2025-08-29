@@ -48,7 +48,11 @@ func TestEvalIntegerExpression(t *testing.T) {
     test_utils.CheckProgram(t, program, len(tests))
 
     for i, stm := range program.Statements {
-        var evaluated = Eval(stm)
+        var env = object.NewEnvironment()
+        var evaluated = Eval(stm, env)
+        if (test_utils.CheckForEvalError(t, evaluated)) {
+            continue
+        }
         var res, ok = evaluated.(*object.Integer)
         if !ok {
             t.Errorf("Evaluated statement was not evaluated to an object.Integer. Got %T instead", evaluated)
@@ -87,7 +91,11 @@ func TestEvalBooleanExpression(t *testing.T) {
     test_utils.CheckProgram(t, program, len(tests))
 
     for i, stm := range program.Statements {
-        var evaluated = Eval(stm)
+        var env = object.NewEnvironment()
+        var evaluated = Eval(stm, env)
+        if (test_utils.CheckForEvalError(t, evaluated)) {
+            continue
+        }
         var res, ok = evaluated.(*object.Boolean)
         if !ok {
             t.Errorf("Evaluated statement was not evaluated to an object.Boolean. Got %T instead", evaluated)
@@ -120,7 +128,11 @@ func TestEvalBangOperator(t *testing.T) {
     test_utils.CheckProgram(t, program, len(tests))
 
     for i, stm := range program.Statements {
-        var evaluated = Eval(stm)
+        var env = object.NewEnvironment()
+        var evaluated = Eval(stm, env)
+        if (test_utils.CheckForEvalError(t, evaluated)) {
+            continue
+        }
         var res, ok = evaluated.(*object.Boolean)
         if !ok {
             t.Errorf("Evaluated statement was not evaluated to an object.Boolean. Got %T instead", evaluated)
@@ -157,7 +169,11 @@ func TestIfElseExpressions(t *testing.T) {
     test_utils.CheckProgram(t, program, len(tests))
 
     for i, stm := range program.Statements {
-        var evaluated = Eval(stm)
+        var env = object.NewEnvironment()
+        var evaluated = Eval(stm, env)
+        if (test_utils.CheckForEvalError(t, evaluated)) {
+            continue
+        }
 
         switch x := tests[i].expected.(type) { // Switch on expected type
         case int:
@@ -209,7 +225,11 @@ func TestReturnStatements(t *testing.T) {
 
         test_utils.CheckForParserErrors(t, parser)
 
-        var evaluated = Eval(program)
+        var env = object.NewEnvironment()
+        var evaluated = Eval(program, env)
+        if (test_utils.CheckForEvalError(t, evaluated)) {
+            continue
+        }
         var returnObj, ok = evaluated.(*object.ReturnValue)
         if !ok {
             t.Errorf("Expected evaluated object to be type of object.ReturnValue. Got %T instead", evaluated)
@@ -247,6 +267,9 @@ func TestErrorHandling(t *testing.T) {
             `,
             "unknown operator: Boolean + Boolean",
         },
+
+        // Let Statements
+        { "foobar;", "identifier not found: foobar" },
     }
 
     for _, test := range tests {
@@ -256,14 +279,48 @@ func TestErrorHandling(t *testing.T) {
 
         test_utils.CheckForParserErrors(t, parser)
 
-        var evaluated = Eval(program)
+        var env = object.NewEnvironment()
+        var evaluated = Eval(program, env)
         var errObj, ok = evaluated.(*object.Error)
         if !ok {
             t.Errorf("Expected evaluated object to be of object.Error. Got %T instead", evaluated)
             continue
         }
         if errObj.Message != test.expected {
-            t.Errorf("Expected error object message to be %s but got %s instead", test.expected, errObj.Message)
+            t.Errorf("Expected error object message to be '%s' but got '%s' instead", test.expected, errObj.Message)
+        }
+    }
+}
+
+func TestLetStatements(t *testing.T) {
+    var tests = []struct {
+        input string; expected int64
+    } {
+        { "let a = 5; a;", 5 },
+        { "let a = 5; let b = a; b;", 5 },
+        { "let a = 5 * 5; a;", 25 },
+        { "let a = 5; let b = 10; let c = a + b; c;", 15 },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+
+        test_utils.CheckForParserErrors(t, parser)
+
+        var env = object.NewEnvironment()
+        var evaluated = Eval(program, env)
+        if (test_utils.CheckForEvalError(t, evaluated)) {
+            continue
+        }
+        var val, ok = evaluated.(*object.Integer)
+        if !ok {
+            t.Errorf("Expected evaluated object to be type of object.Integer. Got %T instead", evaluated)
+            continue
+        }
+        if val.Value != test.expected {
+            t.Errorf("Expected evaluated object value to be %d but got %d instead", test.expected, val.Value)
         }
     }
 }

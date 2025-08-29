@@ -7,6 +7,7 @@ import (
     "monkey/utils"
     "monkey/parser"
     "monkey/ast"
+    "monkey/object"
     "testing"
     "fmt"
 )
@@ -35,4 +36,12 @@ func CheckProgram(t *testing.T, program *ast.Program, expLenStms int) {
     if len(program.Statements) != expLenStms {
         t.Fatalf("Expected program to have length of %d but got %d instead", expLenStms, len(program.Statements))
     }
+}
+
+func CheckForEvalError(t *testing.T, obj object.Object) bool {
+    if obj != nil && obj.Type() == object.ErrorType {
+        t.Errorf("Error found on evaluation: %s", obj.(*object.Error).Message)
+        return true
+    }
+    return false
 }

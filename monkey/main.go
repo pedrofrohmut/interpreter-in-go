@@ -3,12 +3,13 @@
 package main
 
 import (
-    "os"
     "fmt"
-    "monkey/repl"
-    "monkey/lexer"
-    "monkey/parser"
     "monkey/evaluator"
+    "monkey/lexer"
+    "monkey/object"
+    "monkey/parser"
+    "monkey/repl"
+    "os"
 )
 
 func debugMain() {
@@ -66,21 +67,26 @@ func debugMain() {
     // input := "return 3 * 7;"
 
     // Eval error
-    input := "5 + true;"
+    // input := "5 + true;"
+
+    // Eval Let Statements
+    input := "let a = 5; a;"
 
     lexer := lexer.NewLexer(input)
+
     parser := parser.NewParser(lexer)
     program := parser.ParseProgram()
-    // eva := evaluator.Eval(pro.Statements[0])
-    eva := evaluator.Eval(program)
+
+    env := object.NewEnvironment()
+    eva := evaluator.Eval(program, env)
 
     // pro.PrintStatements()
     // pro.PrintStatements()
     // s := pro.String()
     // _ = s
+    // _ = program
 
     _ = eva
-    _ = program
 }
 
 func replMain() {
@@ -93,7 +99,7 @@ func replMain() {
 }
 
 func main() {
-    const debug = true // Toggle for debugging or to use the repl
+    const debug = false // Toggle for debugging or to use the repl
     if debug {
         debugMain()
     } else {

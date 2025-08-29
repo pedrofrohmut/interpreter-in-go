@@ -52,22 +52,33 @@ func getUnknownOperatorError(left object.Object, operator string, right object.O
     }
 }
 
-func evalStatements(statements []ast.Statement) object.Object {
+func getNotCoveredEvaluationError(node ast.Node) *object.Error {
+    return &object.Error {
+        Message: fmt.Sprintf("Node %T not covered in evaluation", node),
+    }
+}
+
+func getIdentifierNotFoundError(name string) *object.Error {
+    return &object.Error {
+        Message: fmt.Sprintf("identifier not found: %s", name),
+    }
+}
+
+func evalStatements(statements []ast.Statement, env *object.Environment) object.Object {
     var result object.Object = nil
 
     for _, stm := range statements {
-        result = Eval(stm)
+        result = Eval(stm, env)
 
-        if isError(result) { // Return early when error type is found
-            return result
-        }
+        // Return early when error type is found
+        if isError(result) { return result }
 
-        if result.IsType(object.ReturnType) { // Return early when return type is found
-            return result
-        }
+        // Return early when return type is found
+        if result.IsType(object.ReturnType) { return result }
     }
 
-    return result // Return the last evaluated statement if no early return types are found
+    // Return the last evaluated statement if no early return types are found
+    return result
 }
 
 func objFromBool(check bool) *object.Boolean {
@@ -87,15 +98,15 @@ func isTruthy(check any) bool {
     }
 }
 
-func Eval(node ast.Node) object.Object {
+func Eval(node ast.Node, env *object.Environment) object.Object {
     switch node := node.(type) {
 
 // Statements
     case *ast.Program:
-        return evalStatements(node.Statements)
+        return evalStatements(node.Statements, env)
 
     case *ast.ReturnStatement:
-        var value = Eval(node.Expression)
+        var value = Eval(node.Expression, env)
         if isError(value) { return value }
 
         switch x := value.(type) {
@@ -105,14 +116,22 @@ func Eval(node ast.Node) object.Object {
             return &object.ReturnValue { Value: x }
         }
 
+    case *ast.LetStatement:
+        var expValue = Eval(node.Expression, env)
+        if isError(expValue) { return expValue }
+
+        env.Set(node.Identifier, expValue)
+
+        return ObjNull
+
     case *ast.ExpressionStatement:
-        return Eval(node.Expression)
+        return Eval(node.Expression, env)
 
 // Expressions
     case *ast.PrefixExpression:
         switch node.Operator {
         case "-":
-            var evaluated = Eval(node.Value)
+            var evaluated = Eval(node.Value, env)
             if isError(evaluated) { return evaluated }
 
             switch x := evaluated.(type) {
@@ -122,7 +141,7 @@ func Eval(node ast.Node) object.Object {
                 return getUnknownOperatorError(nil, node.Operator, evaluated)
             }
         case "!":
-            var evaluated = Eval(node.Value)
+            var evaluated = Eval(node.Value, env)
             if isError(evaluated) { return evaluated }
 
             switch x := evaluated.(type) {
@@ -136,8 +155,8 @@ func Eval(node ast.Node) object.Object {
         }
 
     case *ast.InfixExpression:
-        var evaluatedLeft = Eval(node.Left)
-        var evaluatedRight =  Eval(node.Right)
+        var evaluatedLeft = Eval(node.Left, env)
+        var evaluatedRight =  Eval(node.Right, env)
 
         if isError(evaluatedLeft) { return evaluatedLeft }
         if isError(evaluatedRight) { return evaluatedRight }
@@ -177,29 +196,36 @@ func Eval(node ast.Node) object.Object {
 // TODO: Make IfExpression good and not this mess
 // TODO: Make if eval all needed statements (can use evalStatements)
     case *ast.IfExpression:
-        var conditionResult = Eval(node.Condition)
+        var conditionResult = Eval(node.Condition, env)
         if isError(conditionResult) { return conditionResult }
 
         switch x := conditionResult.(type) {
         case *object.Boolean:
             if isTruthy(x.Value) {
-                return Eval(node.ConsequenceBlock.Statements[0])
+                return Eval(node.ConsequenceBlock.Statements[0], env)
             } else if node.AlternativeBlock != nil {
-                return Eval(node.AlternativeBlock.Statements[0])
+                return Eval(node.AlternativeBlock.Statements[0], env)
             } else {
                 // TODO: error for missing alternative
                 return ObjNull
             }
         case *object.Integer:
             if isTruthy(x.Value) {
-                return Eval(node.ConsequenceBlock.Statements[0])
+                return Eval(node.ConsequenceBlock.Statements[0], env)
             } else if node.AlternativeBlock != nil {
-                return Eval(node.AlternativeBlock.Statements[0])
+                return Eval(node.AlternativeBlock.Statements[0], env)
             } else {
                 // TODO: error for missing alternative
                 return ObjNull
             }
         }
+
+    case *ast.Identifier:
+        var val, ok = env.Get(node.Value)
+        if !ok {
+            return getIdentifierNotFoundError(node.Value)
+        }
+        return val
 
     case *ast.IntegerLiteral:
         return &object.Integer { Value: node.Value }
@@ -209,5 +235,5 @@ func Eval(node ast.Node) object.Object {
 
     } // END: Switch nody.(type)
 
-    return nil
+    return getNotCoveredEvaluationError(node)
 }

@@ -3,13 +3,14 @@
 package repl
 
 import (
-    "os"
     "bufio"
     "fmt"
     "log"
-    "monkey/lexer"
-    "monkey/parser"
+    "os"
     "monkey/evaluator"
+    "monkey/lexer"
+    "monkey/object"
+    "monkey/parser"
 )
 
 func lexerRepl() {
@@ -58,6 +59,7 @@ func parserRepl() {
 func evalRepl() {
     fmt.Println("Tokenize then Parse and then Eval your input")
     scanner := bufio.NewScanner(os.Stdin)
+    var env = object.NewEnvironment()
     for {
         fmt.Printf(">> ")
 
@@ -76,7 +78,7 @@ func evalRepl() {
             parser.PrintErrors()
         }
 
-        var obj = evaluator.Eval(program)
+        var obj = evaluator.Eval(program, env)
         if obj != nil {
             fmt.Println(obj.Inspect())
         } else {
