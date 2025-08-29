@@ -19,6 +19,7 @@ type ObjectType string
 type Object interface {
     Type() ObjectType
     Inspect() string
+    IsType(ObjectType) bool
 }
 
 type Integer struct {
@@ -35,6 +36,11 @@ func (this *Integer) Type() ObjectType {
     return IntType
 }
 
+// @Impl
+func (this *Integer) IsType(check ObjectType) bool {
+    return check == IntType
+}
+
 type Boolean struct {
     Value bool
 }
@@ -49,6 +55,11 @@ func (this *Boolean) Type() ObjectType {
     return BoolType
 }
 
+// @Impl
+func (this *Boolean) IsType(check ObjectType) bool {
+    return check == BoolType
+}
+
 type Null struct {}
 
 // @Impl
@@ -59,6 +70,11 @@ func (this *Null) Inspect() string {
 // @Impl
 func (this *Null) Type() ObjectType {
     return NullType
+}
+
+// @Impl
+func (this *Null) IsType(check ObjectType) bool {
+    return check == NullType
 }
 
 type ReturnValue struct {
@@ -75,6 +91,11 @@ func (this *ReturnValue) Type() ObjectType {
     return ReturnType
 }
 
+// @Impl
+func (this *ReturnValue) IsType(check ObjectType) bool {
+    return check == ReturnType
+}
+
 type Error struct {
     Message string
 }
@@ -87,4 +108,9 @@ func (this *Error) Inspect() string {
 // @Impl
 func (this *Error) Type() ObjectType {
     return ErrorType
+}
+
+// @Impl
+func (this *Error) IsType(check ObjectType) bool {
+    return check == ErrorType
 }

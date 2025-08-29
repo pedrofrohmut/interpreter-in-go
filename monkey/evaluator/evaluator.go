@@ -14,6 +14,10 @@ var (
     ObjNull  = &object.Null {}
 )
 
+func isError(obj object.Object) bool {
+    return obj.Type() == object.ErrorType
+}
+
 func getMsgTypeFor(objType object.ObjectType) string {
     switch objType {
     case object.IntType:
@@ -23,7 +27,7 @@ func getMsgTypeFor(objType object.ObjectType) string {
     case object.NullType:
         return "Null"
     default:
-        return "TODO: Not Covered"
+        return "Not Covered"
     }
 }
 
@@ -49,25 +53,16 @@ func getUnknownOperatorError(left object.Object, operator string, right object.O
 }
 
 func evalStatements(statements []ast.Statement) object.Object {
-    if len(statements) == 0 { return nil }
-
-    var result object.Object
+    var result object.Object = nil
 
     for _, stm := range statements {
         result = Eval(stm)
 
-        if result.Type() == object.ErrorType { // Return early when error type is found
+        if isError(result) { // Return early when error type is found
             return result
         }
 
-        if result.Type() == object.ReturnType { // Return early when return type is found
-            var x = result.(*object.ReturnValue)
-
-            // TODO: Check if with all the check errors implemented this is still necessary
-            if x.Value.Type() == object.ErrorType {
-                return x.Value
-            }
-
+        if result.IsType(object.ReturnType) { // Return early when return type is found
             return result
         }
     }
@@ -101,7 +96,8 @@ func Eval(node ast.Node) object.Object {
 
     case *ast.ReturnStatement:
         var value = Eval(node.Expression)
-        // TODO: if error return here
+        if isError(value) { return value }
+
         switch x := value.(type) {
         case *object.Null:
             return &object.ReturnValue { Value: ObjNull }
@@ -117,7 +113,8 @@ func Eval(node ast.Node) object.Object {
         switch node.Operator {
         case "-":
             var evaluated = Eval(node.Value)
-        // TODO: if error return here
+            if isError(evaluated) { return evaluated }
+
             switch x := evaluated.(type) {
             case *object.Integer:
                 return &object.Integer { Value: -x.Value }
@@ -126,7 +123,8 @@ func Eval(node ast.Node) object.Object {
             }
         case "!":
             var evaluated = Eval(node.Value)
-        // TODO: if error return here
+            if isError(evaluated) { return evaluated }
+
             switch x := evaluated.(type) {
             case *object.Boolean:
                 return objFromBool(!isTruthy(x.Value))
@@ -138,9 +136,11 @@ func Eval(node ast.Node) object.Object {
         }
 
     case *ast.InfixExpression:
-        var evaluatedLeft, evaluatedRight = Eval(node.Left), Eval(node.Right)
+        var evaluatedLeft = Eval(node.Left)
+        var evaluatedRight =  Eval(node.Right)
 
-        // TODO: check for error here before proceeding
+        if isError(evaluatedLeft) { return evaluatedLeft }
+        if isError(evaluatedRight) { return evaluatedRight }
 
         if evaluatedLeft.Type() != evaluatedRight.Type() { // Types are different
             return getMismatchError(evaluatedLeft, node.Operator, evaluatedRight)
@@ -174,10 +174,11 @@ func Eval(node ast.Node) object.Object {
             return objFromBool(left.Value > right.Value)
         }
 
+// TODO: Make IfExpression good and not this mess
 // TODO: Make if eval all needed statements (can use evalStatements)
     case *ast.IfExpression:
         var conditionResult = Eval(node.Condition)
-        // TODO: if error return here
+        if isError(conditionResult) { return conditionResult }
         switch x := conditionResult.(type) {
         case *object.Boolean:
             if isTruthy(x.Value) {
@@ -200,14 +201,12 @@ func Eval(node ast.Node) object.Object {
         }
 
     case *ast.IntegerLiteral:
-        // TODO: if error return here
         return &object.Integer { Value: node.Value }
 
     case *ast.Boolean:
-        // TODO: if error return here
         return objFromBool(node.Value)
 
-    }
+    } // END: Switch nody.(type)
 
     return nil
 }
