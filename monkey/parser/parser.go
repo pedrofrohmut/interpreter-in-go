@@ -26,7 +26,7 @@ const (
 
 var precedences = map[string] int {
     token.Eq:       Equals,
-    token.NotEq:   Equals,
+    token.NotEq:    Equals,
     token.Lt:       LessGreater,
     token.Gt:       LessGreater,
     token.Plus:     Sum,

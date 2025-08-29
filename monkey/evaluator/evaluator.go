@@ -9,9 +9,9 @@ import (
 )
 
 var (
-    ObjTrue = &object.Boolean { Value: true }
+    ObjTrue  = &object.Boolean { Value: true }
     ObjFalse = &object.Boolean { Value: false }
-    ObjNull = &object.Null {}
+    ObjNull  = &object.Null {}
 )
 
 func getMsgTypeFor(objType object.ObjectType) string {
@@ -63,6 +63,7 @@ func evalStatements(statements []ast.Statement) object.Object {
         if result.Type() == object.ReturnType { // Return early when return type is found
             var x = result.(*object.ReturnValue)
 
+            // TODO: Check if with all the check errors implemented this is still necessary
             if x.Value.Type() == object.ErrorType {
                 return x.Value
             }
@@ -100,6 +101,7 @@ func Eval(node ast.Node) object.Object {
 
     case *ast.ReturnStatement:
         var value = Eval(node.Expression)
+        // TODO: if error return here
         switch x := value.(type) {
         case *object.Null:
             return &object.ReturnValue { Value: ObjNull }
@@ -115,38 +117,40 @@ func Eval(node ast.Node) object.Object {
         switch node.Operator {
         case "-":
             var evaluated = Eval(node.Value)
+        // TODO: if error return here
             switch x := evaluated.(type) {
             case *object.Integer:
                 return &object.Integer { Value: -x.Value }
-            case *object.Boolean:
-                return getUnknownOperatorError(nil, node.Operator, evaluated)
             default:
-                return ObjNull
+                return getUnknownOperatorError(nil, node.Operator, evaluated)
             }
         case "!":
             var evaluated = Eval(node.Value)
+        // TODO: if error return here
             switch x := evaluated.(type) {
             case *object.Boolean:
                 return objFromBool(!isTruthy(x.Value))
             case *object.Integer:
                 return objFromBool(!isTruthy(x.Value))
             default:
-                return ObjNull
+                return getUnknownOperatorError(nil, node.Operator, evaluated)
             }
         }
 
     case *ast.InfixExpression:
         var evaluatedLeft, evaluatedRight = Eval(node.Left), Eval(node.Right)
 
+        // TODO: check for error here before proceeding
+
+        if evaluatedLeft.Type() != evaluatedRight.Type() { // Types are different
+            return getMismatchError(evaluatedLeft, node.Operator, evaluatedRight)
+        }
+
         var left, okLeft = evaluatedLeft.(*object.Integer)
         var right, okRight = evaluatedRight.(*object.Integer)
 
         if !okLeft && !okRight {
             return getUnknownOperatorError(evaluatedLeft, node.Operator, evaluatedRight)
-        }
-
-        if !okLeft || !okRight {
-            return getMismatchError(evaluatedLeft, node.Operator, evaluatedRight)
         }
 
         switch node.Operator {
@@ -173,6 +177,7 @@ func Eval(node ast.Node) object.Object {
 // TODO: Make if eval all needed statements (can use evalStatements)
     case *ast.IfExpression:
         var conditionResult = Eval(node.Condition)
+        // TODO: if error return here
         switch x := conditionResult.(type) {
         case *object.Boolean:
             if isTruthy(x.Value) {
@@ -180,6 +185,7 @@ func Eval(node ast.Node) object.Object {
             } else if node.AlternativeBlock != nil {
                 return Eval(node.AlternativeBlock.Statements[0])
             } else {
+                // TODO: error for missing alternative
                 return ObjNull
             }
         case *object.Integer:
@@ -188,14 +194,17 @@ func Eval(node ast.Node) object.Object {
             } else if node.AlternativeBlock != nil {
                 return Eval(node.AlternativeBlock.Statements[0])
             } else {
+                // TODO: error for missing alternative
                 return ObjNull
             }
         }
 
     case *ast.IntegerLiteral:
+        // TODO: if error return here
         return &object.Integer { Value: node.Value }
 
     case *ast.Boolean:
+        // TODO: if error return here
         return objFromBool(node.Value)
 
     }
