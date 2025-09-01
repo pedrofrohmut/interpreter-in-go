@@ -259,7 +259,7 @@ func (this *IfExpression) String() string {
 }
 
 type FunctionLiteral struct {
-    Arguments []Identifier
+    Parameters []Identifier
     Body *StatementsBlock
 }
 
@@ -274,7 +274,7 @@ func (this *FunctionLiteral) String() string {
     var out bytes.Buffer
 
     var args = []string {}
-    for _, arg := range this.Arguments {
+    for _, arg := range this.Parameters {
         args = append(args, arg.String())
     }
 

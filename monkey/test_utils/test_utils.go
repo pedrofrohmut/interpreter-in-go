@@ -40,7 +40,7 @@ func CheckProgram(t *testing.T, program *ast.Program, expLenStms int) {
 
 func CheckForEvalError(t *testing.T, obj object.Object) bool {
     if obj != nil && obj.Type() == object.ErrorType {
-        t.Errorf("Error found on evaluation: %s", obj.(*object.Error).Message)
+        t.Errorf("Evaluation error: %s", obj.(*object.Error).Message)
         return true
     }
     return false

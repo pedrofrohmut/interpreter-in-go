@@ -240,13 +240,13 @@ func (this *Parser) parseFunctionLiteral() ast.Expression {
     this.next() // Jumps to the token.LPAREN
 
     var funLiteral = &ast.FunctionLiteral {}
-    funLiteral.Arguments = []ast.Identifier {}
+    funLiteral.Parameters = []ast.Identifier {}
 
     this.next() // Jumps to the first token of the function arguments or the right paren if none
 
     for !this.isCurr(token.Rparen) { // Parse function args
         var iden = ast.Identifier { Value: this.curr.Literal }
-        funLiteral.Arguments = append(funLiteral.Arguments, iden)
+        funLiteral.Parameters = append(funLiteral.Parameters, iden)
         this.next()
         if this.isCurr(token.Comma) { this.next() }
     }

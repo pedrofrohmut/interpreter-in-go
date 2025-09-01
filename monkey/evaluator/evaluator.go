@@ -14,6 +14,9 @@ var (
     ObjNull  = &object.Null {}
 )
 
+// TODO: make isOfType(object.Object, ObjectType) -> bool a generic function
+// instead of making IsType for every new type of object
+
 func isError(obj object.Object) bool {
     return obj != nil && obj.Type() == object.ErrorType
 }
@@ -81,6 +84,34 @@ func evalStatements(statements []ast.Statement, env *object.Environment) object.
     return result
 }
 
+func evalCallExpression(objFunc *object.Function, node *ast.CallExpression, env *object.Environment) object.Object {
+    // Check if number of parameters of functionLiteral matches the functionCall
+    if len(objFunc.Parameters) != len(node.Parameters) {
+        return &object.Error {
+            Message: fmt.Sprintf("Expected function call to have %d parameters but found %d instead",
+            len(objFunc.Parameters), len(node.Parameters)),
+        }
+    }
+
+    var funcEnv = object.NewEnclosedEnvironment(env)
+
+    // Adds the parameters to the function enclosed environment
+    for i := range objFunc.Parameters {
+        var paramName = objFunc.Parameters[i].Value
+        var paramValue = Eval(node.Parameters[i], env)
+        if isError(paramValue) { return paramValue }
+        funcEnv.Set(paramName, paramValue)
+    }
+
+    var result = Eval(objFunc.Body, funcEnv)
+
+    if result.IsType(object.ReturnType) {
+        return result.(*object.ReturnValue).Value
+    }
+
+    return result
+}
+
 func objFromBool(check bool) *object.Boolean {
     if check { return ObjTrue } else { return ObjFalse }
 }
@@ -103,6 +134,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 // Statements
     case *ast.Program:
+        return evalStatements(node.Statements, env)
+
+    case *ast.StatementsBlock:
         return evalStatements(node.Statements, env)
 
     case *ast.ReturnStatement:
@@ -217,6 +251,41 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
             } else {
                 // TODO: error for missing alternative
                 return ObjNull
+            }
+        }
+
+    case *ast.FunctionLiteral:
+        return &object.Function { Parameters: node.Parameters, Body: node.Body, Env: env }
+
+    case *ast.CallExpression:
+        switch exp := node.Expression.(type) {
+        case *ast.Identifier: // Exp: foo(x, y, z)
+            var obj, okIden = env.Get(exp.Value)
+            if !okIden {
+                return getIdentifierNotFoundError(exp.Value)
+            }
+
+            var objFunc, okFunc = obj.(*object.Function)
+            if !okFunc {
+                return &object.Error {
+                    Message: fmt.Sprintf("Identifier is not connected to an object.Function. Found %T instead", obj),
+                }
+            }
+
+            return evalCallExpression(objFunc, node, env)
+
+        case *ast.FunctionLiteral: // Exp: fn (x, y) { x + y; }(5, 6)
+            var obj = Eval(exp, env)
+            if isError(obj) { return obj }
+
+            var objFunc = obj.(*object.Function)
+
+            return evalCallExpression(objFunc, node, env)
+
+
+        default:
+            return &object.Error {
+                Message:fmt.Sprintf("Not covered CallExpression.Expression type: %T", node.Expression),
             }
         }
 

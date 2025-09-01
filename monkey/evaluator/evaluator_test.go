@@ -50,9 +50,8 @@ func TestEvalIntegerExpression(t *testing.T) {
     for i, stm := range program.Statements {
         var env = object.NewEnvironment()
         var evaluated = Eval(stm, env)
-        if (test_utils.CheckForEvalError(t, evaluated)) {
-            continue
-        }
+        if (test_utils.CheckForEvalError(t, evaluated)) { continue }
+
         var res, ok = evaluated.(*object.Integer)
         if !ok {
             t.Errorf("Evaluated statement was not evaluated to an object.Integer. Got %T instead", evaluated)
@@ -93,9 +92,8 @@ func TestEvalBooleanExpression(t *testing.T) {
     for i, stm := range program.Statements {
         var env = object.NewEnvironment()
         var evaluated = Eval(stm, env)
-        if (test_utils.CheckForEvalError(t, evaluated)) {
-            continue
-        }
+        if (test_utils.CheckForEvalError(t, evaluated)) { continue }
+
         var res, ok = evaluated.(*object.Boolean)
         if !ok {
             t.Errorf("Evaluated statement was not evaluated to an object.Boolean. Got %T instead", evaluated)
@@ -130,9 +128,8 @@ func TestEvalBangOperator(t *testing.T) {
     for i, stm := range program.Statements {
         var env = object.NewEnvironment()
         var evaluated = Eval(stm, env)
-        if (test_utils.CheckForEvalError(t, evaluated)) {
-            continue
-        }
+        if (test_utils.CheckForEvalError(t, evaluated)) { continue }
+
         var res, ok = evaluated.(*object.Boolean)
         if !ok {
             t.Errorf("Evaluated statement was not evaluated to an object.Boolean. Got %T instead", evaluated)
@@ -158,6 +155,9 @@ func TestIfElseExpressions(t *testing.T) {
 
         { "if (true) { 123 } else { 666 }",  123 },
         { "if (false) { 123 } else { 666 }", 666 },
+
+        // TODO: Add more tests where the consequence and alternative blocks have
+        // more stuff like assign variables and return statements
     }
 
     var input = test_utils.TryGetInput(t, tests)
@@ -171,9 +171,7 @@ func TestIfElseExpressions(t *testing.T) {
     for i, stm := range program.Statements {
         var env = object.NewEnvironment()
         var evaluated = Eval(stm, env)
-        if (test_utils.CheckForEvalError(t, evaluated)) {
-            continue
-        }
+        if (test_utils.CheckForEvalError(t, evaluated)) { continue }
 
         switch x := tests[i].expected.(type) { // Switch on expected type
         case int:
@@ -227,9 +225,8 @@ func TestReturnStatements(t *testing.T) {
 
         var env = object.NewEnvironment()
         var evaluated = Eval(program, env)
-        if (test_utils.CheckForEvalError(t, evaluated)) {
-            continue
-        }
+        if (test_utils.CheckForEvalError(t, evaluated)) { continue }
+
         var returnObj, ok = evaluated.(*object.ReturnValue)
         if !ok {
             t.Errorf("Expected evaluated object to be type of object.ReturnValue. Got %T instead", evaluated)
@@ -311,9 +308,8 @@ func TestLetStatements(t *testing.T) {
 
         var env = object.NewEnvironment()
         var evaluated = Eval(program, env)
-        if (test_utils.CheckForEvalError(t, evaluated)) {
-            continue
-        }
+        if (test_utils.CheckForEvalError(t, evaluated)) { continue }
+
         var val, ok = evaluated.(*object.Integer)
         if !ok {
             t.Errorf("Expected evaluated object to be type of object.Integer. Got %T instead", evaluated)
@@ -321,6 +317,74 @@ func TestLetStatements(t *testing.T) {
         }
         if val.Value != test.expected {
             t.Errorf("Expected evaluated object value to be %d but got %d instead", test.expected, val.Value)
+        }
+    }
+}
+
+func TestFunctionObject(t *testing.T) {
+    var input = "fn (x) { x + 2; };"
+
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    test_utils.CheckForParserErrors(t, parser)
+
+    var env = object.NewEnvironment()
+    var evaluated = Eval(program, env)
+    if (test_utils.CheckForEvalError(t, evaluated)) { return }
+
+    var val, ok = evaluated.(*object.Function)
+    if !ok {
+        t.Errorf("Expected evaluated object to be type of object.Function. Got %T instead", evaluated)
+        return
+    }
+    // Arguments
+    if val.Parameters[0].Value != "x" {
+        t.Errorf("Expected function first argument to be %s but got %s instead", "x", val.Parameters[0].Value)
+    }
+    // Body
+    var expectedBody = "(x + 2)"
+    if val.Body.String() != expectedBody {
+        t.Errorf("Expected function body to be '%s' but got '%s' instead", expectedBody, val.Body.String())
+    }
+}
+
+func TestFunctionApplication(t *testing.T) {
+    var tests = []struct {
+        input string; expected int64
+    } {
+        { "let identity = fn(x) { x; }; identity(5);",                      5  },
+        { "let identity = fn(x) { return x; }; identity(5);",               5  },
+        { "let double = fn(x) { x * 2; }; double(5);",                      10 },
+        { "let add = fn(x, y) { x + y; }; add(10, 5);",                     15 },
+        { "let add = fn(x, y) { return x + y; }; add(10, 5);",              15 },
+        { "let add = fn(x, y) { return x + y; }; add(10 + 5, add(5, 10));", 30 },
+        { "fn (x) { x; }(5)",                                               5  },
+
+        // Custom
+        { "let a = 5; let add = fn(x) { a + x; }; add(10);",                15 },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+
+        test_utils.CheckForParserErrors(t, parser)
+
+        var env = object.NewEnvironment()
+        var evaluated = Eval(program, env)
+        if test_utils.CheckForEvalError(t, evaluated) { continue }
+
+        var val, ok = evaluated.(*object.Integer)
+        if !ok {
+            t.Errorf("Expected evaluated object to be type of object.Integer. Got %T instead", evaluated)
+            continue
+        }
+        if val.Value != test.expected {
+            t.Errorf("Expected function call to return object.Integer with value: %d but found %d instead",
+                test.expected, val.Value)
         }
     }
 }

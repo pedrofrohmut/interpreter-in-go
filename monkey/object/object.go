@@ -4,6 +4,9 @@ package object
 
 import (
     "fmt"
+    "bytes"
+    "strings"
+    "monkey/ast"
 )
 
 const (
@@ -12,6 +15,7 @@ const (
     NullType   = "NULL_TYPE"
     ReturnType = "RETURN_TYPE"
     ErrorType  = "ERROR_TYPE"
+    FuncType   = "FUNCTION_TYPE"
 )
 
 type ObjectType string
@@ -113,4 +117,42 @@ func (this *Error) Type() ObjectType {
 // @Impl
 func (this *Error) IsType(check ObjectType) bool {
     return check == ErrorType
+}
+
+type Function struct {
+    Parameters []ast.Identifier
+    Body *ast.StatementsBlock
+    Env *Environment
+}
+
+// @Impl
+func (this *Function) Inspect() string {
+    var out bytes.Buffer
+
+    var args = []string {}
+    for _, arg := range this.Parameters {
+        args = append(args, arg.String())
+    }
+
+    out.WriteString("fn (")
+    if len(args) > 0 {
+        out.WriteString(strings.Join(args, ", "))
+    }
+    out.WriteString(") {")
+    for _, stm := range this.Body.Statements {
+        out.WriteString(" " + stm.String() + "; ")
+    }
+    out.WriteString("}")
+
+    return out.String()
+}
+
+// @Impl
+func (this *Function) Type() ObjectType {
+    return FuncType
+}
+
+// @Impl
+func (this *Function) IsType(check ObjectType) bool {
+    return check == FuncType
 }
