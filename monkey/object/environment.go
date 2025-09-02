@@ -15,6 +15,7 @@ type Environment struct {
 func NewEnvironment() *Environment {
     return &Environment {
         store: make(map[string]Object),
+        outer: nil,
     }
 }
 
@@ -27,8 +28,8 @@ func NewEnclosedEnvironment(outer *Environment) *Environment {
 func (this *Environment) Get(name string) (Object, bool) {
     var val, ok = this.store[name]
     if !ok && this.outer != nil {
-        var outerVal, okOuter = this.outer.store[name]
-        return outerVal, okOuter
+        // It will call the outer of outer of outer until its nil and ends
+        val, ok = this.outer.Get(name)
     }
     return val, ok
 }

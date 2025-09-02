@@ -3,13 +3,12 @@
 package parser
 
 import (
-    "fmt"
-    "testing"
     "bytes"
-    _"strconv"
-    "strings"
-    "monkey/lexer"
+    "fmt"
     "monkey/ast"
+    "monkey/lexer"
+    "strings"
+    "testing"
 )
 
 func checkParserErrors(t *testing.T, parser *Parser) {
@@ -100,7 +99,7 @@ func TestParsingLetStatements(t *testing.T) {
     if len(program.Statements) != 3 {
         t.Fatalf("Expected program to have %d statements but got %d instead", 3, len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 }
 
 func TestParsingReturnStatements(t *testing.T) {
@@ -117,7 +116,7 @@ func TestParsingReturnStatements(t *testing.T) {
     if len(program.Statements) != len(input) {
         t.Fatalf("Expected program to have %d statements but got %d instead", len(input), len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 }
 
 func TestParsingIdentifierExpression(t *testing.T) {
@@ -130,7 +129,7 @@ func TestParsingIdentifierExpression(t *testing.T) {
     if len(program.Statements) != 1 {
         t.Fatalf("Expected program to have %d statements but got %d instead", 1, len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 
     stm, ok := program.Statements[0].(*ast.ExpressionStatement)
     if !ok {
@@ -157,7 +156,7 @@ func TestParsingIntegerExpression(t *testing.T) {
     if len(program.Statements) != 1 {
         t.Fatalf("Expected program to have %d statements but got %d instead", 1, len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 
     stm, ok := program.Statements[0].(*ast.ExpressionStatement)
     if !ok {
@@ -194,7 +193,7 @@ func TestParsingPrefixExpression(t *testing.T) {
     if len(program.Statements) != len(tests) {
         t.Fatalf("Expected program to have %d statements but got %d instead", len(tests), len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 
     for i, test := range tests {
         stm, ok := program.Statements[i].(*ast.ExpressionStatement)
@@ -246,7 +245,7 @@ func TestParsingInfixExpression(t *testing.T) {
     if len(program.Statements) != len(tests) {
         t.Fatalf("Expected program to have %d statements but got %d instead", len(tests), len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 
     for i, test := range tests {
         stm, ok := program.Statements[i].(*ast.ExpressionStatement)
@@ -306,7 +305,7 @@ func TestParsingOperatorPrecedence(t *testing.T) {
     if len(program.Statements) != len(tests) {
         t.Fatalf("Expected programs to have %d statements but got %d instead", len(tests), len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 
     for i, test := range tests {
         stm, ok := program.Statements[i].(*ast.ExpressionStatement)
@@ -332,7 +331,7 @@ func TestParsingIfExpressions(t *testing.T) {
     if len(program.Statements) != 1 {
         t.Fatalf("Expected programs to have %d statements but got %d instead", 1, len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 }
 
 func TestParsingIfExpressions2(t *testing.T) {
@@ -345,7 +344,7 @@ func TestParsingIfExpressions2(t *testing.T) {
     if len(program.Statements) != 1 {
         t.Fatalf("Expected programs to have %d statements but got %d instead", 1, len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 }
 
 func TestParsingFunctionLiterals(t *testing.T) {
@@ -364,7 +363,7 @@ func TestParsingFunctionLiterals(t *testing.T) {
     if len(program.Statements) != len(input) {
         t.Fatalf("Expected programs to have %d statements but got %d instead", len(input), len(program.Statements))
     }
-    program.PrintStatements()
+    // program.PrintStatements()
 }
 
 func TestParsingCallExpressions(t *testing.T) {
@@ -381,5 +380,21 @@ func TestParsingCallExpressions(t *testing.T) {
     if len(program.Statements) != len(input) {
         t.Fatalf("Expected programs to have %d statements but got %d instead", len(input), len(program.Statements))
     }
+    // program.PrintStatements()
+}
+
+func TestClosureProgram(t *testing.T) {
+    var input = `
+        let newAdder = fn (x) {
+            return fn (y) { return x + y; };
+        };
+        let addTwo = newAdder(2);
+        addTwo(5);
+    `;
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
     program.PrintStatements()
 }

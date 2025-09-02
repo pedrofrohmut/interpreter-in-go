@@ -10,3 +10,6 @@
     - [Wren Github](https://github.com/wren-lang/wren)
 
 - [ ] Make tests for the utils
+
+- [ ] About closures and function calls. When evaluating call Expressions, make a env attached
+to that callExpression evaluation that sums { outerEnvCopy, params, innerVariables }

@@ -362,8 +362,25 @@ func TestFunctionApplication(t *testing.T) {
         { "let add = fn(x, y) { return x + y; }; add(10 + 5, add(5, 10));", 30 },
         { "fn (x) { x; }(5)",                                               5  },
 
-        // Custom
-        { "let a = 5; let add = fn(x) { a + x; }; add(10);",                15 },
+    // Custom
+        { // Using closures (a and b from outer scope)
+            `
+                let a = 5;
+                let b = 10;
+                let add = fn(x) { a + b + x; };
+                add(10);
+            `,
+            25,
+        },
+        { // Using identifiers on the callExpression instead of integer literals
+            `
+                let a = 5;
+                let b = 10;
+                let add = fn(x, y) { return x + y; };
+                add(a, b);
+            `,
+            15,
+        },
     }
 
     for _, test := range tests {
@@ -386,5 +403,34 @@ func TestFunctionApplication(t *testing.T) {
             t.Errorf("Expected function call to return object.Integer with value: %d but found %d instead",
                 test.expected, val.Value)
         }
+    }
+}
+
+func TestClosures(t *testing.T) {
+    var input = `
+        let newAdder = fn (x) {
+            return fn (y) { return x + y; };
+        };
+        let addTwo = newAdder(2);
+        addTwo(5);
+    `;
+    var expected int64 = 7
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    test_utils.CheckForParserErrors(t, parser)
+
+    var env = object.NewEnvironment()
+    var evaluated = Eval(program, env)
+    if test_utils.CheckForEvalError(t, evaluated) { return }
+
+    var val, ok = evaluated.(*object.Integer)
+    if !ok {
+        t.Errorf("Expected evaluated object to be type of object.Integer. Got %T instead", evaluated)
+        return
+    }
+    if val.Value != expected {
+        t.Errorf("Expected evaluated value object value to be %d but got %d instead", expected, val.Value)
     }
 }

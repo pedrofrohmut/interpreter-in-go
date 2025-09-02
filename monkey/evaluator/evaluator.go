@@ -14,11 +14,19 @@ var (
     ObjNull  = &object.Null {}
 )
 
-// TODO: make isOfType(object.Object, ObjectType) -> bool a generic function
-// instead of making IsType for every new type of object
+func isOfType(obj object.Object, objType object.ObjectType) bool {
+    return obj.Type() == objType
+}
 
 func isError(obj object.Object) bool {
-    return obj != nil && obj.Type() == object.ErrorType
+    return obj != nil && isOfType(obj, object.ErrorType)
+}
+
+func unwrapReturn(obj object.Object) object.Object {
+    if isOfType(obj, object.ReturnType) {
+        return obj.(*object.ReturnValue).Value
+    }
+    return obj
 }
 
 func getMsgTypeFor(objType object.ObjectType) string {
@@ -73,19 +81,15 @@ func evalStatements(statements []ast.Statement, env *object.Environment) object.
     for _, stm := range statements {
         result = Eval(stm, env)
 
-        // Return early when error type is found
         if isError(result) { return result }
 
-        // Return early when return type is found
-        if result.IsType(object.ReturnType) { return result }
+        if isOfType(result, object.ReturnType) { return result }
     }
 
-    // Return the last evaluated statement if no early return types are found
-    return result
+    return result // Return the last evaluated statement if no early return types are found
 }
 
 func evalCallExpression(objFunc *object.Function, node *ast.CallExpression, env *object.Environment) object.Object {
-    // Check if number of parameters of functionLiteral matches the functionCall
     if len(objFunc.Parameters) != len(node.Parameters) {
         return &object.Error {
             Message: fmt.Sprintf("Expected function call to have %d parameters but found %d instead",
@@ -93,9 +97,9 @@ func evalCallExpression(objFunc *object.Function, node *ast.CallExpression, env 
         }
     }
 
-    var funcEnv = object.NewEnclosedEnvironment(env)
+    var funcEnv = object.NewEnclosedEnvironment(objFunc.Env)
 
-    // Adds the parameters to the function enclosed environment
+    // Adds params with values to function env
     for i := range objFunc.Parameters {
         var paramName = objFunc.Parameters[i].Value
         var paramValue = Eval(node.Parameters[i], env)
@@ -105,11 +109,7 @@ func evalCallExpression(objFunc *object.Function, node *ast.CallExpression, env 
 
     var result = Eval(objFunc.Body, funcEnv)
 
-    if result.IsType(object.ReturnType) {
-        return result.(*object.ReturnValue).Value
-    }
-
-    return result
+    return unwrapReturn(result)
 }
 
 func objFromBool(check bool) *object.Boolean {
@@ -281,7 +281,6 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
             var objFunc = obj.(*object.Function)
 
             return evalCallExpression(objFunc, node, env)
-
 
         default:
             return &object.Error {
