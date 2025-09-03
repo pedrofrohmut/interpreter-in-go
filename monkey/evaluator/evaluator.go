@@ -37,6 +37,8 @@ func getMsgTypeFor(objType object.ObjectType) string {
         return "Boolean"
     case object.NullType:
         return "Null"
+    case object.StringType:
+        return "String"
     default:
         return "Not Covered"
     }
@@ -195,36 +197,45 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
         if isError(evaluatedLeft) { return evaluatedLeft }
         if isError(evaluatedRight) { return evaluatedRight }
 
-        if evaluatedLeft.Type() != evaluatedRight.Type() { // Types are different
+        if evaluatedLeft.Type() != evaluatedRight.Type() {
             return getMismatchError(evaluatedLeft, node.Operator, evaluatedRight)
         }
 
-        var left, okLeft = evaluatedLeft.(*object.Integer)
-        var right, okRight = evaluatedRight.(*object.Integer)
-
-        if !okLeft && !okRight {
+        switch evaluatedLeft.Type() {
+        case object.StringType:
+            if node.Operator != "+" {
+                return getUnknownOperatorError(evaluatedLeft, node.Operator, evaluatedRight)
+            }
+            var left = evaluatedLeft.(*object.String)
+            var right = evaluatedRight.(*object.String)
+            return &object.String { Value: left.Value + right.Value }
+        case object.IntType:
+            var left = evaluatedLeft.(*object.Integer)
+            var right = evaluatedRight.(*object.Integer)
+            switch node.Operator {
+        // Math operations
+            case "+":
+                return &object.Integer { Value: left.Value + right.Value }
+            case "-":
+                return &object.Integer { Value: left.Value - right.Value }
+            case "*":
+                return &object.Integer { Value: left.Value * right.Value }
+            case "/":
+                return &object.Integer { Value: left.Value / right.Value }
+        // Booleans operations
+            case "==":
+                return objFromBool(left.Value == right.Value)
+            case "!=":
+                return objFromBool(left.Value != right.Value)
+            case "<":
+                return objFromBool(left.Value < right.Value)
+            case ">":
+                return objFromBool(left.Value > right.Value)
+            }
+        case object.BoolType:
             return getUnknownOperatorError(evaluatedLeft, node.Operator, evaluatedRight)
-        }
-
-        switch node.Operator {
-    // Math operations
-        case "+":
-            return &object.Integer { Value: left.Value + right.Value }
-        case "-":
-            return &object.Integer { Value: left.Value - right.Value }
-        case "*":
-            return &object.Integer { Value: left.Value * right.Value }
-        case "/":
-            return &object.Integer { Value: left.Value / right.Value }
-    // Booleans operations
-        case "==":
-            return objFromBool(left.Value == right.Value)
-        case "!=":
-            return objFromBool(left.Value != right.Value)
-        case "<":
-            return objFromBool(left.Value < right.Value)
-        case ">":
-            return objFromBool(left.Value > right.Value)
+        default:
+            return getNotCoveredEvaluationError(node)
         }
 
 // TODO: Make IfExpression good and not this mess
