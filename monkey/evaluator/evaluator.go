@@ -301,6 +301,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
     case *ast.Boolean:
         return objFromBool(node.Value)
 
+    case *ast.StringLiteral:
+        return &object.String { Value: node.Value }
+
     } // END: Switch nody.(type)
 
     return getNotCoveredEvaluationError(node)

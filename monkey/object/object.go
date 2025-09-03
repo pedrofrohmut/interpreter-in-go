@@ -16,6 +16,7 @@ const (
     ReturnType = "RETURN_TYPE"
     ErrorType  = "ERROR_TYPE"
     FuncType   = "FUNCTION_TYPE"
+    StringType = "STRING_TYPE"
 )
 
 type ObjectType string
@@ -63,6 +64,20 @@ func (this *Null) Inspect() string {
 // @Impl
 func (this *Null) Type() ObjectType {
     return NullType
+}
+
+type String struct {
+    Value string
+}
+
+// @Impl
+func (this *String) Inspect() string {
+    return this.Value
+}
+
+// @Impl
+func (this *String) Type() ObjectType {
+    return StringType
 }
 
 type ReturnValue struct {

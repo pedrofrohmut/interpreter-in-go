@@ -303,7 +303,7 @@ func TestParsingOperatorPrecedence(t *testing.T) {
 
     checkParserErrors(t, parser)
     if len(program.Statements) != len(tests) {
-        t.Fatalf("Expected programs to have %d statements but got %d instead", len(tests), len(program.Statements))
+        t.Fatalf("Expected program to have %d statements but got %d instead", len(tests), len(program.Statements))
     }
     // program.PrintStatements()
 
@@ -329,7 +329,7 @@ func TestParsingIfExpressions(t *testing.T) {
 
     checkParserErrors(t, parser)
     if len(program.Statements) != 1 {
-        t.Fatalf("Expected programs to have %d statements but got %d instead", 1, len(program.Statements))
+        t.Fatalf("Expected program to have %d statements but got %d instead", 1, len(program.Statements))
     }
     // program.PrintStatements()
 }
@@ -342,7 +342,7 @@ func TestParsingIfExpressions2(t *testing.T) {
 
     checkParserErrors(t, parser)
     if len(program.Statements) != 1 {
-        t.Fatalf("Expected programs to have %d statements but got %d instead", 1, len(program.Statements))
+        t.Fatalf("Expected program to have %d statements but got %d instead", 1, len(program.Statements))
     }
     // program.PrintStatements()
 }
@@ -361,7 +361,7 @@ func TestParsingFunctionLiterals(t *testing.T) {
 
     checkParserErrors(t, parser)
     if len(program.Statements) != len(input) {
-        t.Fatalf("Expected programs to have %d statements but got %d instead", len(input), len(program.Statements))
+        t.Fatalf("Expected program to have %d statements but got %d instead", len(input), len(program.Statements))
     }
     // program.PrintStatements()
 }
@@ -378,7 +378,7 @@ func TestParsingCallExpressions(t *testing.T) {
 
     checkParserErrors(t, parser)
     if len(program.Statements) != len(input) {
-        t.Fatalf("Expected programs to have %d statements but got %d instead", len(input), len(program.Statements))
+        t.Fatalf("Expected program to have %d statements but got %d instead", len(input), len(program.Statements))
     }
     // program.PrintStatements()
 }
@@ -396,5 +396,36 @@ func TestClosureProgram(t *testing.T) {
     var program = parser.ParseProgram()
 
     checkParserErrors(t, parser)
-    program.PrintStatements()
+    if len(program.Statements) != 3 {
+        t.Fatalf("Expected program to have %d statements but got %d instead", 3, len(program.Statements))
+    }
+    // program.PrintStatements()
+}
+
+func TestHelloWorld(t *testing.T) {
+    var input = `"Hello, World!";`
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != 1 {
+        t.Fatalf("Expected program to have %d statements but got %d instead", 1, len(program.Statements))
+    }
+    // program.PrintStatements()
+
+    var exp, expOk = program.Statements[0].(*ast.ExpressionStatement)
+    if !expOk {
+        t.Errorf("The first program statement is not a expression statement. Got %T instead", program.Statements[0])
+        return
+    }
+    var strLit, okStrLit = exp.Expression.(*ast.StringLiteral)
+    if !okStrLit {
+        t.Errorf("Expression statement expression is not a string literal. Got %T instead", exp.Expression)
+        return
+    }
+    var expected = "Hello, World!"
+    if strLit.Value != expected {
+        t.Errorf("Expected strint literal value to be '%s' but got '%s' instead", expected, strLit.Value)
+    }
 }

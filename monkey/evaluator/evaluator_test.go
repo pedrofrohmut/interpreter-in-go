@@ -434,3 +434,27 @@ func TestClosures(t *testing.T) {
         t.Errorf("Expected evaluated value object value to be %d but got %d instead", expected, val.Value)
     }
 }
+
+func TestHelloWorld(t *testing.T) {
+    var input = `"Hello, World!"`
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    test_utils.CheckForParserErrors(t, parser)
+
+    var env = object.NewEnvironment()
+    var evaluated = Eval(program, env)
+    if test_utils.CheckForEvalError(t, evaluated) { return }
+
+    var val, ok = evaluated.(*object.String)
+    if !ok {
+        t.Errorf("Expected evaluated object to be type of object.String. Got %T instead", evaluated)
+        return
+    }
+    var expected = "Hello, World!"
+    if val.Value != expected {
+        t.Errorf("Expected evaluated value object value to be '%s' but got '%s' instead", expected, val.Value)
+    }
+}
+

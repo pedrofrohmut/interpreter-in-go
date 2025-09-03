@@ -155,6 +155,19 @@ func NewIntegerLiteral(value int64) *IntegerLiteral {
     return &IntegerLiteral { Value: value }
 }
 
+type StringLiteral struct {
+    Value string
+}
+
+// @Impl
+func (this *StringLiteral) node() {}
+
+// @Impl
+func (this *StringLiteral) expression() {}
+
+// @Impl
+func (this *StringLiteral) String() string { return this.Value }
+
 type PrefixExpression struct {
     Operator string
     Value Expression

@@ -160,6 +160,8 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
             this.addError("Could not convert current token literal to int64")
         }
         return &ast.IntegerLiteral { Value: intValue }
+    case token.String:
+        return &ast.StringLiteral { Value: this.curr.Literal }
     case token.Lparen:
         this.next() // Jumps the token.LPAREN
         var exp = this.parseExpression(Lowest)
