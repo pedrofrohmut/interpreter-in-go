@@ -8,7 +8,10 @@ package lexer
 import (
     "monkey/token"
     "fmt"
+    "bytes"
 )
+
+const EOF = 0
 
 // INFO: The current version of Lexer only supports ASCII characters. Can be updated
 // later to support utf-8 later as an exercise
@@ -48,7 +51,7 @@ func (this *Lexer) getNextCh() byte {
     if this.hasNextCh() {
         return this.input[this.pos + 1]
     }
-    return 0 // EOF
+    return EOF
 }
 
 func isIdentLetter(val byte) bool {
@@ -103,6 +106,19 @@ func (this *Lexer) readIntNumber() string {
     return this.input[start:this.pos + 1]
 }
 
+func (this *Lexer) readStringLiteral() string {
+    this.nextPos() // Goes to first ch of string literal
+
+    var out bytes.Buffer
+
+    for this.getCh() != '"' && this.getCh() != EOF {
+        out.WriteByte(this.getCh())
+        this.nextPos()
+    }
+
+    return out.String()
+}
+
 func (this *Lexer) GetNextToken() token.Token {
     this.skipWhiteSpaces()
 
@@ -144,7 +160,6 @@ func (this *Lexer) GetNextToken() token.Token {
         tk = token.NewToken(token.Comma, this.getCh())
     case ';':
         tk = token.NewToken(token.Semicolon, this.getCh())
-
     case '(':
         tk = token.NewToken(token.Lparen, this.getCh())
     case ')':
@@ -153,8 +168,10 @@ func (this *Lexer) GetNextToken() token.Token {
         tk = token.NewToken(token.Lbrace, this.getCh())
     case '}':
         tk = token.NewToken(token.Rbrace, this.getCh())
-
-    case 0:
+    case '"':
+        var str = this.readStringLiteral()
+        tk = token.NewTokenStr(token.String, str)
+    case EOF:
         tk = token.NewTokenStr(token.Eof, "")
     default:
         switch {

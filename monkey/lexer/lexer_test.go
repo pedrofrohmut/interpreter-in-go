@@ -3,79 +3,79 @@
 package lexer
 
 import (
-    "testing"
     "monkey/token"
+    "testing"
 )
 
 func TestNewLexer(t *testing.T) {
-    input := "bar"
-    lx := NewLexer(input)
+    var input = "bar"
+    var lexer = NewLexer(input)
 
-    if lx.input != input {
-        t.Errorf("Expected lexer.input to be %q, but got %q", input, lx.input)
+    if lexer.input != input {
+        t.Errorf("Expected lexer.input to be %q, but got %q", input, lexer.input)
     }
-    if lx.getCh() != input[0] {
-        t.Errorf("Expect lexer.ch to be %q, but got %q", input[0], lx.getCh())
+    if lexer.getCh() != input[0] {
+        t.Errorf("Expect lexer.ch to be %q, but got %q", input[0], lexer.getCh())
     }
 }
 
 func TestNewLexerEmptyInput(t *testing.T) {
-    input := ""
-    lx := NewLexer(input)
+    var input = ""
+    var lexer = NewLexer(input)
 
-    if lx.input != "" {
-        t.Errorf("Expected lexer.input to be %q, but got %q", "", lx.input)
+    if lexer.input != "" {
+        t.Errorf("Expected lexer.input to be %q, but got %q", "", lexer.input)
     }
-    if lx.pos != 0 {
-        t.Errorf("Expected lexer.position to be %q, but got %q", 0, lx.pos)
+    if lexer.pos != 0 {
+        t.Errorf("Expected lexer.position to be %q, but got %q", 0, lexer.pos)
     }
 }
 
 type ExpectedToken struct {
-    expectedType string
-    expectedLiteral string
+    Type    string
+    Literal string
 }
 
-func checksForNextToken(lx *Lexer, t *testing.T, tests []ExpectedToken) {
-    for i, tt := range tests {
-        tok := lx.GetNextToken()
+func checksForNextToken(lexer *Lexer, t *testing.T, expectedTokens []ExpectedToken) {
+    for i, expected := range expectedTokens {
+        var token = lexer.GetNextToken()
 
-        if tok.Type != tt.expectedType {
+        if token.Type != expected.Type {
             t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q",
-                i, tt.expectedType, tok.Type)
+                i, expected.Type, token.Type)
         }
 
-        if tok.Literal != tt.expectedLiteral {
+        if token.Literal != expected.Literal {
             t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q",
-                i, tt.expectedLiteral, tok.Literal)
+                i, expected.Literal, token.Literal)
         }
     }
 }
 
 func TestGetNextToken(t *testing.T) {
-    input := "=+(){},;"
-    lx := NewLexer(input)
+    var input = "=+(){},;"
+    var lexer = NewLexer(input)
 
-    tests := []ExpectedToken {
-        {token.Assign,    "="},
-        {token.Plus,      "+"},
-        {token.Lparen,    "("},
-        {token.Rparen,    ")"},
-        {token.Lbrace,    "{"},
-        {token.Rbrace,    "}"},
-        {token.Comma,     ","},
+    var expectedTokens = []ExpectedToken {
+        {token.Assign, "="},
+        {token.Plus, "+"},
+        {token.Lparen, "("},
+        {token.Rparen, ")"},
+        {token.Lbrace, "{"},
+        {token.Rbrace, "}"},
+        {token.Comma, ","},
         {token.Semicolon, ";"},
-        {token.Eof,       ""},
+        {token.Eof, ""},
     }
 
-    checksForNextToken(lx, t, tests)
+    checksForNextToken(lexer, t, expectedTokens)
 }
 
 func TestGetNextToken2(t *testing.T) {
-    input := `let five = 5;`
-    lx := NewLexer(input)
+    var input = `let five = 5;`
+    var lexer = NewLexer(input)
 
-    tests := [] ExpectedToken {
+    var expectedTokens = []ExpectedToken {
         {token.Let, "let"},
         {token.Ident, "five"},
         {token.Assign, "="},
@@ -83,11 +83,11 @@ func TestGetNextToken2(t *testing.T) {
         {token.Semicolon, ";"},
     }
 
-    checksForNextToken(lx, t, tests)
+    checksForNextToken(lexer, t, expectedTokens)
 }
 
 func TestGetNextToken3(t *testing.T) {
-    input := `
+    var input = `
         let five = 5;
         let ten = 10;
 
@@ -97,9 +97,9 @@ func TestGetNextToken3(t *testing.T) {
 
         let result = add(five, ten);
     `
-    lx := NewLexer(input)
+    var lexer = NewLexer(input)
 
-    tests := [] ExpectedToken {
+    var expectedTokens = []ExpectedToken {
         // Statement 1
         {token.Let, "let"},
         {token.Ident, "five"},
@@ -142,17 +142,17 @@ func TestGetNextToken3(t *testing.T) {
         {token.Semicolon, ";"},
     }
 
-    checksForNextToken(lx, t, tests)
+    checksForNextToken(lexer, t, expectedTokens)
 }
 
 func TestGetNextToken4(t *testing.T) {
-    input := `
+    var input = `
         !-/*5;
         5 < 10 > 5;
     `
-    lx := NewLexer(input)
+    var lexer = NewLexer(input)
 
-    tests := [] ExpectedToken {
+    var expectedTokens = []ExpectedToken {
         // Statement 1
         {token.Bang, "!"},
         {token.Minus, "-"},
@@ -169,20 +169,20 @@ func TestGetNextToken4(t *testing.T) {
         {token.Semicolon, ";"},
     }
 
-    checksForNextToken(lx, t, tests)
+    checksForNextToken(lexer, t, expectedTokens)
 }
 
 func TestGetNextToken5(t *testing.T) {
-    input := `
+    var input = `
         if (5 < 10) {
             return true;
         } else {
             return false;
         }
     `
-    lx := NewLexer(input)
+    var lexer = NewLexer(input)
 
-    tests := []ExpectedToken {
+    var expectedTokens = []ExpectedToken {
         // Line 1
         {token.If, "if"},
         {token.Lparen, "("},
@@ -207,17 +207,17 @@ func TestGetNextToken5(t *testing.T) {
         {token.Rbrace, "}"},
     }
 
-    checksForNextToken(lx, t, tests)
+    checksForNextToken(lexer, t, expectedTokens)
 }
 
 func TestNextToken6(t *testing.T) {
-    input := `
+    var input = `
         10 == 10;
         9 !=  10;
     `
-    lx := NewLexer(input)
+    var lexer = NewLexer(input)
 
-    tests := []ExpectedToken {
+    var expectedTokens = []ExpectedToken {
         // Statement 1
         {token.Int, "10"},
         {token.Eq, "=="},
@@ -230,20 +230,21 @@ func TestNextToken6(t *testing.T) {
         {token.Semicolon, ";"},
     }
 
-    checksForNextToken(lx, t, tests)
+    checksForNextToken(lexer, t, expectedTokens)
 }
 
-func TextNextTokenAllTokens(t *testing.T) {
-    input := `foo 5 = + - ! * / < > == != , ; ( ) { } fn let true false if else return`
-    lx := NewLexer(input)
+func TestNextTokenAllTokens(t *testing.T) {
+    var input = `foo 5 = + - ! * / < > == != , ; ( ) { } fn let true false if else return`
+    var lexer = NewLexer(input)
 
-    tests := []ExpectedToken {
+    var expectedTokens = []ExpectedToken {
         // Identifier + literals
         {token.Ident, "foo"},
         {token.Int, "5"},
 
         // Operators
         {token.Assign, "="},
+        {token.Plus, "+"},
         {token.Minus, "-"},
         {token.Bang, "!"},
         {token.Asterisk, "*"},
@@ -275,5 +276,28 @@ func TextNextTokenAllTokens(t *testing.T) {
         {token.Return, "return"},
     }
 
-    checksForNextToken(lx, t, tests)
+    checksForNextToken(lexer, t, expectedTokens)
+}
+
+func TestStrings(t *testing.T) {
+    var input = `
+        "foo bar";
+        "foobar";
+        "";
+        "hello, world!";
+    `
+    var expectedTokens = []ExpectedToken {
+        {token.String, "foo bar"},
+        {token.Semicolon, ";"},
+        {token.String, "foobar"},
+        {token.Semicolon, ";"},
+        {token.String, ""},
+        {token.Semicolon, ";"},
+        {token.String, "hello, world!"},
+        {token.Semicolon, ";"},
+    }
+
+    var lexer = NewLexer(input)
+
+    checksForNextToken(lexer, t, expectedTokens)
 }

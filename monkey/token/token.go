@@ -11,6 +11,9 @@ const (
     Ident      = "IDENT" // add, foobar, x, y
     Int        = "INT"
 
+    // Types
+    String     = "STRING"
+
     // Operators
     Assign     = "="
     Plus       = "+"
