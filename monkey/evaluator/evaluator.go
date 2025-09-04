@@ -29,7 +29,7 @@ func unwrapReturn(obj object.Object) object.Object {
     return obj
 }
 
-func getMsgTypeFor(objType object.ObjectType) string {
+func GetMsgTypeFor(objType object.ObjectType) string {
     switch objType {
     case object.IntType:
         return "Integer"
@@ -45,21 +45,21 @@ func getMsgTypeFor(objType object.ObjectType) string {
 }
 
 func getMismatchError(left object.Object, operator string, right object.Object) *object.Error {
-    var leftMsgType = getMsgTypeFor(left.Type())
-    var rightMsgType = getMsgTypeFor(right.Type())
+    var leftMsgType = GetMsgTypeFor(left.Type())
+    var rightMsgType = GetMsgTypeFor(right.Type())
     return &object.Error {
         Message: fmt.Sprintf("type mismatch: %s %s %s", leftMsgType, operator, rightMsgType),
     }
 }
 
 func getUnknownOperatorError(left object.Object, operator string, right object.Object) *object.Error {
-    var rightMsgType = getMsgTypeFor(right.Type())
+    var rightMsgType = GetMsgTypeFor(right.Type())
     if left == nil {
         return &object.Error {
             Message: fmt.Sprintf("unknown operator: %s%s", operator, rightMsgType),
         }
     }
-    var leftMsgType = getMsgTypeFor(left.Type())
+    var leftMsgType = GetMsgTypeFor(left.Type())
     return &object.Error {
         Message: fmt.Sprintf("unknown operator: %s %s %s", leftMsgType, operator, rightMsgType),
     }
@@ -112,6 +112,16 @@ func evalCallExpression(objFunc *object.Function, node *ast.CallExpression, env 
     var result = Eval(objFunc.Body, funcEnv)
 
     return unwrapReturn(result)
+}
+
+func findIdentifier(name string, env *object.Environment) object.Object {
+    var value, ok = env.Get(name)
+    if ok { return value }
+
+    var builtin, okBuiltin = GetBuiltin(name)
+    if okBuiltin { return builtin }
+
+    return getIdentifierNotFoundError(name)
 }
 
 func objFromBool(check bool) *object.Boolean {
@@ -271,19 +281,26 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
     case *ast.CallExpression:
         switch exp := node.Expression.(type) {
         case *ast.Identifier: // Exp: foo(x, y, z)
-            var obj, okIden = env.Get(exp.Value)
-            if !okIden {
-                return getIdentifierNotFoundError(exp.Value)
-            }
+            var obj = findIdentifier(exp.Value, env)
+            if isError(obj) { return obj }
 
-            var objFunc, okFunc = obj.(*object.Function)
-            if !okFunc {
+            switch objFunc := obj.(type) {
+            case *object.Function:
+                return evalCallExpression(objFunc, node, env)
+            case *object.Builtin:
+                var args = []object.Object {}
+                for _, param := range node.Parameters {
+                    var arg = Eval(param, env)
+                    if isError(arg) { return arg }
+                    args = append(args, arg)
+                }
+                var fn = objFunc.Function
+                return fn(args...)
+            default:
                 return &object.Error {
-                    Message: fmt.Sprintf("Identifier is not connected to an object.Function. Found %T instead", obj),
+                    Message: fmt.Sprintf("Identifier is not connected to an covered function type. Found %T instead", obj),
                 }
             }
-
-            return evalCallExpression(objFunc, node, env)
 
         case *ast.FunctionLiteral: // Exp: fn (x, y) { x + y; }(5, 6)
             var obj = Eval(exp, env)
@@ -300,11 +317,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
         }
 
     case *ast.Identifier:
-        var val, ok = env.Get(node.Value)
-        if !ok {
-            return getIdentifierNotFoundError(node.Value)
-        }
-        return val
+        return findIdentifier(node.Value, env)
 
     case *ast.IntegerLiteral:
         return &object.Integer { Value: node.Value }

@@ -70,7 +70,10 @@ func debugMain() {
     // input := "5 + true;"
 
     // Eval Let Statements
-    input := "let a = 5; a;"
+    // input := "let a = 5; a;"
+
+    // Eval builtin
+    input := `len("hello")`
 
     lexer := lexer.NewLexer(input)
 
@@ -99,7 +102,7 @@ func replMain() {
 }
 
 func main() {
-    const debug = false // Toggle for debugging or to use the repl
+    const debug = true // Toggle for debugging or to use the repl
     if debug {
         debugMain()
     } else {

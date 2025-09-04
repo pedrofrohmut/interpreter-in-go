@@ -3,11 +3,11 @@
 package evaluator
 
 import (
-    "testing"
     "monkey/lexer"
-    "monkey/parser"
     "monkey/object"
+    "monkey/parser"
     "monkey/test_utils"
+    "testing"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
@@ -416,7 +416,7 @@ func TestClosures(t *testing.T) {
         };
         let addTwo = newAdder(2);
         addTwo(5);
-    `;
+    `
     var expected int64 = 7
     var lexer = lexer.NewLexer(input)
     var parser = parser.NewParser(lexer)
@@ -481,5 +481,51 @@ func TestStringConcat(t *testing.T) {
     var expected = "Hello, World!"
     if val.Value != expected {
         t.Errorf("Expected evaluated value object value to be '%s' but got '%s' instead", expected, val.Value)
+    }
+}
+
+func TestBuiltinFunctions(t *testing.T) {
+    var tests = []struct {
+        input string; expected any
+    } {
+        { `len("")`,                    0                                                 },
+        { `len("four")`,                4                                                 },
+        { `len("hello, world!")`,       13                                                },
+        { `len(1)`,                     "argument to len not supported, got Integer"      },
+        { `len("one", "two")`,          "wrong number of arguments. expected=1 but got=2" },
+        { `len("one", "two", "three")`, "wrong number of arguments. expected=1 but got=3" },
+    }
+
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+        test_utils.CheckForParserErrors(t, parser)
+
+        var evaluated = Eval(program, object.NewEnvironment())
+        // if test_utils.CheckForEvalError(t, evaluated) { continue }
+
+        switch expected := test.expected.(type) {
+        case int:
+            var integer, ok = evaluated.(*object.Integer)
+            if !ok {
+                t.Errorf("Expected evaluated to be object.Integer but got %T instead", evaluated)
+                continue
+            }
+            if integer.Value != int64(expected) {
+                t.Errorf("Expected evaluated object.Integer value to be %d but got %d instead",
+                    test.expected, integer.Value)
+            }
+        case string:
+            var strObj, ok = evaluated.(*object.Error)
+            if !ok {
+                t.Errorf("Expected evaluated to be object.String but got %T instead", evaluated)
+                continue
+            }
+            if strObj.Message != expected {
+                t.Errorf("Expected evaluated object.String value to be '%s' but got '%s' instead", expected, strObj.Message)
+            }
+        }
     }
 }

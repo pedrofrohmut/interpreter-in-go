@@ -10,13 +10,14 @@ import (
 )
 
 const (
-    IntType    = "INTEGER_TYPE"
-    BoolType   = "BOOLEAN_TYPE"
-    NullType   = "NULL_TYPE"
-    ReturnType = "RETURN_TYPE"
-    ErrorType  = "ERROR_TYPE"
-    FuncType   = "FUNCTION_TYPE"
-    StringType = "STRING_TYPE"
+    IntType     = "INTEGER_TYPE"
+    BoolType    = "BOOLEAN_TYPE"
+    NullType    = "NULL_TYPE"
+    ReturnType  = "RETURN_TYPE"
+    ErrorType   = "ERROR_TYPE"
+    FuncType    = "FUNCTION_TYPE"
+    StringType  = "STRING_TYPE"
+    BuiltinType = "BUILTIN"
 )
 
 type ObjectType string
@@ -139,4 +140,20 @@ func (this *Function) Inspect() string {
 // @Impl
 func (this *Function) Type() ObjectType {
     return FuncType
+}
+
+type BuiltinFunction func(args ...Object) Object
+
+type Builtin struct {
+    Function BuiltinFunction
+}
+
+// @Impl
+func (this *Builtin) Inspect() string {
+    return "builtin function"
+}
+
+// @Impl
+func (this *Builtin) Type() ObjectType {
+    return BuiltinType
 }
