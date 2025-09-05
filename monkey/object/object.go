@@ -17,7 +17,8 @@ const (
     ErrorType   = "ERROR_TYPE"
     FuncType    = "FUNCTION_TYPE"
     StringType  = "STRING_TYPE"
-    BuiltinType = "BUILTIN"
+    BuiltinType = "BUILTIN_TYPE"
+    ArrayType   = "ARRAY_TYPE"
 )
 
 type ObjectType string
@@ -156,4 +157,29 @@ func (this *Builtin) Inspect() string {
 // @Impl
 func (this *Builtin) Type() ObjectType {
     return BuiltinType
+}
+
+type Array struct {
+    Elements []Object
+}
+
+// @Impl
+func (this *Array) Inspect() string {
+    var out bytes.Buffer
+
+    var elements = []string {}
+    for _, element := range this.Elements {
+        elements = append(elements, element.Inspect())
+    }
+
+    out.WriteString("[")
+    out.WriteString(strings.Join(elements, ", "))
+    out.WriteString("]")
+
+    return out.String()
+}
+
+// @Impl
+func (this *Array) Type() ObjectType {
+    return ArrayType
 }

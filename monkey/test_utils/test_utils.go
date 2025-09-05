@@ -20,13 +20,15 @@ func TryGetInput[T any](t *testing.T, tests []T) string {
     return input
 }
 
-func CheckForParserErrors(t *testing.T, parser *parser.Parser) {
+func CheckForParserErrors(t *testing.T, parser *parser.Parser) bool {
     if len(parser.Errors()) > 0 {
         for i, err := range parser.Errors() {
             fmt.Printf("# [%d] - ERROR: %s\n", i, err)
         }
-        t.Fatalf("Has parser errors")
+        t.Errorf("Has parser errors")
+        return true
     }
+    return false
 }
 
 func CheckProgram(t *testing.T, program *ast.Program, expLenStms int) {

@@ -141,6 +141,31 @@ func isTruthy(check any) bool {
     }
 }
 
+func getIndexFromExpression(expr *ast.IndexExpression, env *object.Environment) (object.Object, bool) {
+    var index = Eval(expr.Index, env)
+    if isError(index) { return index, false }
+
+    var indexInt, okIndexInt = index.(*object.Integer)
+    if !okIndexInt {
+        return &object.Error {
+            Message: fmt.Sprintf(
+                "IndexExpression.Index expected to be a object.Integer but got %T instead",
+                index,
+            ),
+        },
+        false
+    }
+
+    return indexInt, true
+}
+
+func isOutOfBounds[T any](arr []T, index int64) bool {
+    if index < 0 || index >= int64(len(arr)) {
+        return true
+    }
+    return false
+}
+
 func Eval(node ast.Node, env *object.Environment) object.Object {
     switch node := node.(type) {
 
@@ -174,6 +199,60 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
         return Eval(node.Expression, env)
 
 // Expressions
+    case *ast.ArrayLiteral:
+        var arr = &object.Array {
+            Elements: []object.Object {},
+        }
+
+        for _, expr := range node.Elements {
+            var element = Eval(expr, env)
+            arr.Elements = append(arr.Elements, element)
+        }
+
+        return arr
+
+    case *ast.IndexExpression:
+        switch x := node.Left.(type) {
+
+        case *ast.ArrayLiteral:
+            var index, okIndex = getIndexFromExpression(node, env)
+            if !okIndex { return index }
+            var indexInt = index.(*object.Integer).Value
+
+            if isOutOfBounds(x.Elements, indexInt) { return ObjNull }
+
+            return Eval(x.Elements[indexInt], env)
+
+        case *ast.Identifier:
+            var ident, found = env.Get(x.Value)
+            if !found {
+                return getIdentifierNotFoundError(x.Value)
+            }
+
+            var arr, okArr = ident.(*object.Array)
+            if !okArr {
+                return &object.Error {
+                    Message: fmt.Sprintf(
+                        "Identifier from IndexExpression is not connected to an array object. Get %T instead",
+                        ident,
+                    ),
+                }
+            }
+
+            var index, okIndex = getIndexFromExpression(node, env)
+            if !okIndex { return index }
+            var indexInt = index.(*object.Integer).Value
+
+            if isOutOfBounds(arr.Elements, indexInt) { return ObjNull }
+
+            return arr.Elements[indexInt]
+
+        default:
+            return &object.Error {
+                Message: fmt.Sprintf("IndexExpression Left type not covered or invalid. Got %T", node.Left),
+            }
+        }
+
     case *ast.PrefixExpression:
         switch node.Operator {
         case "-":

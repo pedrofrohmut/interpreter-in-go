@@ -142,6 +142,16 @@ func (this *Parser) parseReturnStatement() *ast.ReturnStatement {
     return stm
 }
 
+func (this *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+    var indexExpr = &ast.IndexExpression {}
+    indexExpr.Left = left
+    this.next() // Jumps to the token.Lbracket
+    this.next() // Jumps inside the brackets so the expr is not viewed as an array
+    indexExpr.Index = this.parseExpression(Lowest)
+    this.next() // Jumps to the token.Rbracket
+    return indexExpr
+}
+
 func (this *Parser) parsePrefixOrSymbol() ast.Expression {
     switch this.curr.Type {
     case token.Bang, token.Minus:
@@ -153,19 +163,13 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
     case token.True, token.False:
         return &ast.Boolean { Value: this.isCurr(token.True) } // Easy convert to bool trick :D
     case token.Ident:
-        var ident = &ast.Identifier { Value: this.curr.Literal }
+        var identifier = &ast.Identifier { Value: this.curr.Literal }
 
         if this.isPeek(token.Lbracket) {
-            var indexExpr = &ast.IndexExpression {}
-            indexExpr.Left = ident
-            this.next() // Jumps to the token.Lbracket
-            this.next() // Jumps inside the brackets so the expr is not viewed as an array
-            indexExpr.Index = this.parseExpression(Lowest)
-            this.next() // Jumps to the token.Rbracket
-            return indexExpr
+            return this.parseIndexExpression(identifier)
         }
 
-        return ident
+        return identifier
 
     case token.Int:
         var intValue, err = strconv.ParseInt(this.curr.Literal, 10, 64)
@@ -185,17 +189,23 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
         this.next() // Jumps the token.RPAREN
         return exp
     case token.Lbracket:
-        // ...
-        this.next()
         var array = &ast.ArrayLiteral {}
         array.Elements = []ast.Expression {}
+
+        this.next()
         for !this.isCurr(token.Rbracket) {
             var elem = this.parseExpression(Lowest)
             array.Elements = append(array.Elements, elem)
             this.next()
             if this.isCurr(token.Comma) { this.next() }
         }
-        return array
+
+        if !this.isPeek(token.Lbracket) {
+            return array
+        }
+
+        return this.parseIndexExpression(array)
+
     case token.If:
         return this.parseIfExpression()
     case token.Function:

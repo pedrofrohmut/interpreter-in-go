@@ -482,3 +482,46 @@ func TestArrayIndexes(t *testing.T) {
     testIdentifier(t, idx.Left, "arr")
     testInfixExpression(t, idx.Index, 1, "+", 1)
 }
+
+func TestArrayIndexes2(t *testing.T) {
+    var input = `[1, 2, 3][1]`
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != 1 {
+        t.Errorf("Expected program to have %d statements but got %d instead", 1, len(program.Statements))
+        return
+    }
+
+    var stm, okStm = program.Statements[0].(*ast.ExpressionStatement)
+    if !okStm {
+        t.Errorf("Expected the program first statement to be of type ast.ExpressionStatement but got %T instead",
+            program.Statements[0])
+        return
+    }
+    var index, okIndex = stm.Expression.(*ast.IndexExpression)
+    if !okIndex {
+        t.Errorf("Expected statement expression to be of type ast.IndexExpression but got %T instead", stm.Expression)
+        return
+    }
+
+    // index.Left
+    var array, okArray = index.Left.(*ast.ArrayLiteral)
+    if !okArray {
+        t.Errorf("Expected index left expression to be of type ast.ArrayLiteral but got %T instead", index.Left)
+        return
+    }
+    testIntegerLiteral(t, array.Elements[0], 1)
+    testIntegerLiteral(t, array.Elements[1], 2)
+    testIntegerLiteral(t, array.Elements[2], 3)
+
+    // index.Index
+    var intLit, okIntLit = index.Index.(*ast.IntegerLiteral)
+    if !okIntLit {
+        t.Errorf("Expected indexExpression index to be of type ast.IntegerLiteral but got %T instead", index.Index)
+        return
+    }
+    testIntegerLiteral(t, intLit, 1)
+}

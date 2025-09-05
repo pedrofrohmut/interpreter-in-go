@@ -529,3 +529,76 @@ func TestBuiltinFunctions(t *testing.T) {
         }
     }
 }
+
+func TestArrayLiterals(t *testing.T) {
+    var input = `[1, 2 * 3, 4 + 5]`
+
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+    test_utils.CheckForParserErrors(t, parser)
+
+    var evaluated = Eval(program, object.NewEnvironment())
+    if test_utils.CheckForEvalError(t, evaluated) { return }
+
+    var expectations = []int64 {1, 6, 9}
+    for i, expected := range expectations {
+        var arr, okArr = evaluated.(*object.Array)
+        if !okArr {
+            t.Errorf("Expected evaluated to be type of object.Array but got %T instead", evaluated)
+            continue
+        }
+        var check = arr.Elements[i].(*object.Integer)
+        if check.Value != expected {
+            t.Errorf("Expected array object.Integer value to be %d but got %d instead", expected, check.Value)
+        }
+    }
+}
+
+func TestIndexExpression(t *testing.T) {
+    var tests = []struct {
+        input string; expected any
+    } {
+        { "[1, 2, 3][0];",                                         1   },
+        { "[1, 2, 3][1];",                                         2   },
+        { "[1, 2, 3][2];",                                         3   },
+        { "let i = 0; [1][i];",                                    1   },
+        { "[1, 2, 3][1 + 1];",                                     3   },
+        { "let myArr = [1, 2, 3]; myArr[2];",                      3   },
+        { "let myArr = [1, 2, 3]; myArr[0] + myArr[1] + myArr[2]", 6   },
+        { "let myArr = [1, 2, 3]; let i = myArr[0]; myArr[i];",    2   },
+
+        // Out of bounds check
+        { "[1, 2, 3][3]",                                          nil },
+        { "[1, 2, 3][-1]",                                         nil },
+        { "let myArr = [1, 2, 3]; myArr[3];",                      nil },
+        { "let myArr = [1, 2, 3]; myArr[-1];",                     nil },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+        if test_utils.CheckForParserErrors(t, parser) { continue }
+        // program.PrintStatements()
+
+        var evaluated = Eval(program, object.NewEnvironment())
+        if test_utils.CheckForEvalError(t, evaluated) { continue }
+
+        switch x := test.expected.(type) {
+        case int:
+            var intObj, ok = evaluated.(*object.Integer)
+            if !ok {
+                t.Errorf("Expected evaluated to be of type object.Integer but got %T instead", evaluated)
+                continue
+            }
+            if intObj.Value != int64(x) {
+                t.Errorf("Expected evaluated value to be %d but got %d instead", int64(x), intObj.Value)
+            }
+        case nil:
+            if evaluated.Type() != object.NullType {
+                t.Errorf("Expected evaluated object to be object.NullType but got %s instead", evaluated.Type())
+            }
+        }
+    }
+}
