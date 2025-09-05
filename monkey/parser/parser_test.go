@@ -429,3 +429,30 @@ func TestHelloWorld(t *testing.T) {
         t.Errorf("Expected strint literal value to be '%s' but got '%s' instead", expected, strLit.Value)
     }
 }
+
+func TestArrays(t *testing.T) {
+    var input = `[1, 2 + 3, 4 * 5];`
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != 1 {
+        t.Fatalf("Expected program to have %d statements but get %d instead", 1, len(program.Statements))
+    }
+    // program.PrintStatements()
+
+    var stm, okStm = program.Statements[0].(*ast.ExpressionStatement)
+    if !okStm {
+        t.Fatalf("Expected program first statement to be an ExpressionStatement but got %T instead",
+            program.Statements[0])
+    }
+    var array, okArray = stm.Expression.(*ast.ArrayLiteral)
+    if !okArray {
+        t.Fatalf("Expected ExpressionStatement Expression to be of type ArrayLiteral but got %T instead",
+            stm.Expression)
+    }
+    testIntegerLiteral(t, array.Elements[0], 1)
+    testInfixExpression(t, array.Elements[1], 2, "+", 3)
+    testInfixExpression(t, array.Elements[2], 4, "*", 5)
+}

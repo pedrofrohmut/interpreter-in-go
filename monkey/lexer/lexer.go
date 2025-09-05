@@ -168,6 +168,10 @@ func (this *Lexer) GetNextToken() token.Token {
         tk = token.NewToken(token.Lbrace, this.getCh())
     case '}':
         tk = token.NewToken(token.Rbrace, this.getCh())
+    case '[':
+        tk = token.NewToken(token.Lbracket, this.getCh())
+    case ']':
+        tk = token.NewToken(token.Rbracket, this.getCh())
     case '"':
         var str = this.readStringLiteral()
         tk = token.NewTokenStr(token.String, str)

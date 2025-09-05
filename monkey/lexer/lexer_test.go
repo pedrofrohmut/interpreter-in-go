@@ -301,3 +301,19 @@ func TestStrings(t *testing.T) {
 
     checksForNextToken(lexer, t, expectedTokens)
 }
+
+func TestArrays(t *testing.T) {
+    var input = `[1, 2, 3]`
+    var expectedTokens = []ExpectedToken {
+        { token.Lbracket, "[" },
+        { token.Int, "1" },
+        { token.Comma, "," },
+        { token.Int, "2" },
+        { token.Comma, "," },
+        { token.Int, "3" },
+        { token.Rbracket, "]" },
+    }
+    var lexer = NewLexer(input)
+
+    checksForNextToken(lexer, t, expectedTokens)
+}

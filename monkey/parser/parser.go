@@ -171,6 +171,18 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
         }
         this.next() // Jumps the token.RPAREN
         return exp
+    case token.Lbracket:
+        // ...
+        this.next()
+        var array = &ast.ArrayLiteral {}
+        array.Elements = []ast.Expression {}
+        for !this.isCurr(token.Rbracket) {
+            var elem = this.parseExpression(Lowest)
+            array.Elements = append(array.Elements, elem)
+            this.next()
+            if this.isCurr(token.Comma) { this.next() }
+        }
+        return array
     case token.If:
         return this.parseIfExpression()
     case token.Function:

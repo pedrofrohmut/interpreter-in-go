@@ -335,3 +335,30 @@ func (this *CallExpression) String() string {
 
     return out.String()
 }
+
+type ArrayLiteral struct {
+    Elements []Expression
+}
+
+// @Impl
+func (this *ArrayLiteral) node() {}
+
+// @Impl
+func (this *ArrayLiteral) expression() {}
+
+// @Impl
+func (this *ArrayLiteral) String() string {
+    var out bytes.Buffer
+
+    var elements = []string {}
+    for _, x := range this.Elements {
+        elements = append(elements, x.String())
+    }
+
+    out.WriteString("[")
+    if len(elements) > 0 {
+        out.WriteString(strings.Join(elements, ", "))
+    }
+    out.WriteString("]")
+    return out.String()
+}
