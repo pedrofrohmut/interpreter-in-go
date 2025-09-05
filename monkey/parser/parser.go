@@ -153,7 +153,20 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
     case token.True, token.False:
         return &ast.Boolean { Value: this.isCurr(token.True) } // Easy convert to bool trick :D
     case token.Ident:
-        return &ast.Identifier { Value: this.curr.Literal }
+        var ident = &ast.Identifier { Value: this.curr.Literal }
+
+        if this.isPeek(token.Lbracket) {
+            var indexExpr = &ast.IndexExpression {}
+            indexExpr.Left = ident
+            this.next() // Jumps to the token.Lbracket
+            this.next() // Jumps inside the brackets so the expr is not viewed as an array
+            indexExpr.Index = this.parseExpression(Lowest)
+            this.next() // Jumps to the token.Rbracket
+            return indexExpr
+        }
+
+        return ident
+
     case token.Int:
         var intValue, err = strconv.ParseInt(this.curr.Literal, 10, 64)
         if err != nil {

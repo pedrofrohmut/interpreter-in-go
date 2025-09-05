@@ -456,3 +456,29 @@ func TestArrays(t *testing.T) {
     testInfixExpression(t, array.Elements[1], 2, "+", 3)
     testInfixExpression(t, array.Elements[2], 4, "*", 5)
 }
+
+func TestArrayIndexes(t *testing.T) {
+    var input = `arr[1 + 1]`
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+    if len(program.Statements) != 1 {
+        t.Fatalf("Expected program to have %d statements but got %d instead", 1, len(program.Statements))
+    }
+    // program.PrintStatements()
+
+    var stm, okStm = program.Statements[0].(*ast.ExpressionStatement)
+    if !okStm {
+        t.Fatalf("Expected program first statement to be an ExpressionStatement but got %T instead",
+            program.Statements[0])
+    }
+    var idx, okIdx = stm.Expression.(*ast.IndexExpression)
+    if !okIdx {
+        t.Fatalf("Expected ExpressionStatement Expression to be of type IndexExpression but got %T instead",
+            stm.Expression)
+    }
+    testIdentifier(t, idx.Left, "arr")
+    testInfixExpression(t, idx.Index, 1, "+", 1)
+}

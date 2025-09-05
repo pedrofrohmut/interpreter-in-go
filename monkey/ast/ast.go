@@ -362,3 +362,25 @@ func (this *ArrayLiteral) String() string {
     out.WriteString("]")
     return out.String()
 }
+
+type IndexExpression struct {
+    Left Expression
+    Index Expression
+}
+
+
+// @Impl
+func (this *IndexExpression) node() {}
+
+// @Impl
+func (this *IndexExpression) expression() {}
+
+// @Impl
+func (this *IndexExpression) String() string {
+    var out bytes.Buffer
+    out.WriteString(this.Left.String())
+    out.WriteString("[")
+    out.WriteString(this.Index.String())
+    out.WriteString("]")
+    return out.String()
+}
