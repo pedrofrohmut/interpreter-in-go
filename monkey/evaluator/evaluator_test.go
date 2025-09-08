@@ -692,30 +692,31 @@ func TestBuiltinRest(t *testing.T) {
 }
 
 func TestBuiltinPush(t *testing.T) {
-    var input = `
-        let myarr = [1, 2, 3, 4, 5];
-        push(myarr, 666);
-        myarr;
-    `
-    var lexer = lexer.NewLexer(input)
-    var parser = parser.NewParser(lexer)
-    var program = parser.ParseProgram()
-    test_utils.CheckForParserErrors(t, parser)
-
-    var evaluated = Eval(program, object.NewEnvironment())
-    if test_utils.CheckForEvalError(t, evaluated) { return }
-
-    var arr, okArr = evaluated.(*object.Array)
-    if !okArr {
-        t.Errorf("Expected evaluated to be of type object.Array but got %T instead", evaluated)
-        return
+    var inputs = []string {
+        `let myarr = [1, 2, 3, 4, 5]; push(myarr, 666); myarr;`,
+        `let myarr = push([1, 2, 3, 4, 5], 666); myarr;`,
     }
+    for _, input := range inputs {
+        var lexer = lexer.NewLexer(input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+        test_utils.CheckForParserErrors(t, parser)
 
-    var expectations =  []int64 {1, 2, 3, 4, 5, 666}
-    for i, expected := range expectations {
-        var elem = arr.Elements[i].(*object.Integer)
-        if elem.Value != expected {
-            t.Errorf("Expected array elements[%d] to be %d but got %d instead", i, expected, elem.Value)
+        var evaluated = Eval(program, object.NewEnvironment())
+        if test_utils.CheckForEvalError(t, evaluated) { return }
+
+        var arr, okArr = evaluated.(*object.Array)
+        if !okArr {
+            t.Errorf("Expected evaluated to be of type object.Array but got %T instead", evaluated)
+            return
+        }
+
+        var expectations =  []int64 {1, 2, 3, 4, 5, 666}
+        for i, expected := range expectations {
+            var elem = arr.Elements[i].(*object.Integer)
+            if elem.Value != expected {
+                t.Errorf("Expected array elements[%d] to be %d but got %d instead", i, expected, elem.Value)
+            }
         }
     }
 }
