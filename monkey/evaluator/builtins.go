@@ -23,7 +23,7 @@ func getTypeNotSupportedError(funcName string, obj object.Object) *object.Error 
 
 // Returns the length of an array or string
 var Len = func (args ...object.Object) object.Object {
-    if len(args) > 1 || len(args) == 0 {
+    if len(args) != 1 {
         return getNumArgsError(1, len(args))
     }
 
@@ -41,7 +41,7 @@ var Len = func (args ...object.Object) object.Object {
 
 // Returns the first element of an array or string
 var First = func (args ...object.Object) object.Object {
-    if len(args) > 1 || len(args) == 0 {
+    if len(args) != 1 {
         return getNumArgsError(1, len(args))
     }
 
@@ -64,7 +64,7 @@ var First = func (args ...object.Object) object.Object {
 
 // Returns the last element of an array or a string
 var Last = func (args ...object.Object) object.Object {
-    if len(args) > 1 || len(args) == 0 {
+    if len(args) != 1 {
         return getNumArgsError(1, len(args))
     }
 
@@ -87,7 +87,7 @@ var Last = func (args ...object.Object) object.Object {
 
 // Returns a copy from the source array without the first element
 var Rest = func (args ...object.Object) object.Object {
-    if len(args) > 1 || len(args) == 0 {
+    if len(args) != 1 {
         return getNumArgsError(1, len(args))
     }
 
@@ -113,6 +113,20 @@ var Rest = func (args ...object.Object) object.Object {
     }
 }
 
+var Push = func (args ...object.Object) object.Object {
+    if len(args) != 2 {
+        return getNumArgsError(2, len(args))
+    }
+
+    var arr, okArr = args[0].(*object.Array)
+    if !okArr {
+        return &object.Error { Message: "First argument of push function must be an array" }
+    }
+
+    arr.Elements = append(arr.Elements, args[1]);
+    return arr
+}
+
 func GetBuiltin(name string) (*object.Builtin, bool) {
     switch name {
     case "len":
@@ -123,6 +137,8 @@ func GetBuiltin(name string) (*object.Builtin, bool) {
         return &object.Builtin { Function: Last }, true
     case "rest":
         return &object.Builtin { Function: Rest }, true
+    case "push":
+        return &object.Builtin { Function: Push }, true
     }
 
     return nil, false
