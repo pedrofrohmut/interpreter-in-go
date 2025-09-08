@@ -31,6 +31,7 @@ const (
     // Delimiters
     Comma      = ","
     Semicolon  = ";"
+    Dot        = "."
 
     // Grouping
     Lparen     = "("

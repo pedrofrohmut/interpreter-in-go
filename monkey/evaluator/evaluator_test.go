@@ -484,7 +484,7 @@ func TestStringConcat(t *testing.T) {
     }
 }
 
-func TestBuiltinFunctions(t *testing.T) {
+func TestBuiltinFunctionsLen(t *testing.T) {
     var tests = []struct {
         input string; expected any
     } {
@@ -494,6 +494,12 @@ func TestBuiltinFunctions(t *testing.T) {
         { `len(1)`,                     "argument to len not supported, got Integer"      },
         { `len("one", "two")`,          "wrong number of arguments. expected=1 but got=2" },
         { `len("one", "two", "three")`, "wrong number of arguments. expected=1 but got=3" },
+
+        // Arrays
+        { `len([])`,                      0 },
+        { `len(["one"])`,                 1 },
+        { `len(["one", "two"])`,          2 },
+        { `len(["one", "two", "three"])`, 3 },
     }
 
 
@@ -528,6 +534,173 @@ func TestBuiltinFunctions(t *testing.T) {
             }
         }
     }
+}
+
+func TestBuiltinFirst(t *testing.T) {
+    var tests = []struct {
+        input string; expected any
+    } {
+        { `first("")`,           nil },
+        { `first("foo")`,        'f' },
+        { `first([])`,           nil },
+        { `first([61])`,         61  },
+        { `first([61, 62])`,     61  },
+        { `first([61, 62, 63])`, 61  },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+        test_utils.CheckForParserErrors(t, parser)
+
+        var evaluated = Eval(program, object.NewEnvironment())
+        if test_utils.CheckForEvalError(t, evaluated) { continue }
+
+        switch expected := test.expected.(type) {
+        case int:
+            var intObj, ok = evaluated.(*object.Integer)
+            if !ok {
+                t.Errorf("Expected evaluated to be type object.Integer but got %T instead", evaluated)
+                continue
+            }
+            if intObj.Value != int64(expected) {
+                t.Errorf("Expected object.Integer value to be %d but got %d instead", expected, intObj.Value)
+            }
+        case int32:
+            var ch, ok = evaluated.(*object.Char)
+            if !ok {
+                t.Errorf("Expected evaluated to be type object.Char but got %T instead", evaluated)
+                continue
+            }
+            if ch.Value != byte(expected) {
+                t.Errorf("Expected object.Char value to be %d but got %d instead", expected, ch.Value)
+            }
+        case nil:
+            var _, ok = evaluated.(*object.Null)
+            if !ok {
+                t.Errorf("Expected evaluated to be of type object.Null but got %T instead", evaluated)
+            }
+        default:
+            t.Errorf("Type %T not covered", test.expected)
+        }
+    }
+}
+
+func TestBuiltinLast(t *testing.T) {
+        var tests = []struct {
+        input string; expected any
+    } {
+        { `last("")`,           nil },
+        { `last("foobar")`,     'r' },
+        { `last([])`,           nil },
+        { `last([61])`,         61  },
+        { `last([61, 62])`,     62  },
+        { `last([61, 62, 63])`, 63  },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+        test_utils.CheckForParserErrors(t, parser)
+
+        var evaluated = Eval(program, object.NewEnvironment())
+        if test_utils.CheckForEvalError(t, evaluated) { continue }
+
+        switch expected := test.expected.(type) {
+        case int:
+            var intObj, ok = evaluated.(*object.Integer)
+            if !ok {
+                t.Errorf("Expected evaluated to be type object.Integer but got %T instead", evaluated)
+                continue
+            }
+            if intObj.Value != int64(expected) {
+                t.Errorf("Expected object.Integer value to be %d but got %d instead", expected, intObj.Value)
+            }
+        case int32:
+            var ch, ok = evaluated.(*object.Char)
+            if !ok {
+                t.Errorf("Expected evaluated to be type object.Char but got %T instead", evaluated)
+                continue
+            }
+            if ch.Value != byte(expected) {
+                t.Errorf("Expected object.Char value to be %d but got %d instead", expected, ch.Value)
+            }
+        case nil:
+            var _, ok = evaluated.(*object.Null)
+            if !ok {
+                t.Errorf("Expected evaluated to be of type object.Null but got %T instead", evaluated)
+            }
+        default:
+            t.Errorf("Type %T not covered", test.expected)
+        }
+    }
+}
+
+func TestBuiltinRest(t *testing.T) {
+    var tests = []struct {
+        input string; expected any
+    } {
+        { `rest("")`,           ""             },
+        { `rest("foobar")`,     "oobar"        },
+        { `rest([])`,           []int {}       },
+        { `rest([61])`,         []int {}       },
+        { `rest([61, 62])`,     []int {62}     },
+        { `rest([61, 62, 63])`, []int {62, 63} },
+    }
+
+    for _, test := range tests {
+        var lexer = lexer.NewLexer(test.input)
+        var parser = parser.NewParser(lexer)
+        var program = parser.ParseProgram()
+        test_utils.CheckForParserErrors(t, parser)
+
+        var evaluated = Eval(program, object.NewEnvironment())
+        if test_utils.CheckForEvalError(t, evaluated) { continue }
+
+        switch expected := test.expected.(type) {
+        case []int:
+            var arrObj, ok = evaluated.(*object.Array)
+            if !ok {
+                t.Errorf("Expected evaluated to be of type object.Array but got %T instead", evaluated)
+                continue
+            }
+            for i, obj := range arrObj.Elements {
+                var intObj, okInt = obj.(*object.Integer)
+                if !okInt {
+                    t.Errorf("Expected array element to be object.Integer but got %T instead", obj)
+                    continue
+                }
+                if intObj.Value != int64(expected[i]) {
+                    t.Errorf("Expected array element value to be %d but got %d instead", expected[i], intObj.Value)
+                }
+            }
+        case string:
+            var strObj, ok = evaluated.(*object.String)
+            if !ok {
+                t.Errorf("Expected evaluated to be of type object.String but got %T instead", evaluated)
+                continue
+            }
+            if strObj.Value != expected {
+                t.Errorf("Expected object string value to be '%s' but got '%s' instead", expected, strObj.Value)
+            }
+        default:
+            t.Errorf("Type %T not covered", test.expected)
+        }
+    }
+}
+
+func TestBuiltinPush(t *testing.T) {
+    var input = "let myarr = [1, 2, 3, 4, 5]; myarr.push(666); myarr;"
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+    test_utils.CheckForParserErrors(t, parser)
+
+    _ = program
+
+    t.Errorf("TODO: test the output to be src + 666")
 }
 
 func TestArrayLiterals(t *testing.T) {

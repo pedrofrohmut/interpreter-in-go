@@ -3,10 +3,10 @@
 package object
 
 import (
-    "fmt"
     "bytes"
-    "strings"
+    "fmt"
     "monkey/ast"
+    "strings"
 )
 
 const (
@@ -19,6 +19,7 @@ const (
     StringType  = "STRING_TYPE"
     BuiltinType = "BUILTIN_TYPE"
     ArrayType   = "ARRAY_TYPE"
+    CharType    = "CHAR_TYPE"
 )
 
 type ObjectType string
@@ -66,6 +67,20 @@ func (this *Null) Inspect() string {
 // @Impl
 func (this *Null) Type() ObjectType {
     return NullType
+}
+
+type Char struct {
+    Value byte
+}
+
+// @Impl
+func (this *Char) Inspect() string {
+    return string(this.Value)
+}
+
+// @Impl
+func (this *Char) Type() ObjectType {
+    return CharType
 }
 
 type String struct {

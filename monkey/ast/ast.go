@@ -336,6 +336,28 @@ func (this *CallExpression) String() string {
     return out.String()
 }
 
+type MethodExpression struct {
+    Expression Expression
+    Call *CallExpression
+}
+
+// @Impl
+func (this *MethodExpression) node() {}
+
+// @Impl
+func (this *MethodExpression) expression() {}
+
+// @Impl
+func (this *MethodExpression) String() string {
+    var out bytes.Buffer
+
+    out.WriteString(this.Expression.String())
+    out.WriteString(".")
+    out.WriteString(this.Call.String())
+
+    return out.String()
+}
+
 type ArrayLiteral struct {
     Elements []Expression
 }

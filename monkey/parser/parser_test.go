@@ -525,3 +525,19 @@ func TestArrayIndexes2(t *testing.T) {
     }
     testIntegerLiteral(t, intLit, 1)
 }
+
+func TestLetWithArrays(t *testing.T) {
+    var input = `
+        let myarr = [1, 2, 3];
+        myarr.push(666);
+    `
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+
+    program.PrintStatements()
+
+    _ = program
+}

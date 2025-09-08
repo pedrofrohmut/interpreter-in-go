@@ -152,6 +152,28 @@ func (this *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
     return indexExpr
 }
 
+func (this *Parser) parseMethodExpression(expr ast.Expression) ast.Expression {
+    var methExpr = &ast.MethodExpression {}
+
+    // Left value
+    methExpr.Expression = expr
+
+    // Separator
+    this.next() // Jumps to the token.Dot
+
+    // Right value
+    this.next() // Jumps to the first token of the call expression
+    var right = this.parseExpression(Lowest)
+    var callExpr, ok = right.(*ast.CallExpression)
+    if !ok {
+        this.addError("The right value of the method expression is not a call expression")
+        return nil
+    }
+    methExpr.Call = callExpr
+
+    return methExpr
+}
+
 func (this *Parser) parsePrefixOrSymbol() ast.Expression {
     switch this.curr.Type {
     case token.Bang, token.Minus:
@@ -167,6 +189,10 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
 
         if this.isPeek(token.Lbracket) {
             return this.parseIndexExpression(identifier)
+        }
+
+        if this.isPeek(token.Dot) {
+            return this.parseMethodExpression(identifier)
         }
 
         return identifier

@@ -16,3 +16,5 @@ to that callExpression evaluation that sums { outerEnvCopy, params, innerVariabl
 
 - [ ] Change the Parser so it does not stop on errors. It is resilient and keep recording errors until
 the input ends.
+
+- [ ] Add assignment statements
