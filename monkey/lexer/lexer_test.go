@@ -317,3 +317,17 @@ func TestArrays(t *testing.T) {
 
     checksForNextToken(lexer, t, expectedTokens)
 }
+
+func TestHashs(t *testing.T) {
+    var input = `{ "foo": "bar" }`
+    var expectedTokens = []ExpectedToken {
+        { token.Lbrace, "{"   },
+        { token.String, "foo" },
+        { token.Colon,  ":"   },
+        { token.String, "bar" },
+        { token.Rbrace, "}"   },
+    }
+    var lexer = NewLexer(input)
+
+    checksForNextToken(lexer, t, expectedTokens)
+}

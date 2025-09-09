@@ -232,10 +232,39 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
 
         return this.parseIndexExpression(array)
 
+    case token.Lbrace:
+        var hash = &ast.HashLiteral {}
+        hash.Pairs = make(map[ast.Expression] ast.Expression)
+
+        this.next() // Jumps to the first token inside the hash or the token.Rbrace
+
+        for !this.isCurr(token.Rbrace) {
+            var key = this.parseExpression(Lowest)
+
+            if !this.isPeek(token.Colon) {
+                this.addError(fmt.Sprintf("Expected ':' after hash key but found '%s' instead", this.curr.Literal))
+                return nil
+            }
+
+            this.next() // Jumps to the token.Colon
+            this.next() // Jumps to the first token of the pair value side
+
+            var value = this.parseExpression(Lowest)
+
+            hash.Pairs[key] = value
+
+            this.next() // Normal iteration
+            if this.isCurr(token.Comma) { this.next() } // If has next pair
+        }
+
+        return hash
+
     case token.If:
         return this.parseIfExpression()
+
     case token.Function:
         return this.parseFunctionLiteral()
+
     default:
         this.addError("Invalid or not covered symbol or prefix to parse: " + this.curr.Type)
         return nil

@@ -162,6 +162,8 @@ func (this *Lexer) GetNextToken() token.Token {
         tk = token.NewToken(token.Semicolon, this.getCh())
     case '.':
         tk = token.NewToken(token.Dot, this.getCh())
+    case ':':
+        tk = token.NewToken(token.Colon, this.getCh())
     case '(':
         tk = token.NewToken(token.Lparen, this.getCh())
     case ')':

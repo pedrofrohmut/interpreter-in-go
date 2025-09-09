@@ -406,3 +406,32 @@ func (this *IndexExpression) String() string {
     out.WriteString("]")
     return out.String()
 }
+
+type HashLiteral struct {
+    Pairs map[Expression] Expression
+}
+
+// @Impl
+func (this *HashLiteral) node() {}
+
+// @Impl
+func (this *HashLiteral) expression() {}
+
+// @Impl
+func (this *HashLiteral) String() string {
+    var out bytes.Buffer
+
+    if len(this.Pairs) == 0 { return "{}" }
+
+    var pairs = []string {}
+    for key, value := range this.Pairs {
+        var pair = key.String() + ": " + value.String()
+        pairs = append(pairs, pair)
+    }
+
+    out.WriteString("{ ")
+    out.WriteString(strings.Join(pairs, ", "))
+    out.WriteString(" }")
+
+    return out.String()
+}

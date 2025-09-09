@@ -536,8 +536,141 @@ func TestLetWithArrays(t *testing.T) {
     var program = parser.ParseProgram()
 
     checkParserErrors(t, parser)
-
-    program.PrintStatements()
-
     _ = program
+}
+
+func TestParsingHashLiteralsStringKeys(t *testing.T) {
+    var input = `{ "one": 1, "two": 2, "three": 3 }`
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+
+    var stm = program.Statements[0].(*ast.ExpressionStatement)
+    var hash, ok = stm.Expression.(*ast.HashLiteral)
+    if !ok {
+        t.Errorf("Expected program first statements to have a HashLiteral but found %T instead", stm)
+        return
+    }
+    if len(hash.Pairs) != 3 {
+        t.Errorf("Expected HashLiteral to have %d pairs but found %d instead", 3, len(hash.Pairs))
+        return
+    }
+
+    var expectations = map[string]int64 {
+        "one":   1,
+        "two":   2,
+        "three": 3,
+    }
+
+    for key, value := range hash.Pairs {
+        var strLit, okStr = key.(*ast.StringLiteral)
+        if !okStr {
+            t.Errorf("Expected hash pairs key to be String.Literal but found %T instead", key)
+            continue
+        }
+        var expectedValue, okExpectedValue = expectations[strLit.Value]
+        if !okExpectedValue {
+            t.Errorf("Did not found an value on the expectations with the parsed key")
+            continue
+        }
+        var intLit, okIntLit = value.(*ast.IntegerLiteral)
+        if !okIntLit {
+            t.Errorf("Expected hash pair value to be a IntegerLiteral but got %T instead", value)
+            continue
+        }
+        if intLit.Value != expectedValue {
+            t.Errorf("Expected hash pair value to be %d but got %d instead", expectedValue, intLit.Value)
+        }
+    }
+}
+
+func TestParsingEmptyHashLiteral(t *testing.T) {
+    var input = `{}`
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+
+    var stm = program.Statements[0].(*ast.ExpressionStatement)
+    var hash, okHash = stm.Expression.(*ast.HashLiteral)
+    if !okHash {
+        t.Errorf(
+            "Expected program first statement to be an ExpressionStatement with a Expression of type HashLiteral but got %T instead",
+            stm)
+        return
+    }
+    if len(hash.Pairs) != 0 {
+        t.Errorf("Expected hash to have %d pairs but found %d instead", 0, len(hash.Pairs))
+    }
+}
+
+func TestParsingHashLiteralsWithExpressions(t *testing.T) {
+    var input = `{ "one": 0 + 1, "two": 10 - 8, "three": 15 / 5, "four": 2 * 2 }`
+    var lexer = lexer.NewLexer(input)
+    var parser = NewParser(lexer)
+    var program = parser.ParseProgram()
+
+    checkParserErrors(t, parser)
+
+    var stm = program.Statements[0].(*ast.ExpressionStatement)
+    var hash, ok = stm.Expression.(*ast.HashLiteral)
+    if !ok {
+        t.Errorf("Expected program first statements to have a HashLiteral but found %T instead", stm)
+        return
+    }
+    if len(hash.Pairs) != 4 {
+        t.Errorf("Expected HashLiteral to have %d pairs but found %d instead", 4, len(hash.Pairs))
+        return
+    }
+
+    var expectations = map[string] *ast.InfixExpression {
+        "one": {
+            Left: &ast.IntegerLiteral { Value: int64(0) },
+            Operator: "+",
+            Right: &ast.IntegerLiteral { Value: int64(1) },
+        },
+        "two": {
+            Left: &ast.IntegerLiteral { Value: int64(10) },
+            Operator: "-",
+            Right: &ast.IntegerLiteral { Value: int64(8), },
+        },
+        "three": {
+            Left: &ast.IntegerLiteral { Value: int64(15) },
+            Operator: "/",
+            Right: &ast.IntegerLiteral { Value: int64(5) },
+        },
+        "four": {
+            Left: &ast.IntegerLiteral { Value: int64(2) },
+            Operator: "*",
+            Right: &ast.IntegerLiteral { Value: int64(2) },
+        },
+    }
+
+    for key, value := range hash.Pairs {
+        var strLit, okStr = key.(*ast.StringLiteral)
+        if !okStr {
+            t.Errorf("Expected hash pairs key to be String.Literal but found %T instead", key)
+            continue
+        }
+
+        // Check if key finds a value on expectations
+        var expectedValue, okExpectedValue = expectations[strLit.Value]
+        if !okExpectedValue {
+            t.Errorf("Did not found an value on the expectations with the parsed key")
+            continue
+        }
+
+        var valueInfix, okInfExp = value.(*ast.InfixExpression)
+        if !okInfExp {
+            t.Errorf("Expected pair value to be an InfixExpression but got %T instead", expectedValue)
+        }
+
+        var left = expectedValue.Left.(*ast.IntegerLiteral).Value
+        var operator = expectedValue.Operator
+        var right = expectedValue.Right.(*ast.IntegerLiteral).Value
+        testInfixExpression(t, valueInfix, left, operator, right)
+    }
 }
