@@ -893,3 +893,14 @@ func TestHashIndexExpression(t *testing.T) {
         }
     }
 }
+
+func TestBuiltinPuts(t *testing.T) {
+    var input = `puts("Hello, World!")`
+    var program, parser = getParsedProgram(input)
+    test_utils.CheckForParserErrors(t, parser)
+
+    var evaluated = Eval(program, object.NewEnvironment())
+    if test_utils.CheckForEvalError(t, evaluated) { return }
+
+    _ = program
+}

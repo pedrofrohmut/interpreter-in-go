@@ -127,6 +127,16 @@ var Push = func (args ...object.Object) object.Object {
     return arr
 }
 
+var Puts = func (args ...object.Object) object.Object {
+    if len(args) != 1 {
+        return getNumArgsError(2, len(args))
+    }
+
+    fmt.Println(args[0].Inspect())
+
+    return ObjNull
+}
+
 func GetBuiltin(name string) (*object.Builtin, bool) {
     switch name {
     case "len":
@@ -139,6 +149,8 @@ func GetBuiltin(name string) (*object.Builtin, bool) {
         return &object.Builtin { Function: Rest }, true
     case "push":
         return &object.Builtin { Function: Push }, true
+    case "puts":
+        return &object.Builtin { Function: Puts }, true
     }
 
     return nil, false
