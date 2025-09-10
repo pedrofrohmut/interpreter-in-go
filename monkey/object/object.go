@@ -208,18 +208,17 @@ type Hashable interface {
 type HashKey struct {
     Type ObjectType
     Value uint64
-    Source Object
 }
 
 // @Impl
 func (this *Boolean) HashKey() HashKey {
     var value uint64; if this.Value { value = 1 } else { value = 0 } // This crap because there is no ternary operator
-    return HashKey { Type: this.Type(), Value: value, Source: this }
+    return HashKey { Type: this.Type(), Value: value }
 }
 
 // @Impl
 func (this *Integer) HashKey() HashKey {
-    return HashKey { Type: this.Type(), Value: uint64(this.Value), Source: this }
+    return HashKey { Type: this.Type(), Value: uint64(this.Value) }
 }
 
 // @Impl
@@ -227,11 +226,19 @@ func (this *String) HashKey() HashKey {
     var hash = fnv.New64a()
     hash.Write([]byte(this.Value))
     var value = hash.Sum64()
-    return HashKey { Type: this.Type(), Value: value, Source: this }
+    return HashKey { Type: this.Type(), Value: value }
+}
+
+// Had to create this struct because i could not keep the OriginalKey in the HashKey struct
+// it breaks the comparison capabilities in golang
+// Key used as structs must have only comparable types. More info: https://go.dev/blog/maps
+type HashPair struct {
+    OriginalKey Object
+    Value Object
 }
 
 type Hash struct {
-    Pairs map[HashKey] Object
+    Pairs map[HashKey]HashPair
 }
 
 // @Impl
@@ -241,8 +248,8 @@ func (this *Hash) Inspect() string {
     if len(this.Pairs) == 0 { return "{}" }
 
     var pairs = []string {}
-    for key, value := range this.Pairs {
-        var pair = key.Source.Inspect() + ": " + value.Inspect()
+    for _, value := range this.Pairs {
+        var pair = value.OriginalKey.Inspect() + ": " + value.Value.Inspect()
         pairs = append(pairs, pair)
     }
 

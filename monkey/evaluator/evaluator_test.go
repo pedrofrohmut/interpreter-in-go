@@ -6,9 +6,17 @@ import (
     "monkey/lexer"
     "monkey/object"
     "monkey/parser"
+    "monkey/ast"
     "monkey/test_utils"
     "testing"
 )
+
+func getParsedProgram(input string) (*ast.Program, *parser.Parser) {
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+    return program, parser
+}
 
 func TestEvalIntegerExpression(t *testing.T) {
     var tests = []struct {
@@ -836,13 +844,52 @@ func TestHashLiterals(t *testing.T) {
             continue
         }
 
-        var objInt, okObjInt = value.(*object.Integer)
+        var objInt, okObjInt = value.Value.(*object.Integer)
         if !okObjInt {
             t.Errorf("Expected pair value to be of type object.Integer but got %T instead", value)
             continue
         }
         if expectedValue != objInt.Value {
             t.Errorf("Expected pair value to be %d but got %d instead", expectedValue, objInt.Value)
+        }
+    }
+}
+
+func TestHashIndexExpression(t *testing.T) {
+    var tests = []struct {
+        input string; expected any
+    }{
+        { `{ "foo": 5 }["foo"]`,                5   },
+        { `{ "foo": 5 }["bar"}`,                nil },
+        { `let key = "foo"; { "foo": 5 }[key]`, 5   },
+        { `{}["foo"]`,                          nil },
+        { `{ 5: 5 }[5]`,                        5   },
+        { `{ true: 5 }[true]`,                  5   },
+        { `{ false: 5 }[false]`,                5   },
+    }
+
+    for _, test := range tests {
+        var program, parser = getParsedProgram(test.input)
+        test_utils.CheckForParserErrors(t, parser)
+
+        var evaluated = Eval(program, object.NewEnvironment())
+        if test_utils.CheckForEvalError(t, evaluated) { continue }
+
+        switch x := test.expected.(type) {
+        case int:
+            var objInt, ok = evaluated.(*object.Integer)
+            if !ok {
+                t.Errorf("Expected evaluated be of type object.Integer but found %T instead", evaluated)
+                continue
+            }
+            if objInt.Value != int64(x) {
+                t.Errorf("Expected evaluated value to be %d but gut %d instead", x, objInt.Value)
+            }
+        case nil:
+            var _, ok = evaluated.(*object.Null)
+            if !ok {
+                t.Errorf("Expected evaluated to be of type object.Null but got %T instead", evaluated)
+            }
         }
     }
 }

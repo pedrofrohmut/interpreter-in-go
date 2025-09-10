@@ -211,45 +211,22 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
         return arr
 
-    case *ast.HashLiteral:
-        var hash = &object.Hash {}
-        hash.Pairs = make(map[object.HashKey]object.Object)
-
-        for key, value := range node.Pairs {
-            // Prepare pair key
-            var evaluatedKey = Eval(key, env)
-            if isError(evaluatedKey) { return evaluatedKey }
-            var hashableKey, okHashableKey = evaluatedKey.(object.Hashable)
-            if !okHashableKey {
-                return &object.Error { Message: "Object evaluated to be a hash map key is not a hashable object" }
-            }
-            var hashKey = hashableKey.HashKey()
-
-            // Prepare pair value
-            var evaluatedValue = Eval(value, env)
-            if isError(evaluatedValue) { return evaluatedValue }
-
-            hash.Pairs[hashKey] = evaluatedValue
-        }
-
-        return hash
-
     case *ast.IndexExpression:
-        switch x := node.Left.(type) {
+        switch nodeLeft := node.Left.(type) {
 
         case *ast.ArrayLiteral:
             var index, okIndex = getIndexFromExpression(node, env)
             if !okIndex { return index }
             var indexInt = index.(*object.Integer).Value
 
-            if isOutOfBounds(x.Elements, indexInt) { return ObjNull }
+            if isOutOfBounds(nodeLeft.Elements, indexInt) { return ObjNull }
 
-            return Eval(x.Elements[indexInt], env)
+            return Eval(nodeLeft.Elements[indexInt], env)
 
         case *ast.Identifier:
-            var ident, found = env.Get(x.Value)
+            var ident, found = env.Get(nodeLeft.Value)
             if !found {
-                return getIdentifierNotFoundError(x.Value)
+                return getIdentifierNotFoundError(nodeLeft.Value)
             }
 
             var arr, okArr = ident.(*object.Array)
@@ -270,11 +247,63 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
             return arr.Elements[indexInt]
 
+        case *ast.HashLiteral:
+            var evaluatedIndex = Eval(node.Index, env)
+            if isError(evaluatedIndex) { return evaluatedIndex }
+
+            var hashable, okHashable = evaluatedIndex.(object.Hashable)
+            if !okHashable {
+                return &object.Error {
+                    Message: fmt.Sprintf("Value used as index in the Index Expression for a hash is not Hashable. Got %T",
+                        evaluatedIndex),
+                }
+            }
+            var hashKey = hashable.HashKey()
+
+            var evaluatedHash = Eval(nodeLeft, env)
+            if isError(evaluatedHash) { return evaluatedHash }
+
+            var objHash, okObjHash = evaluatedHash.(*object.Hash)
+            if !okObjHash {
+                return &object.Error {
+                    Message: "Error to convert HashLiteral to Hash object",
+                }
+            }
+
+            var value, ok = objHash.Pairs[hashKey]
+
+            if !ok { return ObjNull }
+
+            return value.Value
+
         default:
             return &object.Error {
                 Message: fmt.Sprintf("IndexExpression Left type not covered or invalid. Got %T", node.Left),
             }
         }
+
+    case *ast.HashLiteral:
+        var hash = &object.Hash {}
+        hash.Pairs = make(map[object.HashKey]object.HashPair)
+
+        for key, value := range node.Pairs {
+            // Prepare pair key
+            var evaluatedKey = Eval(key, env)
+            if isError(evaluatedKey) { return evaluatedKey }
+            var hashableKey, okHashableKey = evaluatedKey.(object.Hashable)
+            if !okHashableKey {
+                return &object.Error { Message: "Object evaluated to be a hash map key is not a hashable object" }
+            }
+            var hashKey = hashableKey.HashKey()
+
+            // Prepare pair value
+            var evaluatedValue = Eval(value, env)
+            if isError(evaluatedValue) { return evaluatedValue }
+
+            hash.Pairs[hashKey] = object.HashPair { OriginalKey: evaluatedKey, Value: evaluatedValue }
+        }
+
+        return hash
 
     case *ast.PrefixExpression:
         switch node.Operator {

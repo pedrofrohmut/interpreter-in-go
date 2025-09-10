@@ -257,7 +257,9 @@ func (this *Parser) parsePrefixOrSymbol() ast.Expression {
             if this.isCurr(token.Comma) { this.next() } // If has next pair
         }
 
-        return hash
+        if !this.isPeek(token.Lbracket) { return hash }
+
+        return this.parseIndexExpression(hash)
 
     case token.If:
         return this.parseIfExpression()
