@@ -7,6 +7,7 @@ import (
     "fmt"
     "monkey/ast"
     "strings"
+    "hash/fnv"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
     BuiltinType = "BUILTIN_TYPE"
     ArrayType   = "ARRAY_TYPE"
     CharType    = "CHAR_TYPE"
+    HashType    = "HASH_TYPE"
 )
 
 type ObjectType string
@@ -197,4 +199,61 @@ func (this *Array) Inspect() string {
 // @Impl
 func (this *Array) Type() ObjectType {
     return ArrayType
+}
+
+type Hashable interface {
+    HashKey() HashKey
+}
+
+type HashKey struct {
+    Type ObjectType
+    Value uint64
+    Source Object
+}
+
+// @Impl
+func (this *Boolean) HashKey() HashKey {
+    var value uint64; if this.Value { value = 1 } else { value = 0 } // This crap because there is no ternary operator
+    return HashKey { Type: this.Type(), Value: value, Source: this }
+}
+
+// @Impl
+func (this *Integer) HashKey() HashKey {
+    return HashKey { Type: this.Type(), Value: uint64(this.Value), Source: this }
+}
+
+// @Impl
+func (this *String) HashKey() HashKey {
+    var hash = fnv.New64a()
+    hash.Write([]byte(this.Value))
+    var value = hash.Sum64()
+    return HashKey { Type: this.Type(), Value: value, Source: this }
+}
+
+type Hash struct {
+    Pairs map[HashKey] Object
+}
+
+// @Impl
+func (this *Hash) Inspect() string {
+    var out bytes.Buffer
+
+    if len(this.Pairs) == 0 { return "{}" }
+
+    var pairs = []string {}
+    for key, value := range this.Pairs {
+        var pair = key.Source.Inspect() + ": " + value.Inspect()
+        pairs = append(pairs, pair)
+    }
+
+    out.WriteString("{ ")
+    out.WriteString(strings.Join(pairs, ", "))
+    out.WriteString(" }")
+
+    return out.String()
+}
+
+// @Impl
+func (this *Hash) Type() ObjectType {
+    return HashType
 }

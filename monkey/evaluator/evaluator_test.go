@@ -793,3 +793,56 @@ func TestIndexExpression(t *testing.T) {
         }
     }
 }
+
+func TestHashLiterals(t *testing.T) {
+    var input = `
+        let two = "two";
+        {
+            "one": 10 - 9,
+            two: 1 + 1,
+            "thr" + "ee": 6 / 2,
+            4: 4,
+            true: 5,
+            false: 6
+        };
+    `
+    var lexer = lexer.NewLexer(input)
+    var parser = parser.NewParser(lexer)
+    var program = parser.ParseProgram()
+    test_utils.CheckForParserErrors(t, parser)
+
+    var evaluated = Eval(program, object.NewEnvironment())
+    if test_utils.CheckForEvalError(t, evaluated) { return }
+
+    var hash, okHash = evaluated.(*object.Hash)
+    if !okHash {
+        t.Errorf("Expected evaluated to be object of type Hash but got %T instead", evaluated)
+        return
+    }
+
+    var expectations = map[uint64]int64 {
+        (&object.String { Value: "one" }).HashKey().Value:   1,
+        (&object.String { Value: "two" }).HashKey().Value:   2,
+        (&object.String { Value: "three" }).HashKey().Value: 3,
+        (&object.Integer { Value: 4 }).HashKey().Value:      4,
+        ObjTrue.HashKey().Value:                             5,
+        ObjFalse.HashKey().Value:                            6,
+    }
+
+    for key, value := range hash.Pairs {
+        var expectedValue, ok = expectations[key.Value]
+        if !ok {
+            t.Errorf("Expected value to be found in expectations to be found with current key.value but nothing was found")
+            continue
+        }
+
+        var objInt, okObjInt = value.(*object.Integer)
+        if !okObjInt {
+            t.Errorf("Expected pair value to be of type object.Integer but got %T instead", value)
+            continue
+        }
+        if expectedValue != objInt.Value {
+            t.Errorf("Expected pair value to be %d but got %d instead", expectedValue, objInt.Value)
+        }
+    }
+}

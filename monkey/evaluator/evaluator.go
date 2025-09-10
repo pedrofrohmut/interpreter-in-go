@@ -4,8 +4,8 @@ package evaluator
 
 import (
     "fmt"
-    "monkey/object"
     "monkey/ast"
+    "monkey/object"
 )
 
 var (
@@ -210,6 +210,29 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
         }
 
         return arr
+
+    case *ast.HashLiteral:
+        var hash = &object.Hash {}
+        hash.Pairs = make(map[object.HashKey]object.Object)
+
+        for key, value := range node.Pairs {
+            // Prepare pair key
+            var evaluatedKey = Eval(key, env)
+            if isError(evaluatedKey) { return evaluatedKey }
+            var hashableKey, okHashableKey = evaluatedKey.(object.Hashable)
+            if !okHashableKey {
+                return &object.Error { Message: "Object evaluated to be a hash map key is not a hashable object" }
+            }
+            var hashKey = hashableKey.HashKey()
+
+            // Prepare pair value
+            var evaluatedValue = Eval(value, env)
+            if isError(evaluatedValue) { return evaluatedValue }
+
+            hash.Pairs[hashKey] = evaluatedValue
+        }
+
+        return hash
 
     case *ast.IndexExpression:
         switch x := node.Left.(type) {
