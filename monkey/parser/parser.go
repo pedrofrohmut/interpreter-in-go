@@ -450,6 +450,10 @@ func (this *Parser) ParseProgram() *ast.Program {
     for this.hasNext() {
         stm := this.parseStatement()
 
+        // TODO: Instead of returning nil when the current statement went wrong try to get to the next one
+        // and accumulate the errors on the parser so the parser gets all possible errors instead of stopping
+        // in the first error found
+
         if utils.IsNill(stm) {
             this.addError("Statement is nill. Something went wrong!!!")
             return nil
